@@ -33,7 +33,7 @@ COMMIT_INTERVAL = 50
 
 async def scrape_ats(scraper, slugs: list[str], db_path: Path) -> dict:
     """Scrape all slugs for one ATS. Returns stats dict."""
-    stats = {"companies": 0, "dead": 0, "jobs_new": 0, "jobs_updated": 0, "descriptions_fetched": 0}
+    stats = {"companies": 0, "dead": 0, "errors": 0, "jobs_new": 0, "jobs_updated": 0, "descriptions_fetched": 0}
     ats = scraper.ats_name
     conn = get_connection(db_path)
     now = int(time.time())
@@ -59,7 +59,7 @@ async def scrape_ats(scraper, slugs: list[str], db_path: Path) -> dict:
                 log.info(
                     f"[{ats}] {processed}/{len(slugs)} slugs | "
                     f"{stats['jobs_new']} new, {stats['jobs_updated']} updated, "
-                    f"{stats['dead']} dead"
+                    f"{stats['dead']} dead, {stats['errors']} errors"
                 )
             return
 
@@ -147,7 +147,7 @@ async def scrape_ats(scraper, slugs: list[str], db_path: Path) -> dict:
             log.info(
                 f"[{ats}] {processed}/{len(slugs)} slugs | "
                 f"{stats['jobs_new']} new, {stats['jobs_updated']} updated, "
-                f"{stats['dead']} dead"
+                f"{stats['dead']} dead, {stats['errors']} errors"
             )
 
     # Process all slugs — scraper semaphore limits HTTP concurrency
@@ -157,6 +157,7 @@ async def scrape_ats(scraper, slugs: list[str], db_path: Path) -> dict:
     )
     for i, result in enumerate(results):
         if isinstance(result, Exception):
+            stats["errors"] += 1
             log.warning(f"[{ats}] {slugs[i]}: {result}")
 
     conn.commit()
@@ -165,7 +166,7 @@ async def scrape_ats(scraper, slugs: list[str], db_path: Path) -> dict:
     log.info(
         f"[{ats}] Done: {processed}/{len(slugs)} slugs | "
         f"{stats['jobs_new']} new, {stats['jobs_updated']} updated, "
-        f"{stats['dead']} dead"
+        f"{stats['dead']} dead, {stats['errors']} errors"
     )
     return stats
 

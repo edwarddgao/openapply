@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, patch, MagicMock
 
 import pytest
 
+from openapply.scrapers.base import ATSScraper
 from openapply.scrapers.lever import LeverScraper
 from openapply.scrapers.greenhouse import GreenhouseScraper
 from openapply.scrapers.ashby import AshbyScraper
@@ -37,6 +38,48 @@ def sr_list_response():
 @pytest.fixture
 def sr_detail_response():
     return json.loads((FIXTURES / "smartrecruiters_visa_detail.json").read_text())
+
+
+class TestProbeWithRetry:
+    @pytest.mark.asyncio
+    async def test_returns_none_for_dead_company(self):
+        """probe_company returning None (dead) should pass through as None."""
+        scraper = LeverScraper()
+        scraper.probe_company = AsyncMock(return_value=None)
+        result = await scraper.probe_with_retry("dead-co")
+        assert result is None
+        await scraper.close()
+
+    @pytest.mark.asyncio
+    async def test_raises_on_retry_exhaustion(self):
+        """Transient errors after all retries should raise, not return None."""
+        scraper = LeverScraper()
+        scraper.probe_company = AsyncMock(side_effect=RuntimeError("429 rate limited"))
+        with pytest.raises(RuntimeError, match="429"):
+            await scraper.probe_with_retry("rate-limited-co", max_retries=2)
+        assert scraper.probe_company.call_count == 2
+        await scraper.close()
+
+    @pytest.mark.asyncio
+    async def test_retries_then_succeeds(self):
+        """Should return result if a retry succeeds."""
+        scraper = LeverScraper()
+        scraper.probe_company = AsyncMock(
+            side_effect=[RuntimeError("timeout"), [{"job": 1}]]
+        )
+        result = await scraper.probe_with_retry("flaky-co", max_retries=3)
+        assert result == [{"job": 1}]
+        assert scraper.probe_company.call_count == 2
+        await scraper.close()
+
+    @pytest.mark.asyncio
+    async def test_desc_retry_returns_none_on_failure(self):
+        """Description fetch failures should return None (not raise)."""
+        scraper = LeverScraper()
+        scraper.fetch_description = AsyncMock(side_effect=RuntimeError("500"))
+        result = await scraper.fetch_description_with_retry("co", "job1", max_retries=2)
+        assert result is None
+        await scraper.close()
 
 
 class TestLeverScraper:
