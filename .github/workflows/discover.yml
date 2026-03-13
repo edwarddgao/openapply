@@ -1,0 +1,41 @@
+name: Discover Slugs
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'  # Every Monday at 6am UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -e .
+
+      - name: Run CC discovery
+        run: python -m openapply.discover --source cc --output-dir data/slugs
+
+      - name: Run Simplify discovery
+        run: python -m openapply.discover --source simplify --output-dir data/slugs
+
+      - name: Commit new slugs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/slugs/
+          if git diff --staged --quiet; then
+            echo "No new slugs found"
+          else
+            git commit -m "Update slugs from CC + Simplify discovery"
+            git push
+          fi

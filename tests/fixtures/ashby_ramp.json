@@ -1,0 +1,30 @@
+{
+  "data": {
+    "jobBoard": {
+      "jobPostings": [
+        {
+          "id": "8c004352-f162-4d89-858f-75a649e77ec4",
+          "title": "Account Executive | Commercial",
+          "teamId": "d8dc541b-72a7-4bb8-86b2-22993312a38d",
+          "locationName": "New York, NY (HQ)",
+          "workplaceType": "Hybrid",
+          "employmentType": "FullTime",
+          "compensationTierSummary": "$138.8K \u2013 $212.1K \u2022 Offers Equity \u2022 Offers Commission \u2022 50/50 split",
+          "secondaryLocations": [
+            {
+              "locationId": "3178e0cd-d087-4533-85df-48e9e3adbe65",
+              "locationName": "San Francisco, CA"
+            }
+          ]
+        }
+      ],
+      "teams": [
+        {
+          "id": "d8dc541b-72a7-4bb8-86b2-22993312a38d",
+          "name": "Account Executive",
+          "parentTeamId": "baa9ccf5-274b-43e7-a810-1b50545f0745"
+        }
+      ]
+    }
+  }
+}

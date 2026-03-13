@@ -1,0 +1,87 @@
+{
+  "offset": 0,
+  "limit": 1,
+  "totalFound": 1181,
+  "content": [
+    {
+      "id": "744000114542567",
+      "name": "Operations Delivery Analyst",
+      "uuid": "71711b80-9b52-44cf-925d-58cfd53af2b6",
+      "jobAdId": "c4e6b0a6-e670-45db-b6c4-6091cd6c6b52",
+      "defaultJobAd": true,
+      "refNumber": "REF079126W",
+      "company": {
+        "identifier": "Visa",
+        "name": "Visa"
+      },
+      "releasedDate": "2026-03-13T06:35:33.191Z",
+      "location": {
+        "city": "Pasay City",
+        "region": "PHILIPPINES",
+        "country": "ph",
+        "remote": false,
+        "hybrid": true,
+        "fullLocation": "Pasay City, PHILIPPINES, Philippines"
+      },
+      "industry": {
+        "id": "it_and_services",
+        "label": "Information Technology And Services"
+      },
+      "department": {
+        "id": "868486",
+        "label": "Information Technology"
+      },
+      "function": {
+        "id": "information_technology",
+        "label": "Information Technology"
+      },
+      "typeOfEmployment": {
+        "id": "permanent",
+        "label": "Full-time"
+      },
+      "experienceLevel": {
+        "id": "mid_senior_level",
+        "label": "Mid-Senior Level"
+      },
+      "customField": [
+        {
+          "fieldId": "58b7e4d1e4b0885c92cd9895",
+          "fieldLabel": "Department",
+          "valueId": "868486",
+          "valueLabel": "Information Technology"
+        },
+        {
+          "fieldId": "COUNTRY",
+          "fieldLabel": "Country/Region",
+          "valueId": "ph",
+          "valueLabel": "Philippines"
+        },
+        {
+          "fieldId": "5bd89e45b1f60b7aea922c5b",
+          "fieldLabel": "Visa Inc. or Visa in Europe job?",
+          "valueId": "3a568048-d1c9-4741-be56-36b4f3addff7",
+          "valueLabel": "Visa Inc."
+        },
+        {
+          "fieldId": "58914413e4b04f807e6ee84f",
+          "fieldLabel": "Brands",
+          "valueId": "default",
+          "valueLabel": "Visa"
+        },
+        {
+          "fieldId": "57ac0c81e4b06e7ab19310e1",
+          "fieldLabel": "Job Family Group",
+          "valueId": "TEC",
+          "valueLabel": "Technology and Operations"
+        }
+      ],
+      "visibility": "PUBLIC",
+      "ref": "https://api.smartrecruiters.com/v1/companies/VISA/postings/744000114542567",
+      "language": {
+        "code": "en",
+        "label": "English",
+        "labelNative": "English (US)"
+      }
+    }
+  ]
+}

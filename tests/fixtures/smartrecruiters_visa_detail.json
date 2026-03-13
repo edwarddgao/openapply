@@ -1,0 +1,108 @@
+{
+  "id": "744000114542567",
+  "name": "Operations Delivery Analyst",
+  "uuid": "71711b80-9b52-44cf-925d-58cfd53af2b6",
+  "jobId": "ba428db4-0442-4134-a115-9929167e98e5",
+  "jobAdId": "c4e6b0a6-e670-45db-b6c4-6091cd6c6b52",
+  "defaultJobAd": true,
+  "refNumber": "REF079126W",
+  "company": {
+    "name": "Visa",
+    "identifier": "Visa"
+  },
+  "location": {
+    "city": "Pasay City",
+    "region": "PHILIPPINES",
+    "country": "ph",
+    "remote": false,
+    "hybrid": true,
+    "fullLocation": "Pasay City, PHILIPPINES, Philippines"
+  },
+  "customField": [
+    {
+      "fieldId": "COUNTRY",
+      "fieldLabel": "Country/Region",
+      "valueId": "ph",
+      "valueLabel": "Philippines"
+    },
+    {
+      "fieldId": "5bd89e45b1f60b7aea922c5b",
+      "fieldLabel": "Visa Inc. or Visa in Europe job?",
+      "valueId": "3a568048-d1c9-4741-be56-36b4f3addff7",
+      "valueLabel": "Visa Inc."
+    },
+    {
+      "fieldId": "58914413e4b04f807e6ee84f",
+      "fieldLabel": "Brands",
+      "valueId": "default",
+      "valueLabel": "Visa"
+    },
+    {
+      "fieldId": "57ac0c81e4b06e7ab19310e1",
+      "fieldLabel": "Job Family Group",
+      "valueId": "TEC",
+      "valueLabel": "Technology and Operations"
+    },
+    {
+      "fieldId": "58b7e4d1e4b0885c92cd9895",
+      "fieldLabel": "Department",
+      "valueId": "868486",
+      "valueLabel": "Information Technology"
+    }
+  ],
+  "releasedDate": "2026-03-13T06:35:33.191Z",
+  "creator": {
+    "name": "",
+    "avatarUrl": ""
+  },
+  "postingUrl": "https://jobs.smartrecruiters.com/Visa/744000114542567-operations-delivery-analyst",
+  "applyUrl": "https://jobs.smartrecruiters.com/Visa/744000114542567-operations-delivery-analyst?oga=true",
+  "referralUrl": "https://jobs.smartrecruiters.com/external-referrals/company/Visa/publication/71711b80-9b52-44cf-925d-58cfd53af2b6?dcr_ci=Visa",
+  "jobAd": {
+    "sections": {
+      "companyDescription": {
+        "title": "Company Description",
+        "text": "<p>Visa is a world leader in payments technology, facilitating transactions between consumers, merchants, financial institutions and government entities across more than 200 countries and territories, dedicated to uplifting everyone, everywhere by being the best way to pay and be paid.</p><p>At Visa, you'll have the opportunity to create impact at scale \u2014 tackling meaningful challenges, growing your skills and seeing your contributions impact lives around the world. Join Visa and do work that matters \u2014 to you, to your community, and to the world.</p><p>Progress starts with you.</p>"
+      },
+      "jobDescription": {
+        "title": "Job Description",
+        "text": "<p>The Operations Delivery&#xa0;Analyst&#xa0;is&#xa0;responsible for&#xa0;ensuring the quality of our systems are continuously working to a high standard and that new features and integrations are&#xa0;operating&#xa0;at an acceptable level prior to releasing into production environments and making readily available to our clients.&#xa0;</p><p>&#xa0;The Details\u2026&#xa0;</p><ul><li>Continuously develop understanding of payment, settlement and trading processes and system workflows&#xa0;</li><li>Acting as a subject matter expert making sure adequate documentation is in place and stay up to date&#xa0;</li><li>Use this knowledge and understanding to help specify projects, working with both the Product and Tech Teams to set out requirements and making sure all risks/assumptions are understood and edge cases captured and handled&#xa0;</li><li>Support Product and Tech Teams to address issues during development /testing phases&#xa0;</li><li>Create Operations Delivery documentation \u2013 test plans and scripts for products and features&#xa0;</li><li>Liaise with Product Owners and Agile Delivery Managers weekly to organize testing and time efficiently post release to ensure feedback turn around is fast&#xa0;</li><li>Own and deliver on \u2018last mile\u2019 testing/\u2019check out\u2019 and pilot activity, once tech deliverables are released into UAT/production environments, to ensure projects are delivered without any negative impacts to business/clients&#xa0;</li><li>Lead continuous improvement activity \u2013 tracking system/process issues and driving root cause analysis/resolution in the medium term&#xa0;</li><li>Conduct post release checks ensuring that core functions of the business are fully operational&#xa0;</li><li>Work with Operations team globally to ensure smooth implementation of projects&#xa0;(.g., training, product&#xa0;guides ,feature&#xa0;demos, feedback sessions, etc.)&#xa0;</li></ul><p>What Success Looks Like..</p><ul><li>Analyze bugs and prioritize accordingly with Product Owner ensuring important bugs get fixed&#xa0;</li><li>Propose solutions and workarounds to bugs that are small or have minimal impact&#xa0;</li><li>Attend weekly Demo sessions with Product and Tech Teams&#xa0;</li><li>Identify&#xa0;any issues and errors proactively to Operations Delivery Manager&#xa0;</li><li>Identify&#xa0;improvements and suggest solutions for the operations system and workflow and communicating these to the Operations Delivery Manager and/or VP Operations&#xa0;</li><li>Show interest in detail of how projects and products are built and delivered&#xa0;</li><li>Understand balance and potential compromises between quality and speed&#xa0;</li><li>Facilitate collaboration between cross functional teams to lay out product requirements and develop operational solutions.&#xa0;</li></ul><p>This is a hybrid position.&#xa0;Expectation&#xa0;of&#xa0;days in&#xa0;the&#xa0;office will be confirmed by your Hiring Manager.&#xa0;</p>"
+      },
+      "qualifications": {
+        "title": "Qualifications",
+        "text": "<p>Basic Qualifications:<br>\n2+ years of relevant work experience and a Bachelors degree, OR 5+ years of relevant work experience<br>\n<br>\nPreferred Qualifications:<br>\n3 or more years of work experience with a Bachelor\u2019s Degree or more than 2 years of work experience with an Advanced Degree (e.g. Masters, MBA, JD, MD)<br>\n2+ years of relevant work experience and a Bachelors degree, OR 5+ years of relevant work experience<br>\n3 or more years of work experience with a Bachelor\u2019s Degree or more than 2 years of work experience with an Advanced Degree (e.g. Masters, MBA, JD, MD)<br>\nSkills &amp; Experience<br>\nExcellent communication skills (both written and verbal)<br>\nOutstanding attention to detail<br>\nAbility to stay focused under time pressure<br>\nDemonstrate analytical and systematic approach to problem solving<br>\nAbility to work both independently and as a team<br>\nBe articulate, numerate and data driven<br>\nMaintain high level or organization across projects<br>\nBe able to manage own workload on short- and long-term projects<br>\nMultitask multiple projects at any given time<br>\nChallenge the status quo and be curious<br>\nWillingness and interest to work in an Agile Environment</p>"
+      },
+      "additionalInformation": {
+        "title": "Additional Information",
+        "text": "<p>Visa is an EEO Employer. Qualified applicants will receive consideration for employment without regard to race, color, religion, sex, national origin, sexual orientation, gender identity, disability or protected veteran status. Visa will also consider for employment qualified applicants with criminal histories in a manner consistent with EEOC guidelines and applicable local law.</p>"
+      }
+    }
+  },
+  "active": true,
+  "visibility": "PUBLIC",
+  "industry": {
+    "id": "it_and_services",
+    "label": "Information Technology And Services"
+  },
+  "function": {
+    "id": "information_technology",
+    "label": "Information Technology"
+  },
+  "department": {
+    "id": 868486,
+    "label": "Information Technology"
+  },
+  "experienceLevel": {
+    "id": "mid_senior_level",
+    "label": "Mid-Senior Level"
+  },
+  "typeOfEmployment": {
+    "id": "permanent",
+    "label": "Full-time"
+  },
+  "language": {
+    "code": "en",
+    "label": "English",
+    "labelNative": "English (US)"
+  }
+}

@@ -1,0 +1,53 @@
+name: Scrape Jobs
+
+on:
+  schedule:
+    - cron: '0 8 * * *'  # Daily at 8am UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -e .
+
+      - name: Download previous DB
+        run: gh release download --pattern 'jobs.db.gz' --dir . || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Decompress previous DB
+        run: |
+          if [ -f jobs.db.gz ]; then
+            gunzip jobs.db.gz
+            echo "Resumed from previous DB"
+          else
+            echo "Starting fresh"
+          fi
+
+      - name: Scrape all ATS platforms
+        run: python -m openapply.scrape --db jobs.db
+
+      - name: Publish release
+        run: |
+          gzip -k jobs.db
+          TAG="nightly-$(date +%Y%m%d-%H%M%S)"
+          JOBS=$(sqlite3 jobs.db 'SELECT COUNT(*) FROM jobs')
+          COMPANIES=$(sqlite3 jobs.db 'SELECT COUNT(*) FROM companies WHERE is_dead=0')
+          gh release create "$TAG" jobs.db.gz \
+            --title "Jobs DB $(date +%Y-%m-%d)" \
+            --notes "$JOBS jobs from $COMPANIES active companies" \
+            --latest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
