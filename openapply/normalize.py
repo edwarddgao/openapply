@@ -180,7 +180,6 @@ EMPLOYMENT_TYPE_MAP = {
     "Intern": "internship",
     "Contract": "contract",
     "Temporary": "contract",
-    # SmartRecruiters
     "permanent": "full-time",
 }
 
@@ -189,25 +188,6 @@ def normalize_employment_type(raw: str | None) -> str:
     if not raw:
         return "full-time"
     return EMPLOYMENT_TYPE_MAP.get(raw, EMPLOYMENT_TYPE_MAP.get(raw.lower(), "full-time"))
-
-
-# --- SmartRecruiters experience level ---
-
-SR_EXPERIENCE_MAP = {
-    "internship": "internship",
-    "entry_level": "entry",
-    "associate": "junior",
-    "mid_senior_level": "mid",
-    "director": "executive",
-    "executive": "executive",
-    "not_applicable": "unknown",
-}
-
-
-def normalize_sr_experience(raw_id: str | None) -> str:
-    if not raw_id:
-        return "unknown"
-    return SR_EXPERIENCE_MAP.get(raw_id.lower(), "unknown")
 
 
 # --- Ashby salary parsing ---
@@ -376,48 +356,3 @@ def normalize_ashby(raw: dict, slug: str, teams: dict[str, str], description_htm
     }
 
 
-def normalize_smartrecruiters(raw: dict, slug: str, description_html: str | None = None) -> dict:
-    """Normalize a SmartRecruiters posting into a unified job dict.
-
-    description_html: combined from jobAd.sections (detail endpoint, optional).
-    """
-    loc = raw.get("location", {})
-    loc_raw = loc.get("fullLocation", "")
-    city = loc.get("city")
-    region = loc.get("region")
-    country_code = (loc.get("country") or "").upper()
-    is_remote = 1 if loc.get("remote") else 0
-
-    description = strip_html(description_html)
-    title = raw.get("name", "")
-    dept = raw.get("department", {})
-    exp = raw.get("experienceLevel", {})
-    emp = raw.get("typeOfEmployment", {})
-
-    # SmartRecruiters has structured experience level
-    experience = normalize_sr_experience(exp.get("id"))
-    if experience == "unknown":
-        experience = parse_experience_level(title)
-
-    return {
-        "job_id": f"smartrecruiters:{raw['id']}",
-        "ats": "smartrecruiters",
-        "company_id": f"smartrecruiters:{slug}",
-        "ats_job_id": raw["id"],
-        "title": title,
-        "company_name": raw.get("company", {}).get("name"),
-        "description_text": description,
-        "location_raw": loc_raw,
-        "city": city,
-        "state": region,
-        "country": country_code if len(country_code) == 2 else None,
-        "is_remote": is_remote,
-        "department": dept.get("label"),
-        "employment_type": normalize_employment_type(emp.get("id")),
-        "experience_level": experience,
-        "min_salary": None,  # Rarely available in public API
-        "max_salary": None,
-        "apply_url": raw.get("applyUrl", f"https://jobs.smartrecruiters.com/{slug}/{raw['id']}?oga=true"),
-        "now": int(time.time()),
-        "content_hash": content_hash(title, slug, loc_raw, description),
-    }

@@ -10,13 +10,11 @@ from openapply.normalize import (
     parse_experience_level,
     normalize_employment_type,
     parse_ashby_compensation,
-    normalize_sr_experience,
     strip_html,
     content_hash,
     normalize_lever,
     normalize_greenhouse,
     normalize_ashby,
-    normalize_smartrecruiters,
 )
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -138,20 +136,6 @@ class TestParseAshbyCompensation:
 
 # --- SmartRecruiters experience ---
 
-class TestNormalizeSRExperience:
-    def test_mid_senior(self):
-        assert normalize_sr_experience("mid_senior_level") == "mid"
-
-    def test_entry(self):
-        assert normalize_sr_experience("entry_level") == "entry"
-
-    def test_internship(self):
-        assert normalize_sr_experience("internship") == "internship"
-
-    def test_none(self):
-        assert normalize_sr_experience(None) == "unknown"
-
-
 # --- HTML stripping ---
 
 class TestStripHtml:
@@ -243,23 +227,3 @@ class TestNormalizeAshby:
         assert result["min_salary"] is not None
 
 
-class TestNormalizeSmartRecruiters:
-    @pytest.fixture
-    def posting(self):
-        return json.loads((FIXTURES / "smartrecruiters_visa_detail.json").read_text())
-
-    def test_fields(self, posting):
-        sections = posting.get("jobAd", {}).get("sections", {})
-        desc_html = "\n".join(
-            s.get("text", "") for s in sections.values() if s.get("text")
-        )
-        result = normalize_smartrecruiters(posting, "VISA", desc_html)
-        assert result["ats"] == "smartrecruiters"
-        assert result["job_id"].startswith("smartrecruiters:")
-        assert result["title"] == posting["name"]
-        assert result["company_name"] == "Visa"
-        assert result["city"]
-        assert result["country"]
-        assert result["department"]
-        assert result["apply_url"].startswith("https://")
-        assert result["description_text"]

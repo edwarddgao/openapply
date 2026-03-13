@@ -23,7 +23,6 @@ from .normalize import strip_html, content_hash
 from .scrapers.lever import LeverScraper
 from .scrapers.greenhouse import GreenhouseScraper
 from .scrapers.ashby import AshbyScraper
-from .scrapers.smartrecruiters import SmartRecruitersScraper
 
 log = logging.getLogger("openapply.scrape")
 
@@ -173,7 +172,7 @@ async def scrape_ats(scraper, slugs: list[str], db_path: Path) -> dict:
 
 async def main():
     parser = argparse.ArgumentParser(description="Scrape ATS platforms for jobs")
-    parser.add_argument("--ats", choices=["lever", "greenhouse", "ashby", "smartrecruiters"],
+    parser.add_argument("--ats", choices=["lever", "greenhouse", "ashby"],
                         help="Scrape only this ATS")
     parser.add_argument("--slugs-dir", type=Path, default=SLUGS_DIR)
     parser.add_argument("--db", type=Path, default=DB_PATH)
@@ -192,7 +191,6 @@ async def main():
         "lever": LeverScraper,
         "greenhouse": GreenhouseScraper,
         "ashby": AshbyScraper,
-        "smartrecruiters": SmartRecruitersScraper,
     }
 
     ats_list = [args.ats] if args.ats else list(scrapers.keys())

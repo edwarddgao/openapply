@@ -10,7 +10,6 @@ from openapply.scrapers.base import ATSScraper
 from openapply.scrapers.lever import LeverScraper
 from openapply.scrapers.greenhouse import GreenhouseScraper
 from openapply.scrapers.ashby import AshbyScraper
-from openapply.scrapers.smartrecruiters import SmartRecruitersScraper
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -29,15 +28,6 @@ def greenhouse_response():
 def ashby_response():
     return json.loads((FIXTURES / "ashby_ramp_rest.json").read_text())
 
-
-@pytest.fixture
-def sr_list_response():
-    return json.loads((FIXTURES / "smartrecruiters_visa_list.json").read_text())
-
-
-@pytest.fixture
-def sr_detail_response():
-    return json.loads((FIXTURES / "smartrecruiters_visa_detail.json").read_text())
 
 
 class TestProbeWithRetry:
@@ -165,38 +155,3 @@ class TestAshbyScraper:
         await scraper.close()
 
 
-class TestSmartRecruitersScraper:
-    @pytest.mark.asyncio
-    async def test_probe_company(self, sr_list_response):
-        scraper = SmartRecruitersScraper()
-
-        # Make pagination stop after first page by setting totalFound = len(content)
-        sr_list_response["totalFound"] = len(sr_list_response["content"])
-
-        mock_resp = MagicMock()
-        mock_resp.status_code = 200
-        mock_resp.json.return_value = sr_list_response
-        mock_resp.raise_for_status = MagicMock()
-
-        scraper._client.get = AsyncMock(return_value=mock_resp)
-
-        result = await scraper.probe_company("VISA")
-        assert result is not None
-        assert len(result) == len(sr_list_response["content"])
-        assert all(j["ats"] == "smartrecruiters" for j in result)
-        await scraper.close()
-
-    @pytest.mark.asyncio
-    async def test_fetch_description(self, sr_detail_response):
-        scraper = SmartRecruitersScraper()
-        mock_resp = MagicMock()
-        mock_resp.status_code = 200
-        mock_resp.json.return_value = sr_detail_response
-        mock_resp.raise_for_status = MagicMock()
-
-        scraper._client.get = AsyncMock(return_value=mock_resp)
-
-        desc = await scraper.fetch_description("VISA", "744000114532207")
-        assert desc is not None
-        assert len(desc) > 100
-        await scraper.close()

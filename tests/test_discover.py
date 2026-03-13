@@ -145,8 +145,8 @@ class TestExtractSlugsFromShard:
 
     def test_filters_robots_txt(self):
         cdx_lines = [
-            'com,smartrecruiters,jobs)/robots.txt 20260101 {"url":"https://jobs.smartrecruiters.com/robots.txt"}',
-            'com,smartrecruiters,jobs)/VISA/123 20260101 {"url":"https://jobs.smartrecruiters.com/VISA/123"}',
+            'co,lever,jobs)/robots.txt 20260101 {"url":"https://jobs.lever.co/robots.txt"}',
+            'co,lever,jobs)/figma/abc 20260101 {"url":"https://jobs.lever.co/figma/abc"}',
         ]
         mock_resp = MagicMock()
         mock_resp.content = _make_gzip_content(cdx_lines)
@@ -155,10 +155,10 @@ class TestExtractSlugsFromShard:
         client = MagicMock()
         client.get.return_value = mock_resp
 
-        pattern = ATS_DOMAINS["smartrecruiters"]["url_pattern"]
-        slugs = extract_slugs_from_shard("CC-MAIN-2026-08", "cdx-00129.gz", 0, 1000, pattern, client)
+        pattern = ATS_DOMAINS["lever"]["url_pattern"]
+        slugs = extract_slugs_from_shard("CC-MAIN-2025-43", "cdx-00027.gz", 0, 1000, pattern, client)
         assert "robots.txt" not in slugs
-        assert "visa" in slugs
+        assert "figma" in slugs
 
     def test_filters_non_slug_prefixes(self):
         cdx_lines = [
@@ -196,7 +196,7 @@ class TestExtractSlugsFromShard:
 
     def test_lowercases_slugs(self):
         cdx_lines = [
-            'com,smartrecruiters,jobs)/VISA/123 20260101 {"url":"https://jobs.smartrecruiters.com/VISA/123"}',
+            'co,lever,jobs)/Figma/abc 20260101 {"url":"https://jobs.lever.co/Figma/abc"}',
         ]
         mock_resp = MagicMock()
         mock_resp.content = _make_gzip_content(cdx_lines)
@@ -205,10 +205,10 @@ class TestExtractSlugsFromShard:
         client = MagicMock()
         client.get.return_value = mock_resp
 
-        pattern = ATS_DOMAINS["smartrecruiters"]["url_pattern"]
-        slugs = extract_slugs_from_shard("CC-MAIN-2026-08", "cdx-00129.gz", 0, 1000, pattern, client)
-        assert "visa" in slugs
-        assert "VISA" not in slugs
+        pattern = ATS_DOMAINS["lever"]["url_pattern"]
+        slugs = extract_slugs_from_shard("CC-MAIN-2025-43", "cdx-00027.gz", 0, 1000, pattern, client)
+        assert "figma" in slugs
+        assert "Figma" not in slugs
 
     def test_bad_gzip_returns_empty(self):
         mock_resp = MagicMock()
@@ -275,9 +275,9 @@ class TestDiscoverCC:
         with patch("openapply.discover.get_latest_index", return_value="CC-MAIN-2026-08"), \
              patch("openapply.discover.find_shard_ranges", return_value=[("cdx-00001.gz", 0, 100)]), \
              patch("openapply.discover.extract_slugs_from_shard", return_value={"alpha", "beta"}):
-            discover_cc("smartrecruiters", output_dir=tmp_path)
+            discover_cc("ashby", output_dir=tmp_path)
 
-        written = (tmp_path / "smartrecruiters.txt").read_text().strip().split("\n")
+        written = (tmp_path / "ashby.txt").read_text().strip().split("\n")
         assert written == ["alpha", "beta"]
 
     def test_updates_provenance(self, tmp_path):
@@ -307,10 +307,6 @@ class TestExtractAtsSlug:
         result = _extract_ats_slug("https://jobs.ashbyhq.com/ramp/abc-def")
         assert result == ("ashby", "ramp")
 
-    def test_smartrecruiters(self):
-        result = _extract_ats_slug("https://jobs.smartrecruiters.com/VISA/744000114532207")
-        assert result == ("smartrecruiters", "visa")
-
     def test_workday_returns_none(self):
         result = _extract_ats_slug("https://dollartree.wd5.myworkdayjobs.com/dollartreeus/job/blah")
         assert result is None
@@ -324,8 +320,8 @@ class TestExtractAtsSlug:
         assert result is None
 
     def test_lowercases_slug(self):
-        result = _extract_ats_slug("https://jobs.smartrecruiters.com/VISA/123")
-        assert result[1] == "visa"
+        result = _extract_ats_slug("https://jobs.lever.co/Figma/abc-123")
+        assert result[1] == "figma"
 
     def test_url_decodes_slug(self):
         result = _extract_ats_slug("https://jobs.ashbyhq.com/my-company/abc")
@@ -384,9 +380,9 @@ class TestMergeSlugs:
 
     def test_creates_file_if_missing(self, tmp_path):
         prov = {}
-        merge_slugs("smartrecruiters", {"visa", "bosch"}, "simplify", tmp_path, prov)
-        slugs = load_slugs("smartrecruiters", tmp_path)
-        assert slugs == {"visa", "bosch"}
+        merge_slugs("ashby", {"ramp", "notion"}, "simplify", tmp_path, prov)
+        slugs = load_slugs("ashby", tmp_path)
+        assert slugs == {"ramp", "notion"}
 
     def test_filters_junk_during_merge(self, tmp_path):
         prov = {}

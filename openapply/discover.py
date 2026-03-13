@@ -49,11 +49,6 @@ ATS_DOMAINS = {
         "url_pattern": re.compile(r"jobs\.ashbyhq\.com/([a-zA-Z0-9%._-]+)"),
         "preferred_index": None,
     },
-    "smartrecruiters": {
-        "surt_prefix": "com,smartrecruiters,jobs)",
-        "url_pattern": re.compile(r"jobs\.smartrecruiters\.com/([a-zA-Z0-9._-]+)"),
-        "preferred_index": None,
-    },
 }
 
 # Mapping from redirect URL hostname patterns → ATS name
@@ -61,7 +56,6 @@ ATS_HOST_PATTERNS = {
     "lever.co": "lever",
     "greenhouse.io": "greenhouse",
     "ashbyhq.com": "ashby",
-    "smartrecruiters.com": "smartrecruiters",
 }
 
 CC_S3_BASE = "https://data.commoncrawl.org"
