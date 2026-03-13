@@ -1,0 +1,278 @@
+{
+  "jobs": [
+    {
+      "id": "63df0ffc-bdc6-40ba-906f-fe03378536b0",
+      "title": "AI Operations Specialist | Enablement ",
+      "department": "Product",
+      "team": "Product Operations",
+      "employmentType": "FullTime",
+      "location": "New York, NY (HQ)",
+      "shouldDisplayCompensationOnJobPostings": true,
+      "secondaryLocations": [],
+      "publishedAt": "2026-01-07T22:26:44.294+00:00",
+      "isListed": true,
+      "isRemote": true,
+      "workplaceType": "Hybrid",
+      "address": {
+        "postalAddress": {
+          "addressRegion": "NY",
+          "addressCountry": "USA",
+          "addressLocality": "New York City"
+        }
+      },
+      "jobUrl": "https://jobs.ashbyhq.com/ramp/63df0ffc-bdc6-40ba-906f-fe03378536b0",
+      "applyUrl": "https://jobs.ashbyhq.com/ramp/63df0ffc-bdc6-40ba-906f-fe03378536b0/application",
+      "descriptionHtml": "<h1><strong>About Ramp</strong></h1><p style=\"min-height:1.5em\">Ramp is building the smart infrastructure for finance teams, embedded in the transaction flow of every dollar a business spends. We automate how over $100B in annualized spend flows in and out of 50,000+ companies: authorizing payments, flagging risk, categorizing spend, and closing books.</p><p style=\"min-height:1.5em\">The problems are high-stakes, data-dense, and unforgiving.</p><p style=\"min-height:1.5em\">We hire people with high agency and high urgency. We look for slope over intercept. We care less about where you trained and more about what you\u2019ve built. At Ramp, everyone is a builder who owns problems end to end and makes consequential decisions that shape the outcome.</p><p style=\"min-height:1.5em\">The median Ramp customer saves 5% and grows revenue 16% in their first year \u2013 far in excess of businesses operating without Ramp. We believe every ambitious company deserves the same.</p><p style=\"min-height:1.5em\">If you want to build systems that directly shape how companies move and manage billions, Ramp is the place to do it.</p><p style=\"min-height:1.5em\"></p><h1><strong>About the Role</strong></h1><p style=\"min-height:1.5em\">As an AI Product Operator, you will help accelerate Ramp\u2019s goal of becoming the most productive company in the world through AI. You will boost not just AI usage across our business, but an AI-first mindset\u2014so that every team develops a muscle for leveraging new AI capabilities instinctually, and is enabled to act on those instincts. Part vibe coder, part data expert, part product manager, and part business ops maven, you\u2019ll work across disciplines and co-develop the cutting edge of AI building technology for non-engineers, and use it to drive massive change at high velocity.</p><p style=\"min-height:1.5em\"></p><h2><strong>What You'll Do</strong></h2><ul style=\"min-height:1.5em\"><li><p style=\"min-height:1.5em\">Deploy dozens of AI-driven automations or copilots across a focused set of non-engineering Ramp teams within 6\u201312 months.</p></li><li><p style=\"min-height:1.5em\">Enable hundreds of Ramp team members with &gt;90% active usage of deployed workflows in their daily work.</p></li><li><p style=\"min-height:1.5em\">Map processes, build workflows using tools like Gumloop, n8n, Notion, Cursor, or ChatGPT plugins, and orchestrate integrations.</p></li><li><p style=\"min-height:1.5em\">Measure impact via dashboards, QA checks, and iteratively optimize based on user feedback.</p></li><li><p style=\"min-height:1.5em\">Seed an AI-native culture, coaching internal \u201cAI champions\u201d and embedding templates and practices into team norms.</p></li></ul><p style=\"min-height:1.5em\"></p><h2><strong>What You Need</strong></h2><ul style=\"min-height:1.5em\"><li><p style=\"min-height:1.5em\"><strong>2\u20135 years</strong> in product management, product ops, BizOps, strategy, technical program management, revenue operations, or similar.</p></li><li><p style=\"min-height:1.5em\">Deep and demonstrated experience using AI to <strong>build, ship, and transform work</strong> in prior teams or projects.</p></li><li><p style=\"min-height:1.5em\">Technical fluency with low-code/no-code and development copilot tools (Notion, n8n, Gumloop, Cursor, Claude Code), SQL and BI tools, APIs, scripting, or integrations.</p></li><li><p style=\"min-height:1.5em\">Operational empathy: able to partner with business teams to deeply understand challenges and deliver rapid solutions.</p></li><li><p style=\"min-height:1.5em\">Strong communicator: you can write crisp docs (with AI!) and run persuasive, engaging internal training sessions that have lasting impact.</p></li><li><p style=\"min-height:1.5em\">Self-starter with high ownership, comfortable with autonomy and ambiguity.</p></li></ul><p style=\"min-height:1.5em\"><strong>Nice-to-Haves:</strong></p><ul style=\"min-height:1.5em\"><li><p style=\"min-height:1.5em\">Familiarity with departmental workflows in operating teams - Sales, CX, Finance, Risk, HR, etc.</p></li><li><p style=\"min-height:1.5em\">Prior experience in internal enablement or change management programs.</p></li></ul><p style=\"min-height:1.5em\"><strong>Not for you if:</strong></p><ul style=\"min-height:1.5em\"><li><p style=\"min-height:1.5em\">You prefer strategy briefings over hands-on delivery.</p></li><li><p style=\"min-height:1.5em\">You lean toward AI research or building models rather than applied AI work.</p></li><li><p style=\"min-height:1.5em\">You\u2019d rather manage people than dive deep into building solutions and discovering new ways to drive edge through technology.</p></li></ul><p style=\"min-height:1.5em\">Don\u2019t meet every bullet? Please apply. Many excellent candidates don\u2019t\u2014but could excel once given the opportunity.</p><p style=\"min-height:1.5em\"></p><h2><strong>Benefits (for U.S.-based full-time employees)</strong></h2><ul style=\"min-height:1.5em\"><li><p style=\"min-height:1.5em\">100% medical, dental &amp; vision insurance coverage for you</p><ul style=\"min-height:1.5em\"><li><p style=\"min-height:1.5em\">Partially covered for your dependents</p></li><li><p style=\"min-height:1.5em\">One Medical annual membership</p></li></ul></li><li><p style=\"min-height:1.5em\">401k (including employer match on contributions made while employed by Ramp)</p></li><li><p style=\"min-height:1.5em\">Flexible PTO</p></li><li><p style=\"min-height:1.5em\">Fertility HRA (up to $10,000 per year)</p></li><li><p style=\"min-height:1.5em\">Parental Leave</p></li><li><p style=\"min-height:1.5em\">Unlimited AI token usage</p></li><li><p style=\"min-height:1.5em\">Pet insurance</p></li><li><p style=\"min-height:1.5em\">Centralized home-office equipment ordering for all employees</p></li><li><p style=\"min-height:1.5em\">Health and Wellness stipend</p></li><li><p style=\"min-height:1.5em\">In-office perks: lunch, snacks, drinks, and more</p></li><li><p style=\"min-height:1.5em\">Budget for intra-office travel</p></li><li><p style=\"min-height:1.5em\">Relocation support to NYC or SF (as needed)</p></li></ul><p style=\"min-height:1.5em\"></p><h2><strong>Referral Instructions</strong></h2><p style=\"min-height:1.5em\">If you are being referred for the role, please contact that person to apply on your behalf.</p><p style=\"min-height:1.5em\"></p><h2><strong>Other notices</strong></h2><p style=\"min-height:1.5em\">Pursuant to the San Francisco Fair Chance Ordinance, we will consider for employment qualified applicants with arrest and conviction records.</p><p style=\"min-height:1.5em\"></p><p style=\"min-height:1.5em\"><em>Beware of recruiting scams: Ramp will only contact you through official @</em><a target=\"_blank\" rel=\"noopener noreferrer nofollow\" href=\"http://Ramp.com\"><em>Ramp.com</em></a><em> email addresses and will never ask for payment or sensitive personal information during the hiring process.</em></p><p style=\"min-height:1.5em\"></p><p style=\"min-height:1.5em\"><a target=\"_blank\" rel=\"noopener noreferrer nofollow\" href=\"https://ramp.com/legal/applicant-privacy-notice\">Ramp Applicant Privacy Notice</a></p>",
+      "descriptionPlain": "ABOUT RAMP\n\nRamp is building the smart infrastructure for finance teams, embedded in the transaction flow of every dollar a business spends. We automate how over $100B in annualized spend flows in and out of 50,000+ companies: authorizing payments, flagging risk, categorizing spend, and closing books.\n\nThe problems are high-stakes, data-dense, and unforgiving.\n\nWe hire people with high agency and high urgency. We look for slope over intercept. We care less about where you trained and more about what you\u2019ve built. At Ramp, everyone is a builder who owns problems end to end and makes consequential decisions that shape the outcome.\n\nThe median Ramp customer saves 5% and grows revenue 16% in their first year \u2013 far in excess of businesses operating without Ramp. We believe every ambitious company deserves the same.\n\nIf you want to build systems that directly shape how companies move and manage billions, Ramp is the place to do it.\n\n\nABOUT THE ROLE\n\nAs an AI Product Operator, you will help accelerate Ramp\u2019s goal of becoming the most productive company in the world through AI. You will boost not just AI usage across our business, but an AI-first mindset\u2014so that every team develops a muscle for leveraging new AI capabilities instinctually, and is enabled to act on those instincts. Part vibe coder, part data expert, part product manager, and part business ops maven, you\u2019ll work across disciplines and co-develop the cutting edge of AI building technology for non-engineers, and use it to drive massive change at high velocity.\n\n\nWHAT YOU'LL DO\n\n - Deploy dozens of AI-driven automations or copilots across a focused set of non-engineering Ramp teams within 6\u201312 months.\n\n - Enable hundreds of Ramp team members with >90% active usage of deployed workflows in their daily work.\n\n - Map processes, build workflows using tools like Gumloop, n8n, Notion, Cursor, or ChatGPT plugins, and orchestrate integrations.\n\n - Measure impact via dashboards, QA checks, and iteratively optimize based on user feedback.\n\n - Seed an AI-native culture, coaching internal \u201cAI champions\u201d and embedding templates and practices into team norms.\n\n\nWHAT YOU NEED\n\n - 2\u20135 years in product management, product ops, BizOps, strategy, technical program management, revenue operations, or similar.\n\n - Deep and demonstrated experience using AI to build, ship, and transform work in prior teams or projects.\n\n - Technical fluency with low-code/no-code and development copilot tools (Notion, n8n, Gumloop, Cursor, Claude Code), SQL and BI tools, APIs, scripting, or integrations.\n\n - Operational empathy: able to partner with business teams to deeply understand challenges and deliver rapid solutions.\n\n - Strong communicator: you can write crisp docs (with AI!) and run persuasive, engaging internal training sessions that have lasting impact.\n\n - Self-starter with high ownership, comfortable with autonomy and ambiguity.\n\nNice-to-Haves:\n\n - Familiarity with departmental workflows in operating teams - Sales, CX, Finance, Risk, HR, etc.\n\n - Prior experience in internal enablement or change management programs.\n\nNot for you if:\n\n - You prefer strategy briefings over hands-on delivery.\n\n - You lean toward AI research or building models rather than applied AI work.\n\n - You\u2019d rather manage people than dive deep into building solutions and discovering new ways to drive edge through technology.\n\nDon\u2019t meet every bullet? Please apply. Many excellent candidates don\u2019t\u2014but could excel once given the opportunity.\n\n\nBENEFITS (FOR U.S.-BASED FULL-TIME EMPLOYEES)\n\n - 100% medical, dental & vision insurance coverage for you\n   \n   - Partially covered for your dependents\n   \n   - One Medical annual membership\n\n - 401k (including employer match on contributions made while employed by Ramp)\n\n - Flexible PTO\n\n - Fertility HRA (up to $10,000 per year)\n\n - Parental Leave\n\n - Unlimited AI token usage\n\n - Pet insurance\n\n - Centralized home-office equipment ordering for all employees\n\n - Health and Wellness stipend\n\n - In-office perks: lunch, snacks, drinks, and more\n\n - Budget for intra-office travel\n\n - Relocation support to NYC or SF (as needed)\n\n\nREFERRAL INSTRUCTIONS\n\nIf you are being referred for the role, please contact that person to apply on your behalf.\n\n\nOTHER NOTICES\n\nPursuant to the San Francisco Fair Chance Ordinance, we will consider for employment qualified applicants with arrest and conviction records.\n\nBeware of recruiting scams: Ramp will only contact you through official @Ramp.com http://Ramp.com email addresses and will never ask for payment or sensitive personal information during the hiring process.\n\nRamp Applicant Privacy Notice https://ramp.com/legal/applicant-privacy-notice",
+      "compensation": {
+        "compensationTierSummary": "$114,200 \u2013 $184,050 \u2022 Offers Equity",
+        "scrapeableCompensationSalarySummary": "$114,200 - $184,050",
+        "compensationTiers": [
+          {
+            "id": "31dfc9d7-ebdd-4c92-9083-bb21b3e97b39",
+            "tierSummary": "Target Base Salary $114,200 \u2013 $184,050 \u2022 Offers Equity",
+            "title": null,
+            "additionalInformation": null,
+            "components": [
+              {
+                "id": "db3d6e2a-d78b-4478-b6f5-5d3f8a7aa450",
+                "summary": "Offers Equity",
+                "compensationType": "EquityCashValue",
+                "interval": "1 YEAR",
+                "currencyCode": "USD",
+                "minValue": null,
+                "maxValue": null
+              },
+              {
+                "id": "773e46e6-e4fd-41c8-87d2-d1b52b38d5ea",
+                "summary": "Target Base Salary $114,200 \u2013 $184,050",
+                "compensationType": "Salary",
+                "interval": "1 YEAR",
+                "currencyCode": "USD",
+                "minValue": 114200,
+                "maxValue": 184050
+              }
+            ]
+          }
+        ],
+        "summaryComponents": [
+          {
+            "compensationType": "EquityCashValue",
+            "interval": "1 YEAR",
+            "currencyCode": "USD",
+            "minValue": null,
+            "maxValue": null
+          },
+          {
+            "compensationType": "Salary",
+            "interval": "1 YEAR",
+            "currencyCode": "USD",
+            "minValue": 114200,
+            "maxValue": 184050
+          }
+        ]
+      }
+    },
+    {
+      "id": "caf900ec-0107-436b-88bf-2bc24174e6b9",
+      "title": "Fraud Strategy Analyst (All Levels)",
+      "department": "Risk",
+      "team": "Risk",
+      "employmentType": "FullTime",
+      "location": "New York, NY (HQ)",
+      "shouldDisplayCompensationOnJobPostings": true,
+      "secondaryLocations": [
+        {
+          "location": "San Francisco, CA",
+          "address": {
+            "postalAddress": {
+              "addressRegion": "California ",
+              "addressCountry": "USA",
+              "addressLocality": "San Fransisco"
+            }
+          }
+        },
+        {
+          "location": "Remote (US)",
+          "address": {
+            "postalAddress": {
+              "addressCountry": "United States"
+            }
+          }
+        },
+        {
+          "location": "Remote (Canada)",
+          "address": {
+            "postalAddress": {
+              "addressCountry": "Canada"
+            }
+          }
+        }
+      ],
+      "publishedAt": "2025-04-02T15:58:38.377+00:00",
+      "isListed": true,
+      "isRemote": true,
+      "workplaceType": "Hybrid",
+      "address": {
+        "postalAddress": {
+          "addressRegion": "NY",
+          "addressCountry": "USA",
+          "addressLocality": "New York City"
+        }
+      },
+      "jobUrl": "https://jobs.ashbyhq.com/ramp/caf900ec-0107-436b-88bf-2bc24174e6b9",
+      "applyUrl": "https://jobs.ashbyhq.com/ramp/caf900ec-0107-436b-88bf-2bc24174e6b9/application",
+      "descriptionHtml": "<h1><strong>About Ramp</strong></h1><p style=\"min-height:1.5em\">Ramp is building the smart infrastructure for finance teams, embedded in the transaction flow of every dollar a business spends. We automate how over $100B in annualized spend flows in and out of 50,000+ companies: authorizing payments, flagging risk, categorizing spend, and closing books.</p><p style=\"min-height:1.5em\">The problems are high-stakes, data-dense, and unforgiving.</p><p style=\"min-height:1.5em\">We hire people with high agency and high urgency. We look for slope over intercept. We care less about where you trained and more about what you\u2019ve built. At Ramp, everyone is a builder who owns problems end to end and makes consequential decisions that shape the outcome.</p><p style=\"min-height:1.5em\">The median Ramp customer saves 5% and grows revenue 16% in their first year \u2013 far in excess of businesses operating without Ramp. We believe every ambitious company deserves the same.</p><p style=\"min-height:1.5em\">If you want to build systems that directly shape how companies move and manage billions, Ramp is the place to do it.</p><p style=\"min-height:1.5em\"></p><p style=\"min-height:1.5em\"><strong>About the Role</strong></p><p style=\"min-height:1.5em\">As a member of Ramp's Fraud Strategy team, you will leverage data to develop and optimize fraud strategies, including underwriting (KYC/B, OFAC, fraud risk) and customer management (payment, transactions, account take-over) strategies. This role requires an understanding of fraud concepts &amp; data sources, fluency with data, and the ability to drive a broad set of projects fairly independently. The role also requires the ability to work with cross-functional teams (product, engineering, operations, finance, marketing, sales, and design) to influence and execute risk strategies.\u00a0</p><p style=\"min-height:1.5em\"></p><p style=\"min-height:1.5em\">You will be given significant ownership of your projects, with the freedom and autonomy to innovate and execute your ideas, empowering you to do your best work and make a meaningful impact. As you successfully drive impactful changes to our fraud prevention policies, you will be entrusted with larger projects and more strategic initiatives, expanding your influence within the company.</p><p style=\"min-height:1.5em\"></p><p style=\"min-height:1.5em\"><strong>What You\u2019ll Do</strong></p><ul style=\"min-height:1.5em\"><li><p style=\"min-height:1.5em\">Leverage external and internal performance data to come up with insights to develop best-in-class fraud policies (e.g. identity/first-party fraud, transaction fraud, account takeover fraud, KYC/B, etc.) that will create value for Ramp and its customers</p></li><li><p style=\"min-height:1.5em\">Deep dive into individual fraud events to perform root cause analyses, and combine the insights with a data-driven approach to develop fraud defenses</p></li><li><p style=\"min-height:1.5em\">Partner with product, engineering, and design teams to execute fraud policies and features</p></li><li><p style=\"min-height:1.5em\">Implement fraud risk metric monitoring by researching/resolving risk events, and developing levers that mitigate risk factors</p></li><li><p style=\"min-height:1.5em\">Partner with data scientists to build and leverage fraud risk models in Ramp\u2019s risk policy</p></li><li><p style=\"min-height:1.5em\">Drive Ramp\u2019s customer experience by diving deep into the flow of funds (repayments, chargebacks, etc.)\u00a0</p></li><li><p style=\"min-height:1.5em\">Research emerging underwriting and fraud trends to innovate on Ramp's decision systems and policies</p></li></ul><p style=\"min-height:1.5em\"></p><p style=\"min-height:1.5em\"><strong>What You Need</strong></p><ul style=\"min-height:1.5em\"><li><p style=\"min-height:1.5em\">Minimum 2 years of experience in fraud risk management or quantitative strategy role</p></li><li><p style=\"min-height:1.5em\">Minimum 2 years of experience using SQL, Python, or R for data retrieval and manipulation\u00a0</p></li><li><p style=\"min-height:1.5em\">Excellent written and verbal communication skills</p></li></ul><p style=\"min-height:1.5em\"></p><p style=\"min-height:1.5em\"><strong>Nice to Haves</strong></p><ul style=\"min-height:1.5em\"><li><p style=\"min-height:1.5em\">Experience in high-growth startups</p></li><li><p style=\"min-height:1.5em\">Experience within consumer/corporate/small business cards, payments, invoices, lending, or related industries</p><p style=\"min-height:1.5em\"></p></li></ul><p style=\"min-height:1.5em\"><strong>We are hiring analysts across multiple levels. If you are excited to work on complex, strategic problems in the fraud domain and help build world-class user experiences while protecting Ramp from bad actors, we encourage you to apply.</strong></p><p style=\"min-height:1.5em\"></p><p style=\"min-height:1.5em\"><strong>Compensation</strong></p><ul style=\"min-height:1.5em\"><li><p style=\"min-height:1.5em\"><em>For\u00a0candidates\u00a0located\u00a0in\u00a0NYC\u00a0or\u00a0SF,\u00a0the\u00a0target pay\u00a0range\u00a0for\u00a0this\u00a0role\u00a0is\u00a0$102,300 -\u00a0$220,000</em></p></li><li><p style=\"min-height:1.5em\"><em>For\u00a0candidates\u00a0located\u00a0in\u00a0all\u00a0other\u00a0locations,\u00a0the target\u00a0pay\u00a0range\u00a0for\u00a0this\u00a0role\u00a0is\u00a0$92,100\u00a0- $200,000.</em></p><ul style=\"min-height:1.5em\"><li><p style=\"min-height:1.5em\"><em>Analyst pay range: $92,100 - $128,000</em></p></li><li><p style=\"min-height:1.5em\"><em>Associate pay range: $108,00 - $150,400</em></p></li><li><p style=\"min-height:1.5em\"><em>Senior Associate pay range: $137,000 - $190,000</em></p></li><li><p style=\"min-height:1.5em\"><em>Lead pay range: $160,000 - $220,000 </em></p></li></ul></li></ul><h2><strong>Benefits (for U.S.-based full-time employees)</strong></h2><ul style=\"min-height:1.5em\"><li><p style=\"min-height:1.5em\">100% medical, dental &amp; vision insurance coverage for you</p><ul style=\"min-height:1.5em\"><li><p style=\"min-height:1.5em\">Partially covered for your dependents</p></li><li><p style=\"min-height:1.5em\">One Medical annual membership</p></li></ul></li><li><p style=\"min-height:1.5em\">401k (including employer match on contributions made while employed by Ramp)</p></li><li><p style=\"min-height:1.5em\">Flexible PTO</p></li><li><p style=\"min-height:1.5em\">Fertility HRA (up to $10,000 per year)</p></li><li><p style=\"min-height:1.5em\">Parental Leave</p></li><li><p style=\"min-height:1.5em\">Unlimited AI token usage</p></li><li><p style=\"min-height:1.5em\">Pet insurance</p></li><li><p style=\"min-height:1.5em\">Centralized home-office equipment ordering for all employees</p></li><li><p style=\"min-height:1.5em\">Health and Wellness stipend</p></li><li><p style=\"min-height:1.5em\">In-office perks: lunch, snacks, drinks, and more</p></li><li><p style=\"min-height:1.5em\">Budget for intra-office travel</p></li><li><p style=\"min-height:1.5em\">Relocation support to NYC or SF (as needed)</p></li></ul><p style=\"min-height:1.5em\"></p><h2><strong>Referral Instructions</strong></h2><p style=\"min-height:1.5em\">If you are being referred for the role, please contact that person to apply on your behalf.</p><p style=\"min-height:1.5em\"></p><h2><strong>Other notices</strong></h2><p style=\"min-height:1.5em\">Pursuant to the San Francisco Fair Chance Ordinance, we will consider for employment qualified applicants with arrest and conviction records.</p><p style=\"min-height:1.5em\"></p><p style=\"min-height:1.5em\"><em>Beware of recruiting scams: Ramp will only contact you through official @</em><a target=\"_blank\" rel=\"noopener noreferrer nofollow\" href=\"http://Ramp.com\"><em>Ramp.com</em></a><em> email addresses and will never ask for payment or sensitive personal information during the hiring process.</em></p><p style=\"min-height:1.5em\"></p><p style=\"min-height:1.5em\"><a target=\"_blank\" rel=\"noopener noreferrer nofollow\" href=\"https://ramp.com/legal/applicant-privacy-notice\">Ramp Applicant Privacy Notice</a></p>",
+      "descriptionPlain": "ABOUT RAMP\n\nRamp is building the smart infrastructure for finance teams, embedded in the transaction flow of every dollar a business spends. We automate how over $100B in annualized spend flows in and out of 50,000+ companies: authorizing payments, flagging risk, categorizing spend, and closing books.\n\nThe problems are high-stakes, data-dense, and unforgiving.\n\nWe hire people with high agency and high urgency. We look for slope over intercept. We care less about where you trained and more about what you\u2019ve built. At Ramp, everyone is a builder who owns problems end to end and makes consequential decisions that shape the outcome.\n\nThe median Ramp customer saves 5% and grows revenue 16% in their first year \u2013 far in excess of businesses operating without Ramp. We believe every ambitious company deserves the same.\n\nIf you want to build systems that directly shape how companies move and manage billions, Ramp is the place to do it.\n\nAbout the Role\n\nAs a member of Ramp's Fraud Strategy team, you will leverage data to develop and optimize fraud strategies, including underwriting (KYC/B, OFAC, fraud risk) and customer management (payment, transactions, account take-over) strategies. This role requires an understanding of fraud concepts & data sources, fluency with data, and the ability to drive a broad set of projects fairly independently. The role also requires the ability to work with cross-functional teams (product, engineering, operations, finance, marketing, sales, and design) to influence and execute risk strategies.\u00a0\n\nYou will be given significant ownership of your projects, with the freedom and autonomy to innovate and execute your ideas, empowering you to do your best work and make a meaningful impact. As you successfully drive impactful changes to our fraud prevention policies, you will be entrusted with larger projects and more strategic initiatives, expanding your influence within the company.\n\nWhat You\u2019ll Do\n\n - Leverage external and internal performance data to come up with insights to develop best-in-class fraud policies (e.g. identity/first-party fraud, transaction fraud, account takeover fraud, KYC/B, etc.) that will create value for Ramp and its customers\n\n - Deep dive into individual fraud events to perform root cause analyses, and combine the insights with a data-driven approach to develop fraud defenses\n\n - Partner with product, engineering, and design teams to execute fraud policies and features\n\n - Implement fraud risk metric monitoring by researching/resolving risk events, and developing levers that mitigate risk factors\n\n - Partner with data scientists to build and leverage fraud risk models in Ramp\u2019s risk policy\n\n - Drive Ramp\u2019s customer experience by diving deep into the flow of funds (repayments, chargebacks, etc.)\u00a0\n\n - Research emerging underwriting and fraud trends to innovate on Ramp's decision systems and policies\n\nWhat You Need\n\n - Minimum 2 years of experience in fraud risk management or quantitative strategy role\n\n - Minimum 2 years of experience using SQL, Python, or R for data retrieval and manipulation\u00a0\n\n - Excellent written and verbal communication skills\n\nNice to Haves\n\n - Experience in high-growth startups\n\n - Experience within consumer/corporate/small business cards, payments, invoices, lending, or related industries\n\nWe are hiring analysts across multiple levels. If you are excited to work on complex, strategic problems in the fraud domain and help build world-class user experiences while protecting Ramp from bad actors, we encourage you to apply.\n\nCompensation\n\n - For\u00a0candidates\u00a0located\u00a0in\u00a0NYC\u00a0or\u00a0SF,\u00a0the\u00a0target pay\u00a0range\u00a0for\u00a0this\u00a0role\u00a0is\u00a0$102,300 -\u00a0$220,000\n\n - For\u00a0candidates\u00a0located\u00a0in\u00a0all\u00a0other\u00a0locations,\u00a0the target\u00a0pay\u00a0range\u00a0for\u00a0this\u00a0role\u00a0is\u00a0$92,100\u00a0- $200,000.\n   \n   - Analyst pay range: $92,100 - $128,000\n   \n   - Associate pay range: $108,00 - $150,400\n   \n   - Senior Associate pay range: $137,000 - $190,000\n   \n   - Lead pay range: $160,000 - $220,000\n\n\nBENEFITS (FOR U.S.-BASED FULL-TIME EMPLOYEES)\n\n - 100% medical, dental & vision insurance coverage for you\n   \n   - Partially covered for your dependents\n   \n   - One Medical annual membership\n\n - 401k (including employer match on contributions made while employed by Ramp)\n\n - Flexible PTO\n\n - Fertility HRA (up to $10,000 per year)\n\n - Parental Leave\n\n - Unlimited AI token usage\n\n - Pet insurance\n\n - Centralized home-office equipment ordering for all employees\n\n - Health and Wellness stipend\n\n - In-office perks: lunch, snacks, drinks, and more\n\n - Budget for intra-office travel\n\n - Relocation support to NYC or SF (as needed)\n\n\nREFERRAL INSTRUCTIONS\n\nIf you are being referred for the role, please contact that person to apply on your behalf.\n\n\nOTHER NOTICES\n\nPursuant to the San Francisco Fair Chance Ordinance, we will consider for employment qualified applicants with arrest and conviction records.\n\nBeware of recruiting scams: Ramp will only contact you through official @Ramp.com http://Ramp.com email addresses and will never ask for payment or sensitive personal information during the hiring process.\n\nRamp Applicant Privacy Notice https://ramp.com/legal/applicant-privacy-notice",
+      "compensation": {
+        "compensationTierSummary": "$92.1K \u2013 $220K \u2022 Offers Equity",
+        "scrapeableCompensationSalarySummary": "$92.1K - $220K",
+        "compensationTiers": [
+          {
+            "id": "070003ba-7e94-440d-8532-c093c7003b50",
+            "tierSummary": "$92.1K \u2013 $220K \u2022 Offers Equity",
+            "title": null,
+            "additionalInformation": null,
+            "components": [
+              {
+                "id": "ef606f30-e328-4087-bebc-4dff9a4185a3",
+                "summary": "Offers Equity",
+                "compensationType": "EquityPercentage",
+                "interval": "NONE",
+                "currencyCode": null,
+                "minValue": null,
+                "maxValue": null
+              },
+              {
+                "id": "7750f021-df19-4012-ac65-dac8c46941af",
+                "summary": "$92.1K \u2013 $220K",
+                "compensationType": "Salary",
+                "interval": "1 YEAR",
+                "currencyCode": "USD",
+                "minValue": 92100,
+                "maxValue": 220000
+              }
+            ]
+          }
+        ],
+        "summaryComponents": [
+          {
+            "compensationType": "EquityPercentage",
+            "interval": "NONE",
+            "currencyCode": null,
+            "minValue": null,
+            "maxValue": null
+          },
+          {
+            "compensationType": "Salary",
+            "interval": "1 YEAR",
+            "currencyCode": "USD",
+            "minValue": 92100,
+            "maxValue": 220000
+          }
+        ]
+      }
+    },
+    {
+      "id": "f564dcf9-9390-4a3f-896f-8047a5086040",
+      "title": "Mobile Engineer, Android",
+      "department": "Engineering",
+      "team": "Mobile",
+      "employmentType": "FullTime",
+      "location": "New York, NY (HQ)",
+      "shouldDisplayCompensationOnJobPostings": true,
+      "secondaryLocations": [
+        {
+          "location": "San Francisco, CA",
+          "address": {
+            "postalAddress": {
+              "addressRegion": "California ",
+              "addressCountry": "USA",
+              "addressLocality": "San Fransisco"
+            }
+          }
+        },
+        {
+          "location": "Remote (US)",
+          "address": {
+            "postalAddress": {
+              "addressCountry": "United States"
+            }
+          }
+        },
+        {
+          "location": "Remote (Canada)",
+          "address": {
+            "postalAddress": {
+              "addressCountry": "Canada"
+            }
+          }
+        }
+      ],
+      "publishedAt": "2025-07-31T21:58:34.674+00:00",
+      "isListed": true,
+      "isRemote": true,
+      "workplaceType": "Hybrid",
+      "address": {
+        "postalAddress": {
+          "addressRegion": "NY",
+          "addressCountry": "USA",
+          "addressLocality": "New York City"
+        }
+      },
+      "jobUrl": "https://jobs.ashbyhq.com/ramp/f564dcf9-9390-4a3f-896f-8047a5086040",
+      "applyUrl": "https://jobs.ashbyhq.com/ramp/f564dcf9-9390-4a3f-896f-8047a5086040/application",
+      "descriptionHtml": "<h1><strong>About Ramp</strong></h1><p style=\"min-height:1.5em\">Ramp is building the smart infrastructure for finance teams, embedded in the transaction flow of every dollar a business spends. We automate how over $100B in annualized spend flows in and out of 50,000+ companies: authorizing payments, flagging risk, categorizing spend, and closing books.</p><p style=\"min-height:1.5em\">The problems are high-stakes, data-dense, and unforgiving.</p><p style=\"min-height:1.5em\">We hire people with high agency and high urgency. We look for slope over intercept. We care less about where you trained and more about what you\u2019ve built. At Ramp, everyone is a builder who owns problems end to end and makes consequential decisions that shape the outcome.</p><p style=\"min-height:1.5em\">The median Ramp customer saves 5% and grows revenue 16% in their first year \u2013 far in excess of businesses operating without Ramp. We believe every ambitious company deserves the same.</p><p style=\"min-height:1.5em\">If you want to build systems that directly shape how companies move and manage billions, Ramp is the place to do it.</p><p style=\"min-height:1.5em\"></p><h1>About the Role</h1><p style=\"min-height:1.5em\">As an Android Engineer at Ramp, you\u2019ll enhance our successful and rapidly growing mobile app. You will improve the core platform that thousands of businesses rely on while also building the future of automated finance by integrating AI and intelligent agents into the mobile experience. This is a chance to grow your skills on a proven product and define the next generation of fintech.</p><p style=\"min-height:1.5em\">Check out our <a target=\"_blank\" rel=\"noopener noreferrer nofollow\" href=\"https://engineering.ramp.com/\">Engineering Blog</a> for more on our tech stack, mission and values!</p><h2><br /><br />What You\u2019ll Do</h2><ul style=\"min-height:1.5em\"><li><p style=\"min-height:1.5em\">Design, build, and launch new products to Ramp\u2019s Android app</p></li><li><p style=\"min-height:1.5em\">Help establish engineering processes, tools, and systems that allow us to scale the code base and productivity</p></li><li><p style=\"min-height:1.5em\">Conduct code reviews and set engineering standards</p></li><li><p style=\"min-height:1.5em\">Work with Product and Design to identify key features that will make the app successful</p></li><li><p style=\"min-height:1.5em\">Work alongside Product and other cross-functional teams to understand customer feedback and continuously improve our product</p><p style=\"min-height:1.5em\"></p></li></ul><h2>What You Need</h2><ul style=\"min-height:1.5em\"><li><p style=\"min-height:1.5em\">Minimum 1 year of experience in mobile development</p></li><li><p style=\"min-height:1.5em\">Proficiency in Kotlin for Android development</p></li><li><p style=\"min-height:1.5em\">Experience launching at least one mobile app and/or several features that reached a large number of users</p></li><li><p style=\"min-height:1.5em\">Desire to work in a fast-paced environment, continuously grow, and master your craft</p></li><li><p style=\"min-height:1.5em\">Strong understanding of mobile design patterns and best practices</p></li></ul><p style=\"min-height:1.5em\"></p><h2>Nice to Haves</h2><ul style=\"min-height:1.5em\"><li><p style=\"min-height:1.5em\">Experience with web apps (React, TypeScript)</p></li><li><p style=\"min-height:1.5em\">Experience with backend technologies (Python, Flask, SQL, OpenAPI)</p></li><li><p style=\"min-height:1.5em\">Experience with our mobile stack: Compose, MVVM, coroutines, flows, gradle, OpenAPI &amp; Buildkite</p></li><li><p style=\"min-height:1.5em\">Experience managing apps in the Google Play Console</p></li></ul><h2><strong>Benefits (for U.S.-based full-time employees)</strong></h2><ul style=\"min-height:1.5em\"><li><p style=\"min-height:1.5em\">100% medical, dental &amp; vision insurance coverage for you</p><ul style=\"min-height:1.5em\"><li><p style=\"min-height:1.5em\">Partially covered for your dependents</p></li><li><p style=\"min-height:1.5em\">One Medical annual membership</p></li></ul></li><li><p style=\"min-height:1.5em\">401k (including employer match on contributions made while employed by Ramp)</p></li><li><p style=\"min-height:1.5em\">Flexible PTO</p></li><li><p style=\"min-height:1.5em\">Fertility HRA (up to $10,000 per year)</p></li><li><p style=\"min-height:1.5em\">Parental Leave</p></li><li><p style=\"min-height:1.5em\">Unlimited AI token usage</p></li><li><p style=\"min-height:1.5em\">Pet insurance</p></li><li><p style=\"min-height:1.5em\">Centralized home-office equipment ordering for all employees</p></li><li><p style=\"min-height:1.5em\">Health and Wellness stipend</p></li><li><p style=\"min-height:1.5em\">In-office perks: lunch, snacks, drinks, and more</p></li><li><p style=\"min-height:1.5em\">Budget for intra-office travel</p></li><li><p style=\"min-height:1.5em\">Relocation support to NYC or SF (as needed)</p></li></ul><p style=\"min-height:1.5em\"></p><h2><strong>Referral Instructions</strong></h2><p style=\"min-height:1.5em\">If you are being referred for the role, please contact that person to apply on your behalf.</p><p style=\"min-height:1.5em\"></p><h2><strong>Other notices</strong></h2><p style=\"min-height:1.5em\">Pursuant to the San Francisco Fair Chance Ordinance, we will consider for employment qualified applicants with arrest and conviction records.</p><p style=\"min-height:1.5em\"></p><p style=\"min-height:1.5em\"><em>Beware of recruiting scams: Ramp will only contact you through official @</em><a target=\"_blank\" rel=\"noopener noreferrer nofollow\" href=\"http://Ramp.com\"><em>Ramp.com</em></a><em> email addresses and will never ask for payment or sensitive personal information during the hiring process.</em></p><p style=\"min-height:1.5em\"></p><p style=\"min-height:1.5em\"><a target=\"_blank\" rel=\"noopener noreferrer nofollow\" href=\"https://ramp.com/legal/applicant-privacy-notice\">Ramp Applicant Privacy Notice</a></p>",
+      "descriptionPlain": "ABOUT RAMP\n\nRamp is building the smart infrastructure for finance teams, embedded in the transaction flow of every dollar a business spends. We automate how over $100B in annualized spend flows in and out of 50,000+ companies: authorizing payments, flagging risk, categorizing spend, and closing books.\n\nThe problems are high-stakes, data-dense, and unforgiving.\n\nWe hire people with high agency and high urgency. We look for slope over intercept. We care less about where you trained and more about what you\u2019ve built. At Ramp, everyone is a builder who owns problems end to end and makes consequential decisions that shape the outcome.\n\nThe median Ramp customer saves 5% and grows revenue 16% in their first year \u2013 far in excess of businesses operating without Ramp. We believe every ambitious company deserves the same.\n\nIf you want to build systems that directly shape how companies move and manage billions, Ramp is the place to do it.\n\n\nABOUT THE ROLE\n\nAs an Android Engineer at Ramp, you\u2019ll enhance our successful and rapidly growing mobile app. You will improve the core platform that thousands of businesses rely on while also building the future of automated finance by integrating AI and intelligent agents into the mobile experience. This is a chance to grow your skills on a proven product and define the next generation of fintech.\n\nCheck out our Engineering Blog https://engineering.ramp.com/ for more on our tech stack, mission and values!\n\n\n\n\nWHAT YOU\u2019LL DO\n\n - Design, build, and launch new products to Ramp\u2019s Android app\n\n - Help establish engineering processes, tools, and systems that allow us to scale the code base and productivity\n\n - Conduct code reviews and set engineering standards\n\n - Work with Product and Design to identify key features that will make the app successful\n\n - Work alongside Product and other cross-functional teams to understand customer feedback and continuously improve our product\n\n\nWHAT YOU NEED\n\n - Minimum 1 year of experience in mobile development\n\n - Proficiency in Kotlin for Android development\n\n - Experience launching at least one mobile app and/or several features that reached a large number of users\n\n - Desire to work in a fast-paced environment, continuously grow, and master your craft\n\n - Strong understanding of mobile design patterns and best practices\n\n\nNICE TO HAVES\n\n - Experience with web apps (React, TypeScript)\n\n - Experience with backend technologies (Python, Flask, SQL, OpenAPI)\n\n - Experience with our mobile stack: Compose, MVVM, coroutines, flows, gradle, OpenAPI & Buildkite\n\n - Experience managing apps in the Google Play Console\n\n\nBENEFITS (FOR U.S.-BASED FULL-TIME EMPLOYEES)\n\n - 100% medical, dental & vision insurance coverage for you\n   \n   - Partially covered for your dependents\n   \n   - One Medical annual membership\n\n - 401k (including employer match on contributions made while employed by Ramp)\n\n - Flexible PTO\n\n - Fertility HRA (up to $10,000 per year)\n\n - Parental Leave\n\n - Unlimited AI token usage\n\n - Pet insurance\n\n - Centralized home-office equipment ordering for all employees\n\n - Health and Wellness stipend\n\n - In-office perks: lunch, snacks, drinks, and more\n\n - Budget for intra-office travel\n\n - Relocation support to NYC or SF (as needed)\n\n\nREFERRAL INSTRUCTIONS\n\nIf you are being referred for the role, please contact that person to apply on your behalf.\n\n\nOTHER NOTICES\n\nPursuant to the San Francisco Fair Chance Ordinance, we will consider for employment qualified applicants with arrest and conviction records.\n\nBeware of recruiting scams: Ramp will only contact you through official @Ramp.com http://Ramp.com email addresses and will never ask for payment or sensitive personal information during the hiring process.\n\nRamp Applicant Privacy Notice https://ramp.com/legal/applicant-privacy-notice",
+      "compensation": {
+        "compensationTierSummary": "$143.2K \u2013 $324.5K \u2022 Offers Equity",
+        "scrapeableCompensationSalarySummary": "$143.2K - $324.5K",
+        "compensationTiers": [
+          {
+            "id": "0283497e-f83b-42ef-9a0a-6215891aa062",
+            "tierSummary": "$143.2K \u2013 $324.5K \u2022 Offers Equity",
+            "title": null,
+            "additionalInformation": null,
+            "components": [
+              {
+                "id": "8d3064c5-4a45-4c4a-b26c-157ec697171c",
+                "summary": "Offers Equity",
+                "compensationType": "EquityPercentage",
+                "interval": "NONE",
+                "currencyCode": null,
+                "minValue": null,
+                "maxValue": null
+              },
+              {
+                "id": "104095ff-c915-4e77-b3fa-5472d81297ef",
+                "summary": "$143.2K \u2013 $324.5K",
+                "compensationType": "Salary",
+                "interval": "1 YEAR",
+                "currencyCode": "USD",
+                "minValue": 143200,
+                "maxValue": 324500
+              }
+            ]
+          }
+        ],
+        "summaryComponents": [
+          {
+            "compensationType": "EquityPercentage",
+            "interval": "NONE",
+            "currencyCode": null,
+            "minValue": null,
+            "maxValue": null
+          },
+          {
+            "compensationType": "Salary",
+            "interval": "1 YEAR",
+            "currencyCode": "USD",
+            "minValue": 143200,
+            "maxValue": 324500
+          }
+        ]
+      }
+    }
+  ],
+  "apiVersion": "1"
+}

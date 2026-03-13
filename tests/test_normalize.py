@@ -227,19 +227,19 @@ class TestNormalizeGreenhouse:
 class TestNormalizeAshby:
     @pytest.fixture
     def data(self):
-        return json.loads((FIXTURES / "ashby_ramp.json").read_text())
+        return json.loads((FIXTURES / "ashby_ramp_rest.json").read_text())
 
     def test_fields(self, data):
-        posting = data["data"]["jobBoard"]["jobPostings"][0]
-        teams_list = data["data"]["jobBoard"]["teams"]
-        teams = {t["id"]: t["name"] for t in teams_list}
-        result = normalize_ashby(posting, "ramp", teams)
+        from openapply.scrapers.ashby import normalize_ashby_rest
+        posting = data["jobs"][0]
+        result = normalize_ashby_rest(posting, "ramp")
         assert result["ats"] == "ashby"
         assert result["job_id"].startswith("ashby:")
-        assert result["title"] == posting["title"]
+        assert result["title"] == posting["title"].strip()
         assert result["department"]
         assert result["employment_type"] == "full-time"
         assert result["apply_url"].startswith("https://jobs.ashbyhq.com/ramp/")
+        assert result["description_text"]
         assert result["min_salary"] is not None
 
 

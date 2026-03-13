@@ -27,7 +27,7 @@ def greenhouse_response():
 
 @pytest.fixture
 def ashby_response():
-    return json.loads((FIXTURES / "ashby_ramp.json").read_text())
+    return json.loads((FIXTURES / "ashby_ramp_rest.json").read_text())
 
 
 @pytest.fixture
@@ -136,27 +136,33 @@ class TestAshbyScraper:
     @pytest.mark.asyncio
     async def test_probe_company(self, ashby_response):
         scraper = AshbyScraper()
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = ashby_response
+        mock_resp.raise_for_status = MagicMock()
 
-        with patch("openapply.scrapers.ashby._post_graphql", return_value=ashby_response):
-            result = await scraper.probe_company("ramp")
+        scraper._client.get = AsyncMock(return_value=mock_resp)
 
+        result = await scraper.probe_company("ramp")
         assert result is not None
-        postings = ashby_response["data"]["jobBoard"]["jobPostings"]
-        assert len(result) == len(postings)
+        assert len(result) == len(ashby_response["jobs"])
         assert all(j["ats"] == "ashby" for j in result)
         assert all(j["apply_url"].startswith("https://jobs.ashbyhq.com/ramp/") for j in result)
-        # Descriptions are None from list query (fetched separately)
-        assert all(j["description_text"] is None for j in result)
+        assert all(j["description_text"] for j in result)
+        assert all(j["min_salary"] is not None for j in result if j.get("min_salary"))
+        await scraper.close()
 
     @pytest.mark.asyncio
     async def test_probe_dead_company(self):
         scraper = AshbyScraper()
-        dead_response = {"data": {"jobBoard": None}}
+        mock_resp = MagicMock()
+        mock_resp.status_code = 404
 
-        with patch("openapply.scrapers.ashby._post_graphql", return_value=dead_response):
-            result = await scraper.probe_company("nonexistent")
+        scraper._client.get = AsyncMock(return_value=mock_resp)
 
+        result = await scraper.probe_company("nonexistent")
         assert result is None
+        await scraper.close()
 
 
 class TestSmartRecruitersScraper:
