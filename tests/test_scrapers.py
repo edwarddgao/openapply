@@ -6,7 +6,6 @@ from unittest.mock import AsyncMock, patch, MagicMock
 
 import pytest
 
-from openapply.scrapers.base import ATSScraper
 from openapply.scrapers.lever import LeverScraper
 from openapply.scrapers.greenhouse import GreenhouseScraper
 from openapply.scrapers.ashby import AshbyScraper
@@ -60,15 +59,6 @@ class TestProbeWithRetry:
         result = await scraper.probe_with_retry("flaky-co", max_retries=3)
         assert result == [{"job": 1}]
         assert scraper.probe_company.call_count == 2
-        await scraper.close()
-
-    @pytest.mark.asyncio
-    async def test_desc_retry_returns_none_on_failure(self):
-        """Description fetch failures should return None (not raise)."""
-        scraper = LeverScraper()
-        scraper.fetch_description = AsyncMock(side_effect=RuntimeError("500"))
-        result = await scraper.fetch_description_with_retry("co", "job1", max_retries=2)
-        assert result is None
         await scraper.close()
 
 

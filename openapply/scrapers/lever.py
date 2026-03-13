@@ -38,6 +38,3 @@ class LeverScraper(ATSScraper):
 
         return [normalize_lever(posting, slug) for posting in data]
 
-    async def fetch_description(self, slug: str, job_id: str) -> str | None:
-        # Lever includes descriptions in the list response — no separate fetch needed
-        return None

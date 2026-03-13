@@ -1848,6 +1848,7 @@ personainc.ai
 personio
 phantom
 phare
+phasebiolabs
 phia
 phil
 phlair
@@ -1886,6 +1887,7 @@ playht
 playpowerlabs
 playson
 please
+pledge.earth
 plinth
 plots
 plume-network
@@ -1919,6 +1921,7 @@ posh-ai
 poshmark
 post
 posthog
+potion
 powerlattice
 powerline
 powerus
@@ -1941,6 +1944,7 @@ primer.io
 prior-labs
 prive
 privy
+privy-operations
 probably-good
 probablygenetic
 probook
@@ -1955,6 +1959,7 @@ promise
 promise-studios
 prompt
 proofofplay
+proofs
 propagate
 propelus
 prophet-security
@@ -1977,6 +1982,7 @@ pylon-labs
 qa.tech
 qawolf
 qed-ai
+qeystroke
 qih-group
 quadrivia
 qualified
@@ -2031,6 +2037,7 @@ recraft
 red-gate
 red-oak
 red6
+reddit
 redpine
 reducto
 reedsy
@@ -2072,6 +2079,7 @@ resend
 reservoir
 resolvepay
 resorcer.com
+resourcely
 response
 resq
 restream
@@ -2113,6 +2121,7 @@ rocketplace
 rocketsciencegg
 rogo
 rohlik
+rollup
 roo-code
 roompricegenie
 rooser
@@ -2197,6 +2206,7 @@ second-front-systems
 second-nature
 seconddinner
 secondnaturecomputing
+sedna
 seekeasy
 sei-labs
 seifoundation
@@ -2221,6 +2231,7 @@ sereact
 seriesai
 serval
 serverobotics
+servicebell
 sesame
 sevenai
 sewer-ai
@@ -2264,6 +2275,7 @@ sitemate
 siteminder
 skelar
 sketch
+skillz
 skimmer
 skydio
 skydropx
@@ -2298,6 +2310,7 @@ sola
 solace
 solcoa
 solforge
+solid
 solidroad
 solink
 solva
@@ -2374,6 +2387,7 @@ stay22
 stayai
 staycation
 steadily
+stealthventurecapitalfirm
 stedi
 stellar
 stellarentertainment
@@ -2471,6 +2485,7 @@ taktile
 talentdisruptors
 talentful
 talentsafari
+tales
 talntteam
 talos-network
 talos-trading
@@ -2491,6 +2506,7 @@ taxfix.com
 tdv
 teachfx
 teal-health
+tealhq
 teamalembic
 teamdynamix
 teameigen
@@ -2531,6 +2547,7 @@ texture
 teya
 teza-technologies
 thaleron
+thanksben
 that1detailer
 thatgamecompany
 the-exploration-company
@@ -2609,6 +2626,7 @@ transgrid-energy
 traversal
 tread
 treasure
+treasuryprime
 treble.ai
 treeswift
 tremendous
@@ -2627,6 +2645,7 @@ truss
 trust-wallet
 trustlab
 truthsystems
+truva
 tryalma
 tryprospect
 tryroam
@@ -2748,6 +2767,7 @@ volition-capital
 volka
 volley-automation
 volley-inc
+volopay
 voltagepark.com
 voltai.careers
 voltrac
@@ -2784,6 +2804,7 @@ wealth-com
 weave
 weaviate
 webai
+weflow
 welltech
 wellth
 wemolo
@@ -2856,6 +2877,7 @@ xyz-reality
 yazio
 ycombinator
 yeet
+yellow3d
 yendo
 yepoda
 yobi
@@ -2880,6 +2902,7 @@ zefir
 zefr
 zello
 zencastr
+zendar
 zeromark
 zettabyte-space
 zip

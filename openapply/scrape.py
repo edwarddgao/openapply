@@ -19,7 +19,7 @@ from .db import (
     mark_dead_company, purge_stale_jobs, batch_job_exists, set_meta, DB_PATH,
 )
 from .discover import load_slugs, SLUGS_DIR
-from .normalize import strip_html, content_hash
+from .normalize import content_hash
 from .scrapers.lever import LeverScraper
 from .scrapers.greenhouse import GreenhouseScraper
 from .scrapers.ashby import AshbyScraper
@@ -32,7 +32,7 @@ COMMIT_INTERVAL = 50
 
 async def scrape_ats(scraper, slugs: list[str], db_path: Path) -> dict:
     """Scrape all slugs for one ATS. Returns stats dict."""
-    stats = {"companies": 0, "dead": 0, "errors": 0, "jobs_new": 0, "jobs_updated": 0, "descriptions_fetched": 0}
+    stats = {"companies": 0, "dead": 0, "errors": 0, "jobs_new": 0, "jobs_updated": 0}
     ats = scraper.ats_name
     conn = get_connection(db_path)
     now = int(time.time())
@@ -83,7 +83,6 @@ async def scrape_ats(scraper, slugs: list[str], db_path: Path) -> dict:
             existing_map = batch_job_exists(conn, [j["job_id"] for j in jobs])
 
         # Classify jobs as new/update/touch (no DB access needed)
-        jobs_needing_desc = []
         for job in jobs:
             if not job.get("company_name"):
                 job["company_name"] = company_name
@@ -91,26 +90,12 @@ async def scrape_ats(scraper, slugs: list[str], db_path: Path) -> dict:
 
             if existing is None:
                 job["_action"] = "new"
-                if scraper.needs_detail_fetch and not job.get("description_text"):
-                    jobs_needing_desc.append(job)
             else:
                 lw_hash = content_hash(job["title"], slug, job["location_raw"] or "")
                 if lw_hash != (existing.get("content_hash") or "")[:16]:
                     job["_action"] = "update"
-                    if scraper.needs_detail_fetch:
-                        jobs_needing_desc.append(job)
                 else:
                     job["_action"] = "touch"
-
-        # Fetch descriptions for new/changed jobs concurrently
-        if jobs_needing_desc:
-            async def fetch_desc(job):
-                desc_html = await scraper.fetch_description_with_retry(slug, job["ats_job_id"])
-                if desc_html:
-                    job["description_text"] = strip_html(desc_html)
-                    stats["descriptions_fetched"] += 1
-
-            await asyncio.gather(*[fetch_desc(j) for j in jobs_needing_desc])
 
         # Write all DB changes under lock
         async with db_lock:

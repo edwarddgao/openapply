@@ -190,26 +190,6 @@ def normalize_employment_type(raw: str | None) -> str:
     return EMPLOYMENT_TYPE_MAP.get(raw, EMPLOYMENT_TYPE_MAP.get(raw.lower(), "full-time"))
 
 
-# --- Ashby salary parsing ---
-
-def parse_ashby_compensation(summary: str | None) -> tuple[float | None, float | None]:
-    """Parse '$138.8K – $212.1K ...' into (min, max) annual salary."""
-    if not summary:
-        return None, None
-    matches = re.findall(r"\$([0-9,.]+)([KkMm]?)", summary)
-    if len(matches) < 2:
-        return None, None
-    values = []
-    for amount_str, suffix in matches[:2]:
-        amount = float(amount_str.replace(",", ""))
-        if suffix.upper() == "K":
-            amount *= 1000
-        elif suffix.upper() == "M":
-            amount *= 1_000_000
-        values.append(amount)
-    return values[0], values[1]
-
-
 # --- Content hash ---
 
 def content_hash(title: str, company: str, location: str, description: str | None = None) -> str:
@@ -310,47 +290,6 @@ def normalize_greenhouse(raw: dict, slug: str) -> dict:
         "min_salary": None,  # Greenhouse doesn't expose salary in public API
         "max_salary": None,
         "apply_url": raw.get("absolute_url", f"https://job-boards.greenhouse.io/{slug}/jobs/{raw['id']}"),
-        "now": int(time.time()),
-        "content_hash": content_hash(title, slug, loc_raw, description),
-    }
-
-
-def normalize_ashby(raw: dict, slug: str, teams: dict[str, str], description_html: str | None = None) -> dict:
-    """Normalize an Ashby job posting into a unified job dict.
-
-    teams: mapping of team_id → team_name (from the list query).
-    description_html: from detail query (optional, may be None for existing jobs).
-    """
-    loc_raw = raw.get("locationName", "")
-    loc = parse_location(loc_raw)
-
-    if raw.get("workplaceType") == "Remote":
-        loc["is_remote"] = 1
-
-    min_sal, max_sal = parse_ashby_compensation(raw.get("compensationTierSummary"))
-    description = strip_html(description_html)
-    title = raw.get("title", "")
-    department = teams.get(raw.get("teamId"))
-
-    return {
-        "job_id": f"ashby:{raw['id']}",
-        "ats": "ashby",
-        "company_id": f"ashby:{slug}",
-        "ats_job_id": raw["id"],
-        "title": title,
-        "company_name": None,
-        "description_text": description,
-        "location_raw": loc_raw,
-        "city": loc["city"],
-        "state": loc["state"],
-        "country": loc["country"],
-        "is_remote": loc["is_remote"],
-        "department": department,
-        "employment_type": normalize_employment_type(raw.get("employmentType")),
-        "experience_level": parse_experience_level(title),
-        "min_salary": min_sal,
-        "max_salary": max_sal,
-        "apply_url": f"https://jobs.ashbyhq.com/{slug}/{raw['id']}/application",
         "now": int(time.time()),
         "content_hash": content_hash(title, slug, loc_raw, description),
     }

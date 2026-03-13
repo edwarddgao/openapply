@@ -6,10 +6,15 @@ Returns JSON with jobs array. Descriptions and compensation included in list res
 
 from __future__ import annotations
 
+import time
+
 import httpx
 
 from .base import ATSScraper, log
-from ..normalize import normalize_ashby
+from ..normalize import (
+    parse_location, normalize_employment_type,
+    parse_experience_level, content_hash, strip_html,
+)
 
 
 class AshbyScraper(ATSScraper):
@@ -39,31 +44,16 @@ class AshbyScraper(ATSScraper):
         if not jobs:
             return None
 
-        # Build teams dict from job fields (REST API includes team/department per job)
-        teams = {}
-        for j in jobs:
-            # REST API gives team name directly, no teamId lookup needed
-            pass
-
         return [
             normalize_ashby_rest(j, slug)
             for j in jobs
             if j.get("isListed", True)
         ]
 
-    async def fetch_description(self, slug: str, job_id: str) -> str | None:
-        # Descriptions included in list response — no separate fetch needed
-        return None
 
 
 def normalize_ashby_rest(raw: dict, slug: str) -> dict:
     """Normalize an Ashby REST API job posting into a unified job dict."""
-    from ..normalize import (
-        parse_location, normalize_employment_type,
-        parse_experience_level, content_hash, strip_html,
-    )
-    import time
-
     loc_raw = raw.get("location", "")
     loc = parse_location(loc_raw)
 

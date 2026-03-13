@@ -9,12 +9,10 @@ from openapply.normalize import (
     parse_location,
     parse_experience_level,
     normalize_employment_type,
-    parse_ashby_compensation,
     strip_html,
     content_hash,
     normalize_lever,
     normalize_greenhouse,
-    normalize_ashby,
 )
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -118,23 +116,6 @@ class TestNormalizeEmploymentType:
     def test_none_defaults(self):
         assert normalize_employment_type(None) == "full-time"
 
-
-# --- Ashby salary ---
-
-class TestParseAshbyCompensation:
-    def test_standard(self):
-        mn, mx = parse_ashby_compensation("$138.8K – $212.1K • Offers Equity")
-        assert mn == 138800.0
-        assert mx == 212100.0
-
-    def test_none(self):
-        assert parse_ashby_compensation(None) == (None, None)
-
-    def test_no_match(self):
-        assert parse_ashby_compensation("Offers Equity") == (None, None)
-
-
-# --- SmartRecruiters experience ---
 
 # --- HTML stripping ---
 

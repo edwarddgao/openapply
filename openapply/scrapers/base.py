@@ -18,9 +18,6 @@ class ATSScraper(ABC):
 
     ats_name: str
     max_concurrent: int = 10
-    needs_detail_fetch: bool = False
-    probe_delay: float = 0.0
-    desc_fetch_delay: float = 0.0
 
     def __init__(self):
         self._sem = asyncio.Semaphore(self.max_concurrent)
@@ -32,10 +29,6 @@ class ATSScraper(ABC):
         Returns list of normalized job dicts, or None if company is dead/invalid.
         """
 
-    @abstractmethod
-    async def fetch_description(self, slug: str, job_id: str) -> str | None:
-        """Fetch description HTML for a single job. Returns None if unavailable."""
-
     async def probe_with_retry(self, slug: str, max_retries: int = 3) -> list[dict] | None:
         """Probe with semaphore + exponential backoff.
 
@@ -44,8 +37,6 @@ class ATSScraper(ABC):
         caller should NOT mark the company as dead.
         """
         async with self._sem:
-            if self.probe_delay:
-                await asyncio.sleep(self.probe_delay)
             for attempt in range(max_retries):
                 try:
                     return await self.probe_company(slug)
@@ -56,19 +47,4 @@ class ATSScraper(ABC):
                     wait = 2 ** attempt
                     log.debug(f"[{self.ats_name}] {slug}: retry {attempt + 1} in {wait}s: {e}")
                     await asyncio.sleep(wait)
-        return None
-
-    async def fetch_description_with_retry(self, slug: str, job_id: str, max_retries: int = 3) -> str | None:
-        """Fetch description with semaphore + exponential backoff."""
-        async with self._sem:
-            if self.desc_fetch_delay:
-                await asyncio.sleep(self.desc_fetch_delay)
-            for attempt in range(max_retries):
-                try:
-                    return await self.fetch_description(slug, job_id)
-                except Exception as e:
-                    if attempt == max_retries - 1:
-                        log.warning(f"[{self.ats_name}] {slug}/{job_id}: description fetch failed: {e}")
-                        return None
-                    await asyncio.sleep(2 ** attempt)
         return None

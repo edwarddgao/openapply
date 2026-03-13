@@ -38,6 +38,3 @@ class GreenhouseScraper(ATSScraper):
 
         return [normalize_greenhouse(job, slug) for job in jobs]
 
-    async def fetch_description(self, slug: str, job_id: str) -> str | None:
-        # Greenhouse includes descriptions in the list response with ?content=true
-        return None
