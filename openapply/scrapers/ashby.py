@@ -59,9 +59,9 @@ def _post_graphql(operation: str, query: str, variables: dict) -> dict:
 
 class AshbyScraper(ATSScraper):
     ats_name = "ashby"
-    max_concurrent = 3
+    max_concurrent = 1
     needs_detail_fetch = True
-    desc_fetch_delay = 0.5  # Ashby rate-limits aggressively
+    probe_delay = 0.2
 
     async def close(self):
         pass  # curl_cffi doesn't need explicit cleanup

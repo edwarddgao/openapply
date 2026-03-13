@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import time
 from abc import ABC, abstractmethod
 
 log = logging.getLogger("openapply.scrapers")
@@ -20,6 +19,8 @@ class ATSScraper(ABC):
     ats_name: str
     max_concurrent: int = 10
     needs_detail_fetch: bool = False
+    probe_delay: float = 0.0
+    desc_fetch_delay: float = 0.0
 
     def __init__(self):
         self._sem = asyncio.Semaphore(self.max_concurrent)
@@ -36,22 +37,26 @@ class ATSScraper(ABC):
         """Fetch description HTML for a single job. Returns None if unavailable."""
 
     async def probe_with_retry(self, slug: str, max_retries: int = 3) -> list[dict] | None:
-        """Probe with semaphore + exponential backoff."""
+        """Probe with semaphore + exponential backoff.
+
+        Returns list of jobs, or None if company is dead (404/empty).
+        Raises on transient failures (429/500/timeout) after retries exhausted —
+        caller should NOT mark the company as dead.
+        """
         async with self._sem:
+            if self.probe_delay:
+                await asyncio.sleep(self.probe_delay)
             for attempt in range(max_retries):
                 try:
                     return await self.probe_company(slug)
                 except Exception as e:
                     if attempt == max_retries - 1:
                         log.warning(f"[{self.ats_name}] {slug}: failed after {max_retries} attempts: {e}")
-                        return None
+                        raise
                     wait = 2 ** attempt
                     log.debug(f"[{self.ats_name}] {slug}: retry {attempt + 1} in {wait}s: {e}")
                     await asyncio.sleep(wait)
         return None
-
-    # Per-request delay (seconds) between description fetches to avoid rate limits
-    desc_fetch_delay: float = 0.0
 
     async def fetch_description_with_retry(self, slug: str, job_id: str, max_retries: int = 3) -> str | None:
         """Fetch description with semaphore + exponential backoff."""
