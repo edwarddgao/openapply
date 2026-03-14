@@ -27,6 +27,7 @@ jobs:
 
       - name: Run Simplify discovery
         run: python -m openapply.discover --source simplify --slugs-dir data/slugs
+        continue-on-error: true  # Simplify API may block datacenter IPs
 
       - name: Commit new slugs
         run: |
