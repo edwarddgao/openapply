@@ -19,7 +19,11 @@ def _typesense_post(
         TYPESENSE_SEARCH,
         params={"x-typesense-api-key": api_key},
         content=_json.dumps(payload),
-        headers={"Content-Type": "text/plain"},
+        headers={
+            "Content-Type": "text/plain",
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+            "Referer": "https://simplify.jobs/",
+        },
         timeout=15.0,
     )
     resp.raise_for_status()
