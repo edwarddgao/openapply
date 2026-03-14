@@ -27,7 +27,6 @@ jobs:
 
       - name: Run Simplify discovery
         run: python -m openapply.discover --source simplify --slugs-dir data/slugs
-        continue-on-error: true  # Simplify blocks datacenter IPs; run locally to refresh
 
       - name: Commit new slugs
         run: |
