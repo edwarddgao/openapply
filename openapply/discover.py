@@ -29,7 +29,6 @@ from .simplify import _typesense_post
 log = logging.getLogger("openapply.discover")
 
 SLUGS_DIR = Path(__file__).parent.parent / "data" / "slugs"
-PROVENANCE_PATH = SLUGS_DIR / "provenance.json"
 
 # ATS domains and their URL patterns for slug extraction
 ATS_DOMAINS = {
@@ -59,36 +58,6 @@ ATS_HOST_PATTERNS = {
 }
 
 CC_S3_BASE = "https://data.commoncrawl.org"
-
-
-# ---------------------------------------------------------------------------
-# Provenance
-# ---------------------------------------------------------------------------
-
-def load_provenance(path: Path = PROVENANCE_PATH) -> dict[str, dict[str, list[str]]]:
-    """Load provenance.json: {ats: {slug: [sources]}}."""
-    if path.exists():
-        return json.loads(path.read_text())
-    return {}
-
-
-def save_provenance(prov: dict[str, dict[str, list[str]]], path: Path = PROVENANCE_PATH) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(prov, sort_keys=True, indent=1) + "\n")
-
-
-def update_provenance(
-    prov: dict[str, dict[str, list[str]]],
-    ats: str,
-    slugs: set[str],
-    source: str,
-) -> None:
-    """Add source tag to slugs in provenance dict (mutates in place)."""
-    ats_prov = prov.setdefault(ats, {})
-    for slug in slugs:
-        sources = ats_prov.setdefault(slug, [])
-        if source not in sources:
-            sources.append(source)
 
 
 # ---------------------------------------------------------------------------
@@ -135,19 +104,31 @@ def clean_slugs(slugs: set[str]) -> set[str]:
 def merge_slugs(
     ats: str,
     new_slugs: set[str],
-    source: str,
     slugs_dir: Path = SLUGS_DIR,
-    prov: dict | None = None,
 ) -> int:
-    """Merge new slugs into slug file and update provenance. Returns count of new slugs."""
+    """Merge new slugs into slug file. Returns (new_count, total)."""
     new_slugs = clean_slugs(new_slugs)
     existing = load_slugs(ats, slugs_dir)
     merged = existing | new_slugs
     new_count = len(merged) - len(existing)
     save_slugs(ats, merged, slugs_dir)
-    if prov is not None:
-        update_provenance(prov, ats, new_slugs, source)
-    return new_count
+    return new_count, len(merged)
+
+
+def save_raw_sets(raw: dict[str, set[str]], source: str, slugs_dir: Path = SLUGS_DIR) -> None:
+    """Save raw discovery results as {source}_latest.json for validation."""
+    path = slugs_dir / f"{source}_latest.json"
+    json_data = {ats: sorted(slugs) for ats, slugs in raw.items()}
+    path.write_text(json.dumps(json_data, indent=1) + "\n")
+
+
+def load_raw_sets(source: str, slugs_dir: Path = SLUGS_DIR) -> dict[str, set[str]]:
+    """Load raw discovery results from {source}_latest.json."""
+    path = slugs_dir / f"{source}_latest.json"
+    if not path.exists():
+        return {}
+    data = json.loads(path.read_text())
+    return {ats: set(slugs) for ats, slugs in data.items()}
 
 
 # ---------------------------------------------------------------------------
@@ -225,7 +206,7 @@ def extract_slugs_from_shard(
     return slugs
 
 
-def discover_cc(ats: str, output_dir: Path | None = None, prov: dict | None = None) -> set[str]:
+def discover_cc(ats: str, output_dir: Path | None = None) -> set[str]:
     """Discover company slugs for an ATS from Common Crawl."""
     config = ATS_DOMAINS[ats]
     index_name = config["preferred_index"]
@@ -256,8 +237,7 @@ def discover_cc(ats: str, output_dir: Path | None = None, prov: dict | None = No
     log.info(f"[{ats}] CC discovered {len(all_slugs)} unique slugs")
 
     if output_dir:
-        new_count = merge_slugs(ats, all_slugs, "cc", output_dir, prov)
-        total = len(load_slugs(ats, output_dir))
+        new_count, total = merge_slugs(ats, all_slugs, output_dir)
         log.info(f"[{ats}] Wrote {total} slugs ({new_count} new from CC)")
 
     return all_slugs
@@ -344,7 +324,7 @@ def _fetch_simplify_companies(page: int, per_page: int = 250) -> list[tuple[str,
     return companies
 
 
-def discover_simplify(output_dir: Path | None = None, prov: dict | None = None) -> dict[str, set[str]]:
+def discover_simplify(output_dir: Path | None = None) -> dict[str, set[str]]:
     """Discover ATS slugs by resolving Simplify redirect URLs.
 
     Returns {ats: {slugs}}.
@@ -368,33 +348,24 @@ def discover_simplify(output_dir: Path | None = None, prov: dict | None = None) 
     for ats, slugs in sorted(results.items()):
         log.info(f"[simplify] {ats}: {len(slugs)} slugs")
         if output_dir:
-            new_count = merge_slugs(ats, slugs, "simplify", output_dir, prov)
-            total = len(load_slugs(ats, output_dir))
+            new_count, total = merge_slugs(ats, slugs, output_dir)
             log.info(f"[simplify] {ats}: {total} total slugs ({new_count} new from Simplify)")
 
     return results
 
 
 # ---------------------------------------------------------------------------
-# Seed provenance (tag existing slugs)
-# ---------------------------------------------------------------------------
-
-# ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
 
-def clean_slug_files(slugs_dir: Path, prov: dict[str, dict[str, list[str]]]) -> None:
-    """Remove junk slugs from slug files and provenance."""
+def clean_slug_files(slugs_dir: Path) -> None:
+    """Remove junk slugs from slug files."""
     for ats in ATS_DOMAINS:
         slugs = load_slugs(ats, slugs_dir)
         cleaned = clean_slugs(slugs)
         removed = slugs - cleaned
         if removed:
             save_slugs(ats, cleaned, slugs_dir)
-            # Remove from provenance too
-            ats_prov = prov.get(ats, {})
-            for slug in removed:
-                ats_prov.pop(slug, None)
             log.info(f"[{ats}] Cleaned {len(removed)} junk slugs ({len(cleaned)} remaining)")
         else:
             log.info(f"[{ats}] No junk slugs found ({len(cleaned)} total)")
@@ -408,7 +379,7 @@ def main():
                         help="Single ATS (CC mode only)")
     parser.add_argument("--clean", action="store_true",
                         help="Clean junk slugs from existing files")
-    parser.add_argument("--output-dir", type=Path, default=SLUGS_DIR)
+    parser.add_argument("--slugs-dir", type=Path, default=SLUGS_DIR)
     parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args()
 
@@ -417,24 +388,20 @@ def main():
         format="%(asctime)s %(levelname)s %(message)s",
     )
 
-    prov = load_provenance()
-
     if args.clean:
-        clean_slug_files(args.output_dir, prov)
-        save_provenance(prov)
-        log.info("Provenance saved.")
+        clean_slug_files(args.slugs_dir)
         return
 
     if args.source in ("cc", "all"):
+        cc_results: dict[str, set[str]] = {}
         ats_list = [args.ats] if args.ats else list(ATS_DOMAINS.keys())
         for ats in ats_list:
-            discover_cc(ats, args.output_dir, prov)
+            cc_results[ats] = discover_cc(ats, args.slugs_dir)
+        save_raw_sets(cc_results, "cc", args.slugs_dir)
 
     if args.source in ("simplify", "all"):
-        discover_simplify(args.output_dir, prov)
-
-    save_provenance(prov)
-    log.info("Provenance saved.")
+        simp_results = discover_simplify(args.slugs_dir)
+        save_raw_sets(simp_results, "simplify", args.slugs_dir)
 
 
 if __name__ == "__main__":

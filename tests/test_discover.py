@@ -1,4 +1,4 @@
-"""Tests for discover.py — CC parsing, Simplify resolution, provenance, merge logic."""
+"""Tests for discover.py — CC parsing, Simplify resolution, raw sets, merge logic."""
 
 import gzip
 import json
@@ -15,9 +15,8 @@ from openapply.discover import (
     is_valid_slug,
     clean_slugs,
     clean_slug_files,
-    load_provenance,
-    save_provenance,
-    update_provenance,
+    save_raw_sets,
+    load_raw_sets,
     merge_slugs,
     load_slugs,
     ATS_DOMAINS,
@@ -280,17 +279,6 @@ class TestDiscoverCC:
         written = (tmp_path / "ashby.txt").read_text().strip().split("\n")
         assert written == ["alpha", "beta"]
 
-    def test_updates_provenance(self, tmp_path):
-        prov = {}
-        with patch("openapply.discover.get_latest_index", return_value="CC-MAIN-2026-08"), \
-             patch("openapply.discover.find_shard_ranges", return_value=[("cdx-00001.gz", 0, 100)]), \
-             patch("openapply.discover.extract_slugs_from_shard", return_value={"figma", "stripe"}):
-            discover_cc("lever", output_dir=tmp_path, prov=prov)
-
-        assert "lever" in prov
-        assert prov["lever"]["figma"] == ["cc"]
-        assert prov["lever"]["stripe"] == ["cc"]
-
 
 # --- Simplify ATS slug extraction ---
 
@@ -328,68 +316,51 @@ class TestExtractAtsSlug:
         assert result == ("ashby", "my-company")
 
     def test_rejects_slug_with_spaces(self):
-        # URL-decoded %20 becomes space, which is not a valid slug
         result = _extract_ats_slug("https://jobs.ashbyhq.com/my%20company/abc")
         assert result is None
 
 
-# --- Provenance ---
+# --- Raw discovery sets ---
 
-class TestProvenance:
+class TestRawSets:
     def test_save_and_load(self, tmp_path):
-        prov = {"lever": {"figma": ["cc", "simplify"]}}
-        path = tmp_path / "provenance.json"
-        save_provenance(prov, path)
-        loaded = load_provenance(path)
-        assert loaded == prov
+        raw = {"lever": {"figma", "stripe"}, "greenhouse": {"discord"}}
+        save_raw_sets(raw, "cc", tmp_path)
+        loaded = load_raw_sets("cc", tmp_path)
+        assert loaded["lever"] == {"figma", "stripe"}
+        assert loaded["greenhouse"] == {"discord"}
 
     def test_load_nonexistent(self, tmp_path):
-        path = tmp_path / "nonexistent.json"
-        assert load_provenance(path) == {}
+        assert load_raw_sets("cc", tmp_path) == {}
 
-    def test_update_adds_source(self):
-        prov = {}
-        update_provenance(prov, "lever", {"figma", "stripe"}, "cc")
-        assert prov["lever"]["figma"] == ["cc"]
-        assert prov["lever"]["stripe"] == ["cc"]
-
-    def test_update_appends_source(self):
-        prov = {"lever": {"figma": ["cc"]}}
-        update_provenance(prov, "lever", {"figma"}, "simplify")
-        assert prov["lever"]["figma"] == ["cc", "simplify"]
-
-    def test_update_no_duplicate_source(self):
-        prov = {"lever": {"figma": ["cc"]}}
-        update_provenance(prov, "lever", {"figma"}, "cc")
-        assert prov["lever"]["figma"] == ["cc"]
-
+    def test_saved_as_sorted_json(self, tmp_path):
+        save_raw_sets({"lever": {"zebra", "alpha"}}, "cc", tmp_path)
+        data = json.loads((tmp_path / "cc_latest.json").read_text())
+        assert data["lever"] == ["alpha", "zebra"]
 
 
 # --- Merge slugs ---
 
 class TestMergeSlugs:
-    def test_merges_and_returns_new_count(self, tmp_path):
+    def test_merges_and_returns_counts(self, tmp_path):
         (tmp_path / "lever.txt").write_text("existing\n")
-        prov = {}
-        new_count = merge_slugs("lever", {"existing", "newco"}, "cc", tmp_path, prov)
+        new_count, total = merge_slugs("lever", {"existing", "newco"}, tmp_path)
         assert new_count == 1
+        assert total == 2
         slugs = load_slugs("lever", tmp_path)
         assert slugs == {"existing", "newco"}
-        assert prov["lever"]["newco"] == ["cc"]
-        assert prov["lever"]["existing"] == ["cc"]
 
     def test_creates_file_if_missing(self, tmp_path):
-        prov = {}
-        merge_slugs("ashby", {"ramp", "notion"}, "simplify", tmp_path, prov)
+        new_count, total = merge_slugs("ashby", {"ramp", "notion"}, tmp_path)
+        assert total == 2
         slugs = load_slugs("ashby", tmp_path)
         assert slugs == {"ramp", "notion"}
 
     def test_filters_junk_during_merge(self, tmp_path):
-        prov = {}
-        merge_slugs("lever", {"figma", "1password?department=eng", "a", "12345"}, "cc", tmp_path, prov)
+        new_count, total = merge_slugs("lever", {"figma", "1password?department=eng", "a", "12345"}, tmp_path)
+        assert total == 1
         slugs = load_slugs("lever", tmp_path)
         assert slugs == {"figma"}
-        assert "1password?department=eng" not in prov.get("lever", {})
 
 
 # --- Slug validation ---
@@ -432,13 +403,6 @@ class TestIsValidSlug:
 class TestCleanSlugFiles:
     def test_removes_junk(self, tmp_path):
         (tmp_path / "lever.txt").write_text("figma\n1password?dept=eng\nstripe\na\n12345\n")
-        prov = {"lever": {
-            "figma": ["simplify"], "1password?dept=eng": ["simplify"],
-            "stripe": ["cc"], "a": ["simplify"], "12345": ["simplify"],
-        }}
-        clean_slug_files(tmp_path, prov)
+        clean_slug_files(tmp_path)
         slugs = load_slugs("lever", tmp_path)
         assert slugs == {"figma", "stripe"}
-        assert "1password?dept=eng" not in prov["lever"]
-        assert "a" not in prov["lever"]
-        assert "12345" not in prov["lever"]
