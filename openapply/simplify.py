@@ -5,7 +5,7 @@ from __future__ import annotations
 import json as _json
 from typing import Any
 
-import httpx
+from curl_cffi import requests as cffi_requests
 
 TYPESENSE_SEARCH = "https://js-ha.simplify.jobs/multi_search"
 TYPESENSE_API_KEY = "SWF1ODFZbzBkcVlVdnVwT2FqUE5EZ3JpSk5hVmdpUHg1SklXWEdGbHZVRT1POHJieyJleGNsdWRlX2ZpZWxkcyI6ImNvbXBhbnlfdXJsLGNhdGVnb3JpZXMsYWRkaXRpb25hbF9yZXF1aXJlbWVudHMsY291bnRyaWVzLGRlZ3JlZXMsZ2VvbG9jYXRpb25zLGluZHVzdHJpZXMsaXNfc2ltcGxlX2FwcGxpY2F0aW9uLGpvYl9saXN0cyxsZWFkZXJzaGlwX3R5cGUsc2VjdXJpdHlfY2xlYXJhbmNlLHNraWxscyx1cmwifQ=="
@@ -15,17 +15,13 @@ TYPESENSE_COLLECTION = "jobs"
 def _typesense_post(
     payload: dict[str, Any], *, api_key: str = TYPESENSE_API_KEY
 ) -> dict[str, Any]:
-    resp = httpx.post(
+    resp = cffi_requests.post(
         TYPESENSE_SEARCH,
         params={"x-typesense-api-key": api_key},
-        content=_json.dumps(payload),
-        headers={
-            "Content-Type": "text/plain",
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-            "Origin": "https://simplify.jobs",
-            "Referer": "https://simplify.jobs/",
-        },
-        timeout=15.0,
+        data=_json.dumps(payload),
+        headers={"Content-Type": "text/plain"},
+        impersonate="chrome",
+        timeout=15,
     )
     resp.raise_for_status()
     return resp.json()["results"][0]

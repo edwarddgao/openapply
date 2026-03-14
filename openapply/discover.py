@@ -14,7 +14,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import asyncio
 import gzip
 import json
 import logging
@@ -263,44 +262,43 @@ def _extract_ats_slug(url: str) -> tuple[str, str] | None:
     return None
 
 
-async def _resolve_batch(
+def _resolve_batch(
     companies: list[tuple[str, str]],
     concurrency: int = 20,
 ) -> dict[str, set[str]]:
     """Resolve Simplify redirect URLs for a batch of (company_name, posting_id) pairs.
 
+    Uses curl_cffi for TLS fingerprint impersonation (Simplify blocks plain httpx).
     Returns {ats: {slugs}}.
     """
-    sem = asyncio.Semaphore(concurrency)
+    from concurrent.futures import ThreadPoolExecutor
+    from curl_cffi import requests as cffi_requests
+
     results: dict[str, set[str]] = {}
     resolved = 0
     errors = 0
 
-    async def resolve(client: httpx.AsyncClient, name: str, pid: str):
+    def resolve(pid: str):
         nonlocal resolved, errors
-        async with sem:
-            try:
-                r = await client.get(
-                    f"https://simplify.jobs/jobs/click/{pid}",
-                    follow_redirects=True,
-                    timeout=10,
-                )
-                pair = _extract_ats_slug(str(r.url))
-                if pair:
-                    ats, slug = pair
-                    results.setdefault(ats, set()).add(slug)
-            except Exception:
-                errors += 1
-            resolved += 1
-            if resolved % 500 == 0:
-                log.info(f"  Resolved {resolved}/{len(companies)} ({errors} errors)")
+        try:
+            r = cffi_requests.get(
+                f"https://simplify.jobs/jobs/click/{pid}",
+                impersonate="chrome",
+                timeout=10,
+                allow_redirects=True,
+            )
+            pair = _extract_ats_slug(str(r.url))
+            if pair:
+                ats, slug = pair
+                results.setdefault(ats, set()).add(slug)
+        except Exception:
+            errors += 1
+        resolved += 1
+        if resolved % 500 == 0:
+            log.info(f"  Resolved {resolved}/{len(companies)} ({errors} errors)")
 
-    async with httpx.AsyncClient() as client:
-        # Process in batches to avoid overwhelming the connection pool
-        batch_size = 200
-        for i in range(0, len(companies), batch_size):
-            batch = companies[i:i + batch_size]
-            await asyncio.gather(*[resolve(client, n, p) for n, p in batch])
+    with ThreadPoolExecutor(max_workers=concurrency) as pool:
+        pool.map(resolve, [pid for _, pid in companies])
 
     log.info(f"  Resolved {resolved}/{len(companies)} ({errors} errors)")
     return results
@@ -343,7 +341,7 @@ def discover_simplify(output_dir: Path | None = None) -> dict[str, set[str]]:
         page += 1
 
     log.info(f"[simplify] Resolving {len(all_companies)} redirect URLs...")
-    results = asyncio.run(_resolve_batch(all_companies))
+    results = _resolve_batch(all_companies)
 
     for ats, slugs in sorted(results.items()):
         log.info(f"[simplify] {ats}: {len(slugs)} slugs")
