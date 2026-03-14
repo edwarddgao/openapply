@@ -324,50 +324,23 @@ def _fetch_simplify_companies(page: int, per_page: int = 250) -> list[tuple[str,
     return companies
 
 
-SIMPLIFY_COMPANIES_PATH = SLUGS_DIR / "simplify_companies.json"
-
-
-def _load_or_fetch_companies(slugs_dir: Path) -> list[tuple[str, str]]:
-    """Fetch company list from Typesense API, falling back to cached file.
-
-    Saves to simplify_companies.json on success so CI can use the cache
-    when the Typesense API blocks datacenter IPs.
-    """
-    cache_path = slugs_dir / "simplify_companies.json"
-
-    try:
-        all_companies: list[tuple[str, str]] = []
-        page = 1
-        while True:
-            batch = _fetch_simplify_companies(page)
-            if not batch:
-                break
-            all_companies.extend(batch)
-            log.info(f"  Page {page}: {len(batch)} companies ({len(all_companies)} total)")
-            page += 1
-
-        # Save cache on success
-        cache_path.parent.mkdir(parents=True, exist_ok=True)
-        cache_path.write_text(json.dumps(all_companies) + "\n")
-        log.info(f"[simplify] Saved {len(all_companies)} companies to cache")
-        return all_companies
-
-    except Exception as e:
-        log.warning(f"[simplify] Typesense API failed: {e}")
-        if cache_path.exists():
-            data = json.loads(cache_path.read_text())
-            log.info(f"[simplify] Using cached company list ({len(data)} companies)")
-            return [tuple(c) for c in data]
-        raise
-
-
 def discover_simplify(output_dir: Path | None = None) -> dict[str, set[str]]:
     """Discover ATS slugs by resolving Simplify redirect URLs.
 
     Returns {ats: {slugs}}.
     """
     log.info("[simplify] Fetching companies from Typesense...")
-    all_companies = _load_or_fetch_companies(output_dir or SLUGS_DIR)
+
+    # Paginate to get all companies
+    all_companies: list[tuple[str, str]] = []
+    page = 1
+    while True:
+        batch = _fetch_simplify_companies(page)
+        if not batch:
+            break
+        all_companies.extend(batch)
+        log.info(f"  Page {page}: {len(batch)} companies ({len(all_companies)} total)")
+        page += 1
 
     log.info(f"[simplify] Resolving {len(all_companies)} redirect URLs...")
     results = asyncio.run(_resolve_batch(all_companies))
