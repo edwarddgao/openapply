@@ -1,0 +1,45 @@
+name: monthly-slug-harvest
+
+on:
+  schedule:
+    - cron: '0 5 1 * *'   # 05:00 UTC on the 1st of each month
+  workflow_dispatch: {}
+
+concurrency:
+  group: harvest
+  cancel-in-progress: false
+
+jobs:
+  harvest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: harvest slugs
+        run: python scripts/harvest_cc.py --slug-dir slugs
+
+      - name: commit if changed
+        run: |
+          if git diff --quiet slugs/; then
+            echo "no slug changes"
+            exit 0
+          fi
+          git config user.name  'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add slugs/
+          git commit -m "chore: monthly slug refresh ($(date -u +%Y-%m-%d))"
+          git push
+
+      - name: summary
+        if: always()
+        run: |
+          for f in slugs/cc_*_FINAL.txt; do
+            echo "- $f: $(wc -l < $f) slugs" >> $GITHUB_STEP_SUMMARY
+          done
