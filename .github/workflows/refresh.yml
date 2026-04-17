@@ -21,7 +21,7 @@ jobs:
           python-version: '3.11'
           cache: pip
 
-      - run: pip install huggingface_hub pyarrow
+      - run: pip install -r requirements.txt
 
       - name: compute date
         id: d
