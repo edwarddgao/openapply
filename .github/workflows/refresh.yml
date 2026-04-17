@@ -1,0 +1,47 @@
+name: daily-refresh
+
+on:
+  schedule:
+    - cron: '0 6 * * *'   # 06:00 UTC daily
+  workflow_dispatch: {}
+
+concurrency:
+  group: refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - run: pip install huggingface_hub pyarrow
+
+      - name: compute date
+        id: d
+        run: echo "date=$(date -u +%Y-%m-%d)" >> $GITHUB_OUTPUT
+
+      - name: fetch jobs
+        run: python oa_adapter.py --workers 16 --out jobs.jsonl
+
+      - name: convert to parquet
+        run: python scripts/jsonl_to_parquet.py jobs.jsonl data --date ${{ steps.d.outputs.date }}
+
+      - name: publish to HF
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_REPO_ID: ${{ vars.HF_REPO_ID || 'edwarddgao/open-apply-jobs' }}
+        run: python scripts/publish_hf.py data --date ${{ steps.d.outputs.date }}
+
+      - name: summary
+        if: always()
+        run: |
+          echo "date: ${{ steps.d.outputs.date }}" >> $GITHUB_STEP_SUMMARY
+          echo "jsonl lines: $(wc -l < jobs.jsonl 2>/dev/null || echo N/A)" >> $GITHUB_STEP_SUMMARY
+          du -sh data/ 2>/dev/null >> $GITHUB_STEP_SUMMARY || true

@@ -1,0 +1,8 @@
+.env
+*.jsonl
+*.log
+data/
+.claude/
+__pycache__/
+*.pyc
+.DS_Store
