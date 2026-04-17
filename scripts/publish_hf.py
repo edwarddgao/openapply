@@ -5,7 +5,7 @@ Timestamped layout means each run uploads ONE new date= directory;
 previous days stay in the repo untouched. History is preserved for
 time-series consumers.
 
-Env: HF_TOKEN (required), HF_REPO_ID (default: open-apply/jobs)
+Env: HF_TOKEN (required), HF_REPO_ID (default: edwarddgao/open-apply-jobs)
 """
 import argparse, os, sys
 from pathlib import Path

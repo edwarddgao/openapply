@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Open-Apply: 5 ATS adapters → canonical JobPosting JSONL.
+"""Open-Apply: 3 ATS adapters → canonical JobPosting JSONL.
 
 Usage:
-  python3 oa_adapter.py --slugs /tmp/cc_{ats}_FINAL.txt --out /tmp/oa_jobs.jsonl --limit 10
+  python3 oa_adapter.py --slug-dir slugs --out jobs.jsonl --limit 10
 """
 import argparse, json, sys, time, urllib.request, urllib.error, urllib.parse, re
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -30,6 +30,8 @@ class JobPosting:
     salary_currency: Optional[str] = None
     salary_period: Optional[str] = None  # HOUR|DAY|WEEK|MONTH|YEAR
 
+RETRYABLE_STATUS = {408, 429, 500, 502, 503, 504}
+
 def http_get(url: str, timeout: int = TIMEOUT, retries: int = 2) -> bytes:
     last = None
     for attempt in range(retries + 1):
@@ -38,9 +40,9 @@ def http_get(url: str, timeout: int = TIMEOUT, retries: int = 2) -> bytes:
             with urllib.request.urlopen(req, timeout=timeout) as r:
                 return r.read()
         except urllib.error.HTTPError as e:
-            if e.code == 404: raise
+            if e.code not in RETRYABLE_STATUS: raise
             last = e
-        except Exception as e:
+        except (urllib.error.URLError, TimeoutError, ConnectionError) as e:
             last = e
         time.sleep(1 + attempt)
     raise last
@@ -63,7 +65,7 @@ def fetch_greenhouse(slug: str) -> List[JobPosting]:
             title=j.get('title') or '',
             apply_url=j.get('absolute_url') or '',
             description_html=j.get('content'),
-            department=(j.get('departments') or [{}])[0].get('name'),
+            department=next((d.get('name') for d in (j.get('departments') or []) if isinstance(d, dict)), None),
             locations=locs, remote=remote,
             posted_at=j.get('updated_at') or j.get('first_published'),
         ))
@@ -100,7 +102,7 @@ def _epoch_to_iso(ms):
     if not ms: return None
     try:
         return time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(ms/1000.0))
-    except Exception:
+    except (TypeError, ValueError, OSError):
         return None
 
 # ---------- Ashby ----------
@@ -111,7 +113,7 @@ def fetch_ashby(slug: str) -> List[JobPosting]:
     for j in d.get('jobs', []):
         sec_locs = [l.get('location') if isinstance(l, dict) else l for l in (j.get('secondaryLocations') or [])]
         comp = (j.get('compensation') or {}).get('compensationTierSummary') or ''
-        sal_min = sal_max = sal_curr = sal_per = None
+        sal_min = sal_max = sal_curr = None
         # Parse "$180K - $220K USD" style strings — best-effort
         m = re.search(r'([$£€])\s*(\d[\d,.kKmM]*)\s*(?:-|–|to)\s*([$£€]?)\s*(\d[\d,.kKmM]*)\s*([A-Z]{3})?', comp)
         if m:
@@ -130,7 +132,7 @@ def fetch_ashby(slug: str) -> List[JobPosting]:
             remote=j.get('isRemote'),
             posted_at=j.get('publishedAt') or j.get('updatedAt'),
             salary_min=sal_min, salary_max=sal_max,
-            salary_currency=sal_curr, salary_period=sal_per,
+            salary_currency=sal_curr,
         ))
     return out
 
