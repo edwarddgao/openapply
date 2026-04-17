@@ -13,8 +13,7 @@ import argparse, json, re, time, urllib.request
 from pathlib import Path
 from collections import defaultdict
 
-CRAWLS = ['CC-MAIN-2026-08', 'CC-MAIN-2026-04', 'CC-MAIN-2025-38',
-          'CC-MAIN-2025-26', 'CC-MAIN-2024-26']
+COLLINFO_URL = 'https://index.commoncrawl.org/collinfo.json'
 
 ATS = {
     'greenhouse': ('boards.greenhouse.io/*',
@@ -33,6 +32,22 @@ def cdx_get(url, timeout=240):
     req = urllib.request.Request(url, headers={'User-Agent': 'openapply-harvest/1.0'})
     with urllib.request.urlopen(req, timeout=timeout) as r:
         return r.read().decode('utf-8', errors='replace')
+
+
+def discover_crawls(n):
+    """Return the N newest CC-MAIN crawl IDs, sorted newest-first.
+
+    IDs like CC-MAIN-YYYY-WW are lexicographically sortable, so alphabetic
+    descending sort == chronological descending.
+    """
+    for _ in range(3):
+        try:
+            data = json.loads(cdx_get(COLLINFO_URL, 30))
+            ids = sorted((c['id'] for c in data if c.get('id', '').startswith('CC-MAIN-')), reverse=True)
+            return ids[:n]
+        except Exception:
+            time.sleep(5)
+    raise RuntimeError(f'could not fetch {COLLINFO_URL}')
 
 
 def num_pages(crawl, pattern):
@@ -82,13 +97,17 @@ def extract_slugs(jsonl, pat, skip):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--slug-dir', default='slugs')
+    ap.add_argument('--n-crawls', type=int, default=5, help='number of most-recent CC snapshots to query')
     args = ap.parse_args()
 
     out_dir = Path(args.slug_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    crawls = discover_crawls(args.n_crawls)
+    print(f'crawls: {", ".join(crawls)}', flush=True)
+
     discovered = defaultdict(set)
-    for crawl in CRAWLS:
+    for crawl in crawls:
         print(f'=== {crawl} ===', flush=True)
         for ats, (pat_url, regex, skip) in ATS.items():
             pages = num_pages(crawl, pat_url)
