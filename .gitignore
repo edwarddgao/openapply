@@ -2,6 +2,7 @@
 *.jsonl
 *.log
 data/
+.cache/
 .claude/
 __pycache__/
 *.pyc

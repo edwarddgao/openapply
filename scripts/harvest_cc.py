@@ -1,107 +1,143 @@
 #!/usr/bin/env python3
-"""Harvest ATS tenant slugs from Common Crawl CDX.
+"""Harvest ATS tenant slugs from Common Crawl's CDX data on S3.
 
-Queries recent CC snapshots for URLs matching public ATS job-board
-hostnames, extracts the tenant-slug path segment, dedups, and merges
-into slugs/cc_{ats}_FINAL.txt.
+Uses the data-path directly (cluster.idx + cdx-*.gz on data.commoncrawl.org)
+rather than the frequently-flaky index.commoncrawl.org HTTP API. The nginx
+frontend occasionally goes down for days at a time; the underlying files on
+CloudFront stay up throughout, so this is more resilient.
 
-Merge semantics: existing slugs are preserved (so slugs added via the
-one-time Simplify bootstrap survive a re-run). Intended for monthly
-cadence — CC index lags by ~1 week and tenant churn is slow.
+Algorithm:
+  1. discover_crawls() via collinfo.json (static, reliable)
+  2. Per crawl: download cluster.idx (sparse SURT index, ~110MB, cached locally)
+  3. Per ATS host SURT prefix: locate matching byte-ranges in cluster.idx
+  4. HTTP Range-fetch those ranges from cdx-NNNNN.gz
+  5. Gunzip, parse CDX lines, extract slugs, merge into slugs/
+
+Merge semantics: existing slug files are preserved (so Simplify-bootstrapped
+entries survive a re-run).
 """
-import argparse, json, re, time, urllib.request
+import argparse, gzip, json, re, time, urllib.request
 from pathlib import Path
 from collections import defaultdict
 
+CDN = 'https://data.commoncrawl.org'
 COLLINFO_URL = 'https://index.commoncrawl.org/collinfo.json'
 
+# SURT prefix + slug regex + skip set, per ATS.
 ATS = {
-    'greenhouse': ('boards.greenhouse.io/*',
+    'greenhouse': ('io,greenhouse,boards)',
                    re.compile(r'boards\.greenhouse\.io/([a-zA-Z0-9][\w.-]{1,48})', re.I),
                    {'embed', 'jobs', 'api', 'v1', 'assets', 'static'}),
-    'lever':      ('jobs.lever.co/*',
+    'lever':      ('co,lever,jobs)',
                    re.compile(r'jobs\.lever\.co/([a-zA-Z0-9][\w.-]{1,48})', re.I),
                    {'js', 'api', 'embed', 'assets', 'robots.txt', 'sitemap.xml', 'favicon.ico'}),
-    'ashby':      ('jobs.ashbyhq.com/*',
+    'ashby':      ('com,ashbyhq,jobs)',
                    re.compile(r'jobs\.ashbyhq\.com/([a-zA-Z0-9][\w.-]{1,48})', re.I),
                    {'api', 'embed', 'assets', 'static', 'common'}),
 }
 
 
-def cdx_get(url, timeout=240):
-    req = urllib.request.Request(url, headers={'User-Agent': 'openapply-harvest/1.0'})
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        return r.read().decode('utf-8', errors='replace')
+def http_get(url, range_=None, timeout=600):
+    headers = {'User-Agent': 'openapply-harvest/1.0'}
+    if range_:
+        headers['Range'] = f'bytes={range_[0]}-{range_[1]}'
+    req = urllib.request.Request(url, headers=headers)
+    last = None
+    for i in range(5):
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                return r.read()
+        except Exception as e:
+            last = e
+            time.sleep(5 * (i + 1))
+    raise RuntimeError(f'failed: {url} ({last})')
 
 
 def discover_crawls(n):
-    """Return the N newest CC-MAIN crawl IDs, sorted newest-first.
+    data = json.loads(http_get(COLLINFO_URL, timeout=60).decode())
+    ids = sorted((c['id'] for c in data if c.get('id', '').startswith('CC-MAIN-')), reverse=True)
+    return ids[:n]
 
-    IDs like CC-MAIN-YYYY-WW are lexicographically sortable, so alphabetic
-    descending sort == chronological descending.
+
+def fetch_cluster_idx(crawl, cache_dir):
+    path = cache_dir / f'{crawl}.cluster.idx'
+    if path.exists() and path.stat().st_size > 1_000_000:
+        return path.read_bytes()
+    print(f'  downloading cluster.idx ({crawl})...', flush=True)
+    data = http_get(f'{CDN}/cc-index/collections/{crawl}/indexes/cluster.idx', timeout=600)
+    path.write_bytes(data)
+    return data
+
+
+def find_ranges(idx_bytes, surt_prefix):
+    """Return (cdx_file, offset, length) byte-ranges whose CDX entries may
+    have SURT starting with surt_prefix.
+
+    cluster.idx is SURT-sorted; each line marks the start of a chunk. We emit
+    the last chunk whose surt < prefix (covers the tail preceding the match)
+    plus every chunk whose surt falls within [prefix, prefix+\\xff].
     """
-    for _ in range(3):
-        try:
-            data = json.loads(cdx_get(COLLINFO_URL, 30))
-            ids = sorted((c['id'] for c in data if c.get('id', '').startswith('CC-MAIN-')), reverse=True)
-            return ids[:n]
-        except Exception:
-            time.sleep(5)
-    raise RuntimeError(f'could not fetch {COLLINFO_URL}')
+    ranges = []
+    prev = None
+    end_key = surt_prefix + '\xff'
+    seen_match = False
+    for line in idx_bytes.decode('utf-8', errors='replace').splitlines():
+        parts = line.split('\t')
+        if len(parts) < 5:
+            continue
+        surt = parts[0].split(' ', 1)[0]
+        if surt < surt_prefix:
+            prev = parts
+            continue
+        if surt > end_key:
+            break
+        if not seen_match:
+            if prev is not None:
+                ranges.append((prev[1], int(prev[2]), int(prev[3])))
+            seen_match = True
+        ranges.append((parts[1], int(parts[2]), int(parts[3])))
+    if not seen_match and prev is not None:
+        ranges.append((prev[1], int(prev[2]), int(prev[3])))
+    return ranges
 
 
-def num_pages(crawl, pattern):
-    u = f'https://index.commoncrawl.org/{crawl}-index?url={pattern}&showNumPages=true'
-    for _ in range(4):
-        try:
-            txt = cdx_get(u, 30)
-            if txt.startswith('{'):
-                return json.loads(txt)['pages']
-        except Exception:
-            pass
-        time.sleep(3)
-    return 0
-
-
-def fetch_page(crawl, pattern, page):
-    u = f'https://index.commoncrawl.org/{crawl}-index?url={pattern}&output=json&page={page}'
-    for i in range(6):
-        try:
-            txt = cdx_get(u, 240)
-            if txt and txt.startswith('{'):
-                return txt
-        except Exception:
-            pass
-        time.sleep(5 * (i + 1))
-    return ''
-
-
-def extract_slugs(jsonl, pat, skip):
-    out = set()
-    for ln in jsonl.splitlines():
-        if not ln.startswith('{'):
+def extract_from_cdx_range(crawl, cdx_file, offset, length, regex, skip):
+    url = f'{CDN}/cc-index/collections/{crawl}/indexes/{cdx_file}'
+    try:
+        gz = http_get(url, range_=(offset, offset + length - 1), timeout=120)
+        raw = gzip.decompress(gz).decode('utf-8', errors='replace')
+    except Exception as e:
+        print(f'    warn: {cdx_file}@{offset}: {e}', flush=True)
+        return set()
+    slugs = set()
+    for line in raw.splitlines():
+        parts = line.split(' ', 2)
+        if len(parts) < 3:
             continue
         try:
-            rec = json.loads(ln)
+            meta = json.loads(parts[2])
         except Exception:
             continue
-        m = pat.search(rec.get('url', ''))
+        m = regex.search(meta.get('url', ''))
         if not m:
             continue
         s = m.group(1).lower().rstrip('.-_')
         if s and s not in skip and len(s) >= 2:
-            out.add(s)
-    return out
+            slugs.add(s)
+    return slugs
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--slug-dir', default='slugs')
     ap.add_argument('--n-crawls', type=int, default=5, help='number of most-recent CC snapshots to query')
+    ap.add_argument('--cache-dir', default='.cache/cc', help='where to cache cluster.idx files')
     args = ap.parse_args()
 
     out_dir = Path(args.slug_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
+    cache_dir = Path(args.cache_dir)
+    cache_dir.mkdir(parents=True, exist_ok=True)
 
     crawls = discover_crawls(args.n_crawls)
     print(f'crawls: {", ".join(crawls)}', flush=True)
@@ -109,15 +145,17 @@ def main():
     discovered = defaultdict(set)
     for crawl in crawls:
         print(f'=== {crawl} ===', flush=True)
-        for ats, (pat_url, regex, skip) in ATS.items():
-            pages = num_pages(crawl, pat_url)
-            if pages == 0:
-                print(f'  {ats:<12} pages=?? skipped', flush=True)
+        idx = fetch_cluster_idx(crawl, cache_dir)
+        for ats, (prefix, regex, skip) in ATS.items():
+            ranges = find_ranges(idx, prefix)
+            if not ranges:
+                print(f'  {ats:<12} no matching cluster.idx ranges', flush=True)
                 continue
-            chunks = [fetch_page(crawl, pat_url, p) for p in range(pages)]
-            slugs = extract_slugs('\n'.join(c for c in chunks if c), regex, skip)
+            slugs = set()
+            for cdx, off, ln in ranges:
+                slugs |= extract_from_cdx_range(crawl, cdx, off, ln, regex, skip)
             discovered[ats] |= slugs
-            print(f'  {ats:<12} pages={pages} slugs={len(slugs):,}', flush=True)
+            print(f'  {ats:<12} ranges={len(ranges):>3} slugs={len(slugs):,}', flush=True)
 
     print('\n=== merge ===', flush=True)
     for ats, new_slugs in discovered.items():
