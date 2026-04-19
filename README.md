@@ -6,6 +6,12 @@ An open dataset of active job postings, refreshed daily from public ATS APIs.
 - **Sources:** Greenhouse, Lever, Ashby
 - **Refresh:** daily at 06:00 UTC via GitHub Actions
 
+## Demo
+
+Powers an automated job-application agent that fills ATS forms via Claude-Code-spawned subagents.
+
+[![Demo video](https://img.youtube.com/vi/MiDGBzrxSNk/maxresdefault.jpg)](https://youtu.be/MiDGBzrxSNk?si=C9HVTmRYluw_w2gM)
+
 ## Pipeline
 
 ```
