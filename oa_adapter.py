@@ -187,7 +187,7 @@ def main():
             by_ats.setdefault(ats, {'tenants_ok':0, 'tenants_err':0, 'jobs':0})
             if err_msg:
                 err += 1; by_ats[ats]['tenants_err'] += 1
-                if err <= 10: print(f'  ERR {ats}:{slug} → {err_msg}', file=sys.stderr)
+                if by_ats[ats]['tenants_err'] <= 10: print(f'  ERR {ats}:{slug} → {err_msg}', file=sys.stderr)
             else:
                 ok += 1; by_ats[ats]['tenants_ok'] += 1
                 for jp in jobs:
