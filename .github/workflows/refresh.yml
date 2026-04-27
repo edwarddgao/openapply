@@ -39,39 +39,6 @@ jobs:
           HF_REPO_ID: ${{ vars.HF_REPO_ID || 'edwarddgao/open-apply-jobs' }}
         run: python scripts/publish_hf.py data --date ${{ steps.d.outputs.date }}
 
-      - name: embed + publish embeddings
-        env:
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          HF_EMB_REPO_ID: ${{ vars.HF_EMB_REPO_ID || 'edwarddgao/open-apply-jobs-embeddings' }}
-        run: |
-          if [ -z "$OPENROUTER_API_KEY" ]; then
-            echo "OPENROUTER_API_KEY not set — skipping embeddings"
-            exit 0
-          fi
-          python scripts/embed.py data embeddings \
-            --date ${{ steps.d.outputs.date }} \
-            --bootstrap-from-hf
-          python scripts/publish_hf.py embeddings \
-            --repo-id "$HF_EMB_REPO_ID" \
-            --date ${{ steps.d.outputs.date }}
-
-      - name: enrich + publish enrichments
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          HF_ENR_REPO_ID: ${{ vars.HF_ENR_REPO_ID || 'edwarddgao/open-apply-jobs-enrichments' }}
-        run: |
-          if [ ! -d "embeddings/date=${{ steps.d.outputs.date }}" ]; then
-            echo "no embeddings partition for today — skipping enrichments"
-            exit 0
-          fi
-          python scripts/enrich.py data embeddings enrichments \
-            --date ${{ steps.d.outputs.date }} \
-            --bootstrap-from-hf
-          python scripts/publish_hf.py enrichments \
-            --repo-id "$HF_ENR_REPO_ID" \
-            --date ${{ steps.d.outputs.date }}
-
       - name: summary
         if: always()
         run: |

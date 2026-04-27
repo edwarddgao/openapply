@@ -95,57 +95,6 @@ duckdb.sql("""
 """)
 ```
 
-## Embeddings
-
-A companion dataset of `qwen3-embedding-8b` vectors over the postings, generated via [OpenRouter](https://openrouter.ai):
-
-- **Dataset:** https://huggingface.co/datasets/edwarddgao/open-apply-jobs-embeddings
-- **Model:** `qwen/qwen3-embedding-8b` (4096 dims, L2-normalizable). The embedding is Matryoshka — the first N dims (e.g. 512, 1024) are a valid lower-dim representation after re-normalization.
-- **Content formula:** `title + "\n\n" + plain_text(description_html)` (bs4 `get_text`), capped at 30k plaintext chars / 32k-char batch-packing budget
-- **Partitioning:** `date=YYYY-MM-DD/source={ats}/` — mirrors the base dataset so `id` joins 1:1
-- **Columns:** `id`, `content_sha256`, `embedding` (list[float32]), `model`
-
-The pipeline is incremental: each day's run reads yesterday's partition as a read-through cache, keyed on `(id, content_sha256)`, and only calls the API for new or changed postings.
-
-```python
-import duckdb
-duckdb.sql("""
-  SELECT j.id, j.title, e.embedding
-  FROM read_parquet('hf://datasets/edwarddgao/open-apply-jobs/data/**/*.parquet', hive_partitioning=1) j
-  JOIN read_parquet('hf://datasets/edwarddgao/open-apply-jobs-embeddings/data/**/*.parquet', hive_partitioning=1) e
-    ON j.id = e.id
-  WHERE j.date = '2026-04-17'
-""")
-```
-
-Local run:
-
-```bash
-OPENROUTER_API_KEY=... python scripts/embed.py data embeddings
-HF_TOKEN=... python scripts/publish_hf.py embeddings \
-  --repo-id edwarddgao/open-apply-jobs-embeddings
-```
-
-## Enrichments
-
-A second sidecar dataset adds per-row role clusters, industry clusters, and imputed salary derived from the embeddings:
-
-- **Dataset:** https://huggingface.co/datasets/edwarddgao/open-apply-jobs-enrichments
-- **Columns:** `id`, `content_sha256`, `role_l1_id`/`role_l1_name` (~25 coarse role buckets, e.g. Engineering / Sales / Clinical), `role_l2_id`/`role_l2_name` (~600 specific sub-roles, e.g. Senior Backend Engineer / PMHNP / BCBA), `industry_id`/`industry_name` (~80 industry verticals, e.g. openai / databricks / andurilindustries), `salary_lo_usd`/`salary_hi_usd`/`salary_mid_usd` (USD), `salary_src` (`column` | `regex` | `imputed`), `model`
-- **How it's built:** role L1 from agglomerative clustering over department-string centroids (MRL-512 cosine, complete linkage); role L2 from MiniBatchKMeans on job embeddings within each L1 bucket; industry from the same agglomerative process over `source_slug` centroids; salary from Ridge regression on the full 4096-d embedding, trained on column + JD-body-regex observations (R²=0.75 on held-out, medAPE ~14% on rows whose JD doesn't mention salary).
-- **Partitioning:** `date=YYYY-MM-DD/source={ats}/` — joins 1:1 on `id` with base and embeddings.
-
-Models are trained once and checked into `models/` at repo root (~2 MB total). Daily enrichment inference uses the same SHA-keyed two-pass cache protocol as `embed.py`, so unchanged rows are copied forward from the previous day's partition.
-
-```bash
-# one-time model training (re-run if you want fresher clusters)
-python scripts/train_enrichments.py --date YYYY-MM-DD --out-dir models/
-
-# daily inference
-python scripts/enrich.py data embeddings enrichments --date YYYY-MM-DD --bootstrap-from-hf
-HF_TOKEN=... python scripts/publish_hf.py enrichments --repo-id edwarddgao/open-apply-jobs-enrichments
-```
-
 ## License
 
 - **Code:** MIT

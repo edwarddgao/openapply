@@ -3,6 +3,7 @@
 *.log
 *.db
 data/
+experiments/
 .cache/
 .claude/
 __pycache__/
