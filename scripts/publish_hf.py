@@ -29,12 +29,16 @@ def main():
 
     api = HfApi(token=token)
     api.create_repo(repo_id=args.repo_id, repo_type='dataset', exist_ok=True)
+    # delete existing files under this date so repeat runs don't accumulate
+    # UUID-named parquet files alongside old ones (parquet writers emit unique
+    # filenames per run; without delete_patterns consumers would see duplicates)
     api.upload_folder(
         folder_path=str(src),
         path_in_repo=f'data/date={args.date}',
         repo_id=args.repo_id,
         repo_type='dataset',
         commit_message=f'daily refresh {args.date}',
+        delete_patterns=[f'data/date={args.date}/**'],
     )
     print(f'published → https://huggingface.co/datasets/{args.repo_id}')
 
