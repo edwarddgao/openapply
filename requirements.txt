@@ -1,2 +1,6 @@
 huggingface_hub>=0.20
+numpy>=1.26
 pyarrow>=14
+openai>=1.0
+beautifulsoup4>=4.12
+scikit-learn>=1.3
