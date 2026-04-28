@@ -24,7 +24,8 @@ class JobPosting:
     department: Optional[str] = None
     locations: List[str] = field(default_factory=list)
     remote: Optional[bool] = None
-    posted_at: Optional[str] = None   # ISO 8601
+    posted_at: Optional[str] = None    # original publish/create timestamp, ISO 8601
+    updated_at: Optional[str] = None   # last updated timestamp, ISO 8601 when exposed
     salary_min: Optional[float] = None
     salary_max: Optional[float] = None
     salary_currency: Optional[str] = None
@@ -67,7 +68,8 @@ def fetch_greenhouse(slug: str) -> List[JobPosting]:
             description_html=j.get('content'),
             department=next((d.get('name') for d in (j.get('departments') or []) if isinstance(d, dict)), None),
             locations=locs, remote=remote,
-            posted_at=j.get('updated_at') or j.get('first_published'),
+            posted_at=j.get('first_published'),
+            updated_at=j.get('updated_at'),
         ))
     return out
 
@@ -91,6 +93,7 @@ def fetch_lever(slug: str) -> List[JobPosting]:
             locations=[cat.get('location')] if cat.get('location') else [],
             remote=('remote' in (cat.get('location','').lower())) if cat.get('location') else None,
             posted_at=_epoch_to_iso(j.get('createdAt')),
+            updated_at=_epoch_to_iso(j.get('updatedAt')),
             salary_min=sal.get('min'),
             salary_max=sal.get('max'),
             salary_currency=sal.get('currency'),
@@ -130,7 +133,8 @@ def fetch_ashby(slug: str) -> List[JobPosting]:
             department=j.get('department') or j.get('team'),
             locations=[j.get('location')] + sec_locs if j.get('location') else sec_locs,
             remote=j.get('isRemote'),
-            posted_at=j.get('publishedAt') or j.get('updatedAt'),
+            posted_at=j.get('publishedAt'),
+            updated_at=j.get('updatedAt'),
             salary_min=sal_min, salary_max=sal_max,
             salary_currency=sal_curr,
         ))

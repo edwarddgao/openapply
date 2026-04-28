@@ -64,9 +64,14 @@ Records follow a subset of [schema.org JobPosting](https://schema.org/JobPosting
 | `department` | str? | |
 | `locations` | list[str] | |
 | `remote` | bool? | inferred from location text if not structured |
-| `posted_at` | ISO 8601? | |
+| `posted_at` | ISO 8601? | Original publish/create timestamp where exposed (`first_published` for Greenhouse, `createdAt` for Lever, `publishedAt` for Ashby) |
+| `updated_at` | ISO 8601? | Last updated timestamp where exposed (currently Greenhouse; sometimes absent for Lever/Ashby public APIs) |
 | `salary_min` / `salary_max` | float? | 25–35% populated (Ashby/Lever expose structured comp; Greenhouse embeds in HTML) |
 | `salary_currency` / `salary_period` | str? | |
+
+### Timestamp semantics
+
+Partitions published before the timestamp migration used a best-effort `posted_at` field. For Greenhouse rows in those historical partitions, `posted_at` was populated from `updated_at` when present, so it may represent the last modification time rather than the original publication time. New partitions populate `posted_at` from the original publish/create field and expose `updated_at` separately when the ATS provides it.
 
 ## Local run
 

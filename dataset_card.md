@@ -78,7 +78,8 @@ Each `date=` folder is a full snapshot of that day's active postings — not an 
 | `department` | string? | Free-form; ATS-dependent |
 | `locations` | list[string] | Always a list; may be empty for fully-remote |
 | `remote` | bool? | Structured where available; otherwise inferred from location text |
-| `posted_at` | string? | ISO 8601 UTC |
+| `posted_at` | string? | Original publish/create timestamp where exposed (`first_published` for Greenhouse, `createdAt` for Lever, `publishedAt` for Ashby) |
+| `updated_at` | string? | Last updated timestamp where exposed (currently Greenhouse; often absent from Lever/Ashby public APIs) |
 | `salary_min` / `salary_max` | float? | Only Ashby/Lever expose structured comp (~30%). Greenhouse salary is embedded in `description_html` |
 | `salary_currency` | string? | ISO 4217 (`USD`, `EUR`, `GBP`) |
 | `salary_period` | string? | `HOUR` \| `DAY` \| `WEEK` \| `MONTH` \| `YEAR` |
@@ -100,6 +101,7 @@ No authentication required for any endpoint. Every URL hit is publicly documente
 
 ## Known limitations
 
+- **Timestamp migration.** Partitions published before the `updated_at` field was added used a best-effort `posted_at` field. For historical Greenhouse rows, `posted_at` may be the ATS `updated_at` value rather than the original `first_published` value. New partitions use the original publish/create timestamp for `posted_at` and store last-modified time separately in `updated_at` when exposed.
 - **~30% tenant fetch failure rate.** Slugs in the input list include defunct/renamed companies CC still references. These return 404 and are dropped.
 - **No tombstoning.** A job present in `date=N` but absent in `date=N+1` is simply gone; there's no explicit `closed_at` flag. Compute by diffing.
 - **No deduplication across ATSes.** A company listing the same role on both Greenhouse and Lever will appear twice. Rare in practice.
