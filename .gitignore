@@ -1,9 +1,14 @@
 .env
+config/applicant-profile.json
+config/application-policy.json
+config/resume/
 *.jsonl
 *.log
 *.db
 data/
+shortlists/
 experiments/
+applications/codex-subagent-logs/
 .cache/
 .claude/
 __pycache__/
