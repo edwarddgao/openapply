@@ -79,6 +79,7 @@ Partitions published before the timestamp migration used a best-effort `posted_a
 pip install -r requirements.txt
 python oa_adapter.py --workers 16 --out jobs.jsonl         # ~15 min
 python scripts/jsonl_to_parquet.py jobs.jsonl data         # partition
+python scripts/build_shortlist.py --data-dir data --date latest --out-dir shortlists
 HF_TOKEN=... python scripts/publish_hf.py data             # upload
 ```
 

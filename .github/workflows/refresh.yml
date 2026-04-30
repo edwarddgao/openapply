@@ -33,7 +33,19 @@ jobs:
       - name: convert to parquet
         run: python scripts/jsonl_to_parquet.py jobs.jsonl data --date ${{ steps.d.outputs.date }}
 
+      - name: build shortlist
+        run: python scripts/build_shortlist.py --data-dir data --date ${{ steps.d.outputs.date }} --out-dir shortlists
+
+      - name: upload shortlist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: shortlists-${{ steps.d.outputs.date }}
+          path: |
+            shortlists/date=${{ steps.d.outputs.date }}/
+            shortlists/latest.json
+
       - name: publish to HF
+        continue-on-error: true
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           HF_REPO_ID: ${{ vars.HF_REPO_ID || 'edwarddgao/open-apply-jobs' }}
@@ -44,4 +56,5 @@ jobs:
         run: |
           echo "date: ${{ steps.d.outputs.date }}" >> $GITHUB_STEP_SUMMARY
           echo "jsonl lines: $(wc -l < jobs.jsonl 2>/dev/null || echo N/A)" >> $GITHUB_STEP_SUMMARY
+          cat shortlists/date=${{ steps.d.outputs.date }}/summary.json >> $GITHUB_STEP_SUMMARY 2>/dev/null || true
           du -sh data/ 2>/dev/null >> $GITHUB_STEP_SUMMARY || true

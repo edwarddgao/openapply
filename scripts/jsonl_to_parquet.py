@@ -7,7 +7,7 @@ Consumers:
   duckdb.sql("SELECT * FROM read_parquet('data/**/*.parquet', hive_partitioning=1)")
   pd.read_parquet('data/', partitioning='hive')
 """
-import argparse, json
+import argparse, json, shutil
 from pathlib import Path
 from datetime import datetime, timezone
 import pyarrow as pa
@@ -25,6 +25,9 @@ def main():
         rows = [json.loads(ln) for ln in f]
     for r in rows:
         r['date'] = args.date
+
+    date_dir = Path(args.out_dir) / f'date={args.date}'
+    shutil.rmtree(date_dir, ignore_errors=True)
 
     table = pa.Table.from_pylist(rows)
     pq.write_to_dataset(
