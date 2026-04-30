@@ -13,8 +13,8 @@ Algorithm:
   4. HTTP Range-fetch those ranges from cdx-NNNNN.gz
   5. Gunzip, parse CDX lines, extract slugs, merge into slugs/
 
-Merge semantics: existing slug files are preserved (so Simplify-bootstrapped
-entries survive a re-run).
+Merge semantics: existing slug files are preserved so manually bootstrapped
+entries survive a re-run.
 """
 import argparse, gzip, json, re, time, urllib.request
 from pathlib import Path

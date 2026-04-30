@@ -68,7 +68,7 @@ def fetch_greenhouse(slug: str) -> List[JobPosting]:
             description_html=j.get('content'),
             department=next((d.get('name') for d in (j.get('departments') or []) if isinstance(d, dict)), None),
             locations=locs, remote=remote,
-            posted_at=j.get('first_published'),
+            posted_at=j.get('first_published') or j.get('updated_at'),
             updated_at=j.get('updated_at'),
         ))
     return out
@@ -133,7 +133,7 @@ def fetch_ashby(slug: str) -> List[JobPosting]:
             department=j.get('department') or j.get('team'),
             locations=[j.get('location')] + sec_locs if j.get('location') else sec_locs,
             remote=j.get('isRemote'),
-            posted_at=j.get('publishedAt'),
+            posted_at=j.get('publishedAt') or j.get('updatedAt'),
             updated_at=j.get('updatedAt'),
             salary_min=sal_min, salary_max=sal_max,
             salary_currency=sal_curr,
