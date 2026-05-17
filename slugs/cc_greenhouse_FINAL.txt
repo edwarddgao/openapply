@@ -15,6 +15,7 @@
 1800contacts
 1848ventures
 1906newhighs
+1910genetics
 1pyra
 1stdibscom
 1uphealth
@@ -34,6 +35,7 @@
 3playmedia
 3q
 3redpartners
+42
 4dmoleculartherapeutics
 4lu44n1n37w012k
 5280
@@ -335,6 +337,7 @@ ambiencehealthcare
 ambientai
 ambiententerprises
 ambit
+amca
 ameelio
 amendconsulting
 amenitiz
@@ -438,10 +441,13 @@ appliedintuition
 appliedvr
 applovin
 applytoaktos
+applytobelfry
 applytoboltwise
 applytocloudforge
 applytococaptain
 applytocuebox
+applytodruxia
+applytoglazier
 applytogreenspark
 applytointerfold
 applytonectar
@@ -450,6 +456,7 @@ applytoonbrand
 applytopassagehealth
 applytopopulate
 applytoprefix
+applytoshelfcycle
 applytoterial
 applytotrashlab
 applytotruebuilt
@@ -487,6 +494,7 @@ arcdev
 arceeai
 arcellx
 arcesiumllc
+archer
 archer56
 archera
 archetypesg
@@ -516,6 +524,7 @@ arise
 arive
 arizeai
 arizonaliverhealth
+ark
 arkanalaboratories
 arkansascenterfordatasciences
 arkestroinc
@@ -606,6 +615,7 @@ atolls
 atomai
 atome
 atomiccartoons
+atomicmachines
 atomicvest
 atomwise
 attain
@@ -617,6 +627,7 @@ atticus
 attivopartners
 attn
 attune
+atumworks
 atwellgroup
 auctane
 audaxgroup
@@ -669,6 +680,7 @@ avride
 avvir
 awalsme
 awardco
+awardedsoftware
 awarehealthcare
 away
 aweber
@@ -904,7 +916,9 @@ bluebirdbioinc
 bluebirdkidshealth
 blueconic
 bluecoreinc
+bluecove
 bluecrestcapitalmanagement
+bluecrew
 bluecubeservices
 bluecurrent
 bluefin
@@ -931,6 +945,7 @@ blumira
 blurstudio
 blusharkdigital
 bme
+bmnt
 boardable
 boatwright
 bobbie
@@ -948,6 +963,7 @@ bombas
 bombfell
 bombora
 bondvet
+bonfirestudiosinc
 bonobos
 booker
 boomilp
@@ -1023,6 +1039,7 @@ brighthire
 brightideainc
 brightinsight
 brightmode
+brightnetwork
 brightsign
 brileysecurities
 brillapubliccharterschools
@@ -1140,6 +1157,7 @@ cannondesign
 canonical
 canonicaljobs
 canopycare
+canopyconnect
 canopytax
 canto
 canvas
@@ -1289,6 +1307,7 @@ chanzuckerberginitiative
 chaosindustries
 chapter
 chargepoint
+chariotdefense
 chariotenergy
 charlesandlynnschustermanfamilyphilanthropies
 charlesriveranalytics90
@@ -1298,6 +1317,7 @@ charliehealthbehavioralhealthoperations
 charliehealthepd
 charliehealthinternalcandidates
 charmindustrial
+charnetwork
 chartbeatinc
 chartboost
 charterts
@@ -1311,6 +1331,7 @@ checkr
 cheddar
 chelseaavondale
 chenmoore
+cherry
 chessielanevet
 chestercommunitycharterschool
 chewielabs
@@ -1727,12 +1748,14 @@ datera
 datsolutions
 datto
 dattojobs
+david
 davidzwirnergallery
 davinciderivatives
 davisdevelopment
 day1academies
 daybreakgames
 daybreakhealth
+daylight
 daymarkhealth
 dayonebiopharmaceuticals
 dbeconorthamerica
@@ -1835,6 +1858,7 @@ digitaltrendsfreelance
 digrestaurants
 digs
 dijanow
+diligent
 diligentcorporation
 diligentrobotics
 dillards
@@ -1853,6 +1877,7 @@ divergehealth
 divergent
 divvyhomes
 dkatalislabs
+dkatalissingapore
 dl1961
 dlhcorporation
 dlpbank
@@ -1978,6 +2003,7 @@ ecoworks
 ecsolutions
 edb
 ede
+edge
 edgeandnode
 edgeconnex
 edgedelta
@@ -2142,6 +2168,7 @@ euclidpower
 eudia
 eulerity
 eumaterialbank
+eve
 eventbriteinc
 eventussystemsinc
 ever
@@ -2255,6 +2282,7 @@ fenixinternational
 fermat
 fermataenergy
 fernride
+fetch
 fetchrewards
 feverup
 ffeinc
@@ -2418,6 +2446,7 @@ found
 foundation
 foundationriskpartners
 foundenergy
+founders
 foundersintelligence
 foundry
 foundrybrands
@@ -2492,6 +2521,7 @@ gaia
 gainternships
 gaintheory
 galagames
+galaxy
 galaxydigitalservices
 galileo
 galileofinancialtechnologies
@@ -2647,6 +2677,7 @@ goldendoorscholars
 goldenhippo
 goldflora
 goldsky
+golf
 golin
 gomaestro
 gomedia
@@ -2666,6 +2697,7 @@ goodtime
 goodunited
 goodwaygroup
 goodworldwide
+goody
 googlefiber
 goop
 gooutdoors
@@ -2897,6 +2929,7 @@ hitachivantaracorporation
 hive
 hivefinancialsystems
 hivemq
+hivestack
 hivewatch
 hiya
 hogarthworldwide
@@ -3011,6 +3044,7 @@ i360technologiesinc
 ians
 ibanfirst
 ibkr
+ibkrexternal
 ibotta
 icapitalnetwork
 icarus
@@ -3245,6 +3279,7 @@ joinuplift
 joonko
 jordanparkgroup
 jornaya
+journey
 jshiddenevents
 jukeboxhealth
 julieproducts
@@ -3335,6 +3370,7 @@ kindbody
 kinders
 kindo
 kindsnacks
+kinelo
 kinetic
 kinetic-xyz
 kinevant
@@ -3347,6 +3383,7 @@ kintsugi
 kion
 kiosk
 kisbeetherapeutics
+kite
 kivaorg
 kiwicoinc
 kizen
@@ -3369,9 +3406,11 @@ koalafi
 kobaltmusicgroup
 kobie
 koboldmetals
+koboldmetalsdrc
 kodiak
 kodiaksolutions
 koho
+koko
 kolena
 komodohealth
 konovo
@@ -3461,6 +3500,7 @@ ledgerinvesting
 ledgestone
 ledgy
 leftcoastventures
+legalist
 legalservicesnyc
 legatosecurity
 legendcareers
@@ -3672,6 +3712,7 @@ malloryalexander
 mammothbrands
 mammothgrowth
 managedbyq
+manatee
 mangroup
 mangrovemanagementpartners
 manifest
@@ -3679,6 +3720,7 @@ manifoldai
 manifoldbio
 manscaped
 manticoregames
+mantis
 mantl
 mantle
 mantrahealth
@@ -3722,6 +3764,7 @@ mastercontrol
 matchcharterpublicschool
 materialbank
 materialize
+materiom
 matherheadquarters
 matherintysons
 matherplace
@@ -3827,6 +3870,7 @@ metapack
 meter
 method
 methodsandmastery
+metisinc
 metoxinternationalinc
 metromile
 metron
@@ -3886,6 +3930,7 @@ missionlanellc
 missiontelecom
 mississippititleloansinc
 missourititleloansinc
+mithril
 mitratech
 mitsubishimotorsna
 mixbook
@@ -3949,6 +3994,7 @@ montaihealth
 monumentalsports
 monumentsoftwareinc
 monzo
+moon
 moonlite
 moonpay
 moovfinancial
@@ -3964,6 +4010,7 @@ mosaicgroup
 mosaicservicepartners
 motional
 motive
+motivity
 motivpowersystems
 motorefi
 motortrendgroup
@@ -4048,6 +4095,7 @@ naturesone
 naughtydog
 nauto
 nava
+navierai
 navierboat
 navigationfund
 navigatrgroupinternal
@@ -4064,6 +4112,7 @@ nearfoundation
 nearspacelabs
 nearsure
 nebius
+nectar
 neda
 nemahealth
 neo4j
@@ -4117,6 +4166,7 @@ nextroll
 nextrollinc
 nextstreet
 nexttrucking
+nexus
 nexxen
 nflcareers
 ngcash
@@ -4196,6 +4246,7 @@ nozominetworks
 nsrg
 ntconcepts
 nubank
+nucleo
 nucleus
 nugget
 nuharborsecurity
@@ -4342,6 +4393,7 @@ onlyone
 onna
 onnitlabs
 onrunning
+onshore
 onsights
 onsiteiq
 onxmaps
@@ -4366,6 +4418,7 @@ openstore
 opentable
 openteams
 openweb
+openwork
 openzeppelin
 operantai
 operationscareers
@@ -4646,6 +4699,7 @@ physicsx
 piaggiofastforward
 picarroinc
 piclo
+picnicai
 picnichealth
 picoquantitativetrading
 picsart
@@ -4712,6 +4766,7 @@ pluspower
 pma
 pmg
 poaptheproofofattendanceprotocol
+pocketco
 pocketgems
 podium81
 point
@@ -4729,6 +4784,7 @@ polycamcareers
 polychaincapital
 polygence
 polygonus
+polymathventures
 polysign
 pomelocare
 pontera
@@ -4746,6 +4802,7 @@ postman
 postscript
 powerdigitalmarketing
 powerfinance
+powerx
 pqshield
 practicebetter
 practisinglawinstitute
@@ -4811,6 +4868,7 @@ prolaio
 prolific
 prolificinteractive
 prometheusrealestategroup
+pronto
 proof
 proofxyz
 propel
@@ -4822,8 +4880,10 @@ propublica02
 prose
 prosek
 proshares
+prospa
 prospera
 prosperhealth
+protillionbiosciences
 protocollabs
 proton
 protonai
@@ -4843,6 +4903,7 @@ pubgsanramon
 pubgsm
 public
 publica
+publicrelay
 pubmatic
 pubnub
 puffco
@@ -4884,6 +4945,7 @@ quartethealth
 quartzy
 quberesearchandtechnologies
 queracomputinginc
+quetzal
 quick-release
 quickaction
 quid
@@ -5059,6 +5121,7 @@ resultsforamerica
 retailinsights
 retailnext
 retool
+retrofit
 reunionmarketing
 rev
 revance
@@ -5202,12 +5265,14 @@ safebreach
 sagansystems
 sagardcareers
 sage49
+sagebionetworks
 sagehomeloanscorporation
 sagent
 sagesure
 salaryfinance
 saleae
 salesloft
+saleswhale
 salientmotion
 salsify
 saltbox
@@ -5306,9 +5371,11 @@ seeitclear
 seekout
 seekr
 seenhealth
+seer
 seesaw
 segmed
 segment
+sei
 seisandbox
 seldon
 selectmanagementgroup
@@ -5329,6 +5396,7 @@ sennder
 senne
 senrasystems
 sensei
+senseiag
 sensiblecare
 sentilink
 sentinellabs
@@ -5407,6 +5475,7 @@ signavio
 signifyd95
 signifyhealth
 signifyhealthireland
+signpost
 sigstr
 siilo
 silananotechnologies
@@ -5454,6 +5523,7 @@ skilljar
 skillsoft
 skillzinc
 skinlaundry
+skupos
 skydio
 skyflow
 skylighthq
@@ -5467,6 +5537,7 @@ slice
 slickdeals
 slideinsurance
 slingshotaerospace
+slingshotbiosciences
 slyce
 smaamerica
 smalldoor
@@ -5541,6 +5612,7 @@ somethingspecialstudios
 sonderaustralia
 sondermind
 songfinch
+songtrust
 sonic
 sonicwall
 sonobello
@@ -5573,6 +5645,7 @@ southernpovertylawcenter
 southstarcareers
 southworks
 sovrn
+spaceium
 spacekinetic
 spacex
 spade
@@ -5598,6 +5671,7 @@ spektrum
 sphereentertainment
 sphinxdefense
 spideroak
+spin
 spinlaunch
 spinnakersupport
 spins
@@ -5814,6 +5888,7 @@ synacksrt
 synapsehealth
 synccomputing
 synchron
+syncro
 syncron
 synctera
 syndaxpharmaceuticals
@@ -6192,6 +6267,7 @@ trykarat
 tsg
 tsm
 ttcglobal
+ttiinc
 tubescience52
 tubitv
 tucows
@@ -6238,6 +6314,7 @@ ubiquitygp
 uchicagoepic
 udacity
 udig
+udio
 uhligllc
 uiflow
 ujet
@@ -6258,6 +6335,7 @@ undeadlabsllc
 underdogfantasy
 underscoremarketing
 understood
+understoodcare
 uneteaddbspain
 unframe
 unionai
@@ -6355,6 +6433,7 @@ vaticlabs
 vault
 vaxcyte
 vay
+vaya
 vaynercommerce
 vaynermedia
 vdc
@@ -6382,6 +6461,7 @@ ventureforamerica
 ventureglobal
 venturegloballng
 venturewell
+ventustherapeutics
 veocorporatecareers
 veracode
 veracyte
@@ -6405,6 +6485,7 @@ versprite
 verticalbridge
 vertocareers
 verusen
+verve
 verygoodventures
 vesalius
 vestahealthcare
@@ -6417,6 +6498,7 @@ vettery
 veza
 vgw
 via
+viagogo
 vialogic
 viamrobotics
 vibesllc
@@ -6455,6 +6537,7 @@ vivcourtevents
 vivi
 vivian
 vividseatsllc
+vivodyne
 vivvi
 vixxo
 vizai
@@ -6529,6 +6612,7 @@ wayvia
 wayward
 wealthfront
 weatherbug
+weave
 weavegrid
 weavehq
 weavixinc
@@ -6635,6 +6719,7 @@ workwize
 world4822stri986des
 worldcoinfoundation
 worldcoinorg
+worldlabs
 worldquant
 worlds
 worldsuntold

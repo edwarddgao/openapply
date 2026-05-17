@@ -127,6 +127,7 @@ airdna
 airprotein
 airshipsyndicate
 airslate
+airtasker
 airtm
 aisafety
 aiwyn
@@ -200,6 +201,7 @@ animaapp
 animaker
 animocabrands
 animoto
+anjuna
 anlatan
 anomali
 anotherco
@@ -247,6 +249,7 @@ apt-deco
 aptible
 aqemia.com
 aquabyte
+aquarium
 arable
 aragon
 arbitalhealth
@@ -327,6 +330,7 @@ axonify
 azul
 babylonhealth
 back
+backerkit
 backflip
 backmarket
 bai-inc
@@ -354,6 +358,7 @@ beacon
 beam
 beam-impact
 beamy
+bearflagrobotics
 beautybarrage
 bebop
 bedrockenergy
@@ -476,6 +481,7 @@ bridge2rwanda
 bridgebio
 brighte
 brightedge
+brighthire
 brightmachines
 brightonjones
 brightseedbio
@@ -492,6 +498,7 @@ bssp
 buckmason
 buildatmos
 buildgc
+buildingconnected
 buildingswell
 buildzoom
 bumbleinc
@@ -638,6 +645,7 @@ clearer
 clearpoint
 clerky
 clevertap
+clicktime
 climate-collaborative
 climatepower
 clipbook
@@ -868,6 +876,7 @@ directi
 disher
 disqo
 distro
+distru
 divergent3d
 diversified-automation
 diversifiedradiology
@@ -946,11 +955,13 @@ einride
 ekimetrics
 ekohealth
 elearningmind
+electric-twin
 electricmind
 electrifiedthermalsolutions
 eleks
 elementsolutions
 elementus
+eleostech
 elevatelabs
 elfbeauty
 eliyan
@@ -1032,6 +1043,7 @@ evidentid
 evisort-2
 evocalize
 evrealty-us
+evry-health
 exa-labs
 exabeam
 exowatt
@@ -1050,6 +1062,7 @@ fabric
 factor
 factored
 fairmat
+falcon
 fama
 fampay
 fanatee
@@ -1122,6 +1135,7 @@ flynncompanies
 flytographer
 flywheel-2
 fnatic
+fond
 food52
 foodsmart
 foodstuffs
@@ -1208,6 +1222,7 @@ getfable
 getlabs
 getmaple
 getmysa
+getpoint
 getsquire
 gettyimages
 getwingapp
@@ -1410,6 +1425,7 @@ ideayabio
 idmworks
 idt
 ifm-us
+iheartjane
 ilek.fr
 illumination
 imagexmedia
@@ -1429,6 +1445,7 @@ incandescent
 includedhealth
 incompasshealth
 incorta
+increase
 indebted
 indico
 indigoag
@@ -1554,6 +1571,7 @@ kcasbio
 kddia
 kdinfotech
 keepit
+keepsafe
 kekstcnc
 keloniatx
 kenko
@@ -1572,6 +1590,7 @@ killbusyseason
 kimiatherapeutics
 kingfishgroup
 kinsta
+kinter
 kippsocal
 kira-learning.com
 kitmanlabs
@@ -1691,6 +1710,7 @@ lionheartkid
 liquid.ai
 livechatinc
 livefront
+livingcarbon
 loadsmart
 loblawagency
 loblawdigital
@@ -1801,10 +1821,12 @@ masygroup
 matchgroup
 mathpresso
 matillion
+matrixpartners
 mattermost
 matterport
 matters
 matterworks
+maverickx
 max-retail
 maxmind
 mbrdna
@@ -1827,6 +1849,7 @@ mednow
 medrhythms
 meds
 meesho
+meetalbert
 meetingstreetschools
 megaport
 meili
@@ -1870,6 +1893,7 @@ mindbloom
 mindtickle
 minesense
 minted
+mirror
 missioncap
 missioncloud
 missioncontinues
@@ -1909,6 +1933,7 @@ moonsong-labs
 moorecolson
 morningbrew
 morningconsult
+mosaic-2
 mostly-ai
 mostudio
 motional
@@ -1957,6 +1982,7 @@ neowiz
 nesthealth
 nestig
 nesto
+netflix
 netlight
 netomi
 neuralink
@@ -2041,6 +2067,7 @@ onefootball
 onehouse
 oneimpression
 oneteam
+onit
 oomnitza
 oowlish
 opendoor
@@ -2064,12 +2091,14 @@ osedea
 osmind
 oso
 otilumionics
+ottertune
 ou-education-services
 our-place
 outpacebio
 outreach
 outsight
 outsourcedstaff
+overmind
 owner
 ownwell
 oxeonpartners
@@ -2187,6 +2216,7 @@ playvs
 plazahomemortgage
 plenti
 plexium
+plexus
 plivo
 plooto
 plum
@@ -2208,6 +2238,7 @@ pollyex
 polygon
 polymerlabs
 polyspectra
+polywork
 popmenu
 popsockets
 populus
@@ -2316,6 +2347,7 @@ purplelandmgmt
 purvis
 pushpress
 pushsecurity
+pyka
 pyramidci
 pythian
 q-centrix
@@ -2459,6 +2491,7 @@ retailmenot
 retailreinvented
 retro
 revealtech
+reveelgroup
 revefi
 reverielabs
 revero
@@ -2657,6 +2690,7 @@ signaturedentalpartners
 significanceinc
 signinsolutions
 siilo
+sila
 silasg
 silo
 silverbackstrategies
@@ -2686,6 +2720,7 @@ skygrid
 skylineconstruction
 skypointcloud
 skyralio
+skysafe
 skyslope
 skywarditsolutions
 skyways
@@ -2696,6 +2731,8 @@ smarsh
 smart-working-solutions
 smartadserver
 smartbugoperatingllc
+smartcar
+smartcuts
 smile.io
 smiledigitalhealth
 smsstaffing
@@ -2737,6 +2774,7 @@ space-time
 spaceback
 sparkclimatesolutions
 spawglass
+speakeasyapi
 spear
 spectral
 spekit
@@ -2774,6 +2812,7 @@ standtogether
 stanleygroup
 starburstdata
 starcompliance
+starkbank
 starknet
 startengine
 startuptap
@@ -2853,6 +2892,7 @@ swordhealth
 swyftx
 sygnaturediscovery
 sylvera
+symmetryinvestments
 symmetrysystems
 symplicity
 synapsefi
@@ -2927,6 +2967,7 @@ tensorwave
 tenstorrent
 teramind
 terawattinfrastructure
+terminus
 termius
 terra
 terraform
@@ -3060,6 +3101,7 @@ treasure-data
 treering
 trela
 trella
+trellis
 trendyol
 trengobv
 trevipay
@@ -3232,6 +3274,7 @@ vibrenthealth
 victoryhrg
 vida
 videahealth
+videoamp.com
 vidsy
 viget
 villa-homes
@@ -3248,6 +3291,7 @@ visioninvest
 visotrust
 vistarmedia-2
 vital-software
+vivacitylabs
 vivenu
 vivrelle
 vivsoft
@@ -3282,6 +3326,7 @@ wandb
 wandisco
 warblerlabs
 waremalcomb
+warmly
 wasabi
 wasatchglobal
 washburn
@@ -3416,6 +3461,7 @@ zendesk
 zeneducate
 zenogroup
 zensurance
+zenysis
 zeotap
 zerion
 zerofox
@@ -3430,6 +3476,7 @@ zilliz
 zimperium
 zingtree
 zinovo
+zippi
 zocks
 zoom
 zoomprop
