@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Launch Codex subagents against the latest OpenApply shortlist.
+"""Launch agent subagents (claude or codex) against the latest OpenApply shortlist.
 
 The script reads shortlists/latest.json, skips roles already recorded in the
-application ledger, and starts one non-interactive Codex process per selected
-role. Each Codex process receives a unique agent-browser session name; the
-launcher closes that session after the process exits.
+application ledger, and starts one non-interactive agent process per selected
+role. Each process receives a unique agent-browser session name; the launcher
+closes that session after the process exits. Agent backend is chosen via
+--agent (claude=`claude -p`, codex=`codex exec`); default is claude.
 """
 
 from __future__ import annotations
@@ -18,6 +19,7 @@ import re
 import shutil
 import subprocess
 import sys
+import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
@@ -31,6 +33,21 @@ DEFAULT_APPLICATION_POLICY = Path(os.environ.get('OPENAPPLY_APPLICATION_POLICY',
 DEFAULT_OUTPUT_DIR = Path(os.environ.get('OPENAPPLY_CODEX_OUTPUT_DIR', REPO_ROOT / 'applications/codex-subagent-logs'))
 DEFAULT_STATUS_PATH = Path('applications/status.jsonl')
 SKIP_STATUSES = {'submitted', 'blocked', 'needs_input'}
+RATE_LIMIT_PHRASES = (
+    "out of extra usage",
+    "you've hit your usage limit",
+    "you have hit your usage limit",
+    "you've hit your limit",
+    "you have hit your limit",
+    "usage limit reached",
+    "rate limit",
+)
+RATE_LIMIT_EVENT = threading.Event()
+
+
+def is_rate_limited(text: str) -> bool:
+    low = (text or '').lower()
+    return any(phrase in low for phrase in RATE_LIMIT_PHRASES)
 
 
 def utc_now() -> str:
@@ -122,15 +139,25 @@ def run_agent_browser(repo: Path, command: list[str], log_file: Any, timeout: in
 
 def prepare_browser_session(row: dict[str, str], session: str, args: argparse.Namespace, log_file: Any) -> None:
     close_browser_session(args.repo, session)
+    browser_cmd = [
+        'agent-browser',
+        '--session', session,
+    ]
+    if args.chrome_executable:
+        browser_cmd.extend(['--executable-path', args.chrome_executable])
+    if args.browser_profile:
+        browser_cmd.extend(['--profile', args.browser_profile])
+    if args.browser_session_name:
+        browser_cmd.extend(['--session-name', args.browser_session_name])
+    if args.headed:
+        browser_cmd.append('--headed')
+    browser_cmd.extend([
+        '--args', '--disable-blink-features=AutomationControlled',
+        'open', row.get('apply_url', ''),
+    ])
     run_agent_browser(
         args.repo,
-        [
-            'agent-browser',
-            '--session', session,
-            '--headed',
-            '--args', '--disable-blink-features=AutomationControlled',
-            'open', row.get('apply_url', ''),
-        ],
+        browser_cmd,
         log_file,
         timeout=120,
     )
@@ -147,7 +174,7 @@ def append_status(path: Path, record: dict[str, Any]) -> None:
 
 def parse_status(message: str) -> tuple[str, str]:
     text = ' '.join(message.strip().split())
-    lower = text.lower()
+    lower = re.sub(r'^[\W_]+', '', text.lower())
     if lower.startswith('submitted'):
         return 'submitted', text
     if lower.startswith('blocked'):
@@ -177,7 +204,7 @@ def build_prompt(row: dict[str, str], session: str, args: argparse.Namespace, sn
 - Open the application URL yourself.
 - Verify all filled values before submitting."""
 
-    return f"""You are an external Codex subagent for job applications. Apply to exactly one role.
+    return f"""You are an external job application agent. Apply to exactly one role.
 
 Role:
 - Snapshot date: {snapshot_date}
@@ -205,6 +232,7 @@ Rules:
 - Do not invent facts.
 - Submit only if all required answers are known.
 - If a required answer cannot be inferred, stop and return Needs input with exact question text.
+- On Greenhouse validation errors, inspect aria-invalid="true" / *-error fields. For invalid custom dropdowns, reselect via a different path; visible selected text alone may not clear validation.
 - If blocked, return the exact blocker.
 - Final response must be one concise status line only: Submitted / Blocked / Needs input, with confirmation URL or exact blocker.
 """
@@ -220,7 +248,60 @@ def close_browser_session(repo: Path, session: str) -> None:
     )
 
 
-def run_codex(row: dict[str, str], index: int, args: argparse.Namespace, snapshot_date: str) -> dict[str, Any]:
+def close_all_browser_sessions(repo: Path) -> None:
+    """Stop the shared agent-browser daemon so launch flags are honored.
+
+    agent-browser launch flags such as --headed and --args are daemon-scoped.
+    If a headless daemon is already running, later per-session opens print a
+    warning and ignore those flags. For application batches we prefer a clean
+    daemon start so Ashby submits are not accidentally performed headless.
+    """
+    subprocess.run(
+        ['agent-browser', 'close', '--all'],
+        cwd=repo,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+
+
+def build_codex_cmd(args: argparse.Namespace, prompt: str, final_path: Path) -> list[str]:
+    cmd = [
+        'codex', 'exec',
+        '-C', str(args.repo),
+        '-s', args.sandbox,
+        '--output-last-message', str(final_path),
+    ]
+    if args.reasoning_effort:
+        cmd.extend(['-c', f'model_reasoning_effort="{args.reasoning_effort}"'])
+    if args.model:
+        cmd.extend(['--model', args.model])
+    cmd.append(prompt)
+    return cmd
+
+
+def build_claude_cmd(args: argparse.Namespace, prompt: str) -> list[str]:
+    cmd = ['claude', '-p', '--dangerously-skip-permissions']
+    if args.model:
+        cmd.extend(['--model', args.model])
+    cmd.append(prompt)
+    return cmd
+
+
+def run_agent(row: dict[str, str], index: int, args: argparse.Namespace, snapshot_date: str) -> dict[str, Any]:
+    if RATE_LIMIT_EVENT.is_set():
+        return {
+            'id': row.get('id', ''),
+            'status': 'skipped_rate_limit',
+            'detail': 'Skipped: agent quota exhausted earlier in batch',
+            'company_slug': row.get('company_slug', ''),
+            'title': row.get('title', ''),
+            'apply_url': row.get('apply_url', ''),
+            'snapshot_date': snapshot_date,
+            'agent': args.agent,
+            '_skip_ledger': True,
+        }
+
     session = session_name(row, index)
     output_dir = args.output_dir
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -235,44 +316,68 @@ def run_codex(row: dict[str, str], index: int, args: argparse.Namespace, snapsho
     prompt = build_prompt(row, session, args, snapshot_date)
     final_path.unlink(missing_ok=True)
 
-    cmd = [
-        'codex', 'exec',
-        '-C', str(args.repo),
-        '-s', args.sandbox,
-        '--output-last-message', str(final_path),
-    ]
-    if args.reasoning_effort:
-        cmd.extend(['-c', f'model_reasoning_effort="{args.reasoning_effort}"'])
-    if args.model:
-        cmd.extend(['--model', args.model])
-    cmd.append(prompt)
+    if args.agent == 'codex':
+        cmd = build_codex_cmd(args, prompt, final_path)
+    else:
+        cmd = build_claude_cmd(args, prompt)
 
     started_at = utc_now()
     return_code = None
+    browser_setup_error: Exception | None = None
     try:
         with log_path.open('w', encoding='utf-8') as log_file:
             if args.prepare_browser:
-                prepare_browser_session(row, session, args, log_file)
-                log_file.write(f'\nPrepared browser session {session}\n')
-                log_file.flush()
-            proc = subprocess.run(
-                cmd,
-                cwd=args.repo,
-                env=os.environ.copy(),
-                stdout=log_file,
-                stderr=subprocess.STDOUT,
-                text=True,
-                timeout=args.timeout_minutes * 60,
-                check=False,
-            )
-            return_code = proc.returncode
+                try:
+                    prepare_browser_session(row, session, args, log_file)
+                except (RuntimeError, OSError) as exc:
+                    browser_setup_error = exc
+                else:
+                    log_file.write(f'\nPrepared browser session {session}\n')
+                    log_file.flush()
+            if browser_setup_error is None:
+                if args.agent == 'claude':
+                    proc = subprocess.run(
+                        cmd,
+                        cwd=args.repo,
+                        stdin=subprocess.DEVNULL,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT,
+                        text=True,
+                        timeout=args.timeout_minutes * 60,
+                        check=False,
+                    )
+                    log_file.write(proc.stdout)
+                    log_file.flush()
+                    final_path.write_text(proc.stdout, encoding='utf-8')
+                else:
+                    proc = subprocess.run(
+                        cmd,
+                        cwd=args.repo,
+                        stdin=subprocess.DEVNULL,
+                        stdout=log_file,
+                        stderr=subprocess.STDOUT,
+                        text=True,
+                        timeout=args.timeout_minutes * 60,
+                        check=False,
+                    )
+                return_code = proc.returncode
     except subprocess.TimeoutExpired:
         return_code = 124
-    except (RuntimeError, OSError) as exc:
-        return_code = 1
-        final_path.write_text(f'Blocked: browser setup failed: {exc}', encoding='utf-8')
     finally:
         close_browser_session(args.repo, session)
+
+    if browser_setup_error is not None:
+        return {
+            'id': row.get('id', ''),
+            'status': 'infra_error',
+            'detail': f'Browser setup failed: {browser_setup_error}',
+            'company_slug': row.get('company_slug', ''),
+            'title': row.get('title', ''),
+            'apply_url': row.get('apply_url', ''),
+            'snapshot_date': snapshot_date,
+            'agent': args.agent,
+            '_skip_ledger': True,
+        }
 
     final_message = ''
     if final_path.exists():
@@ -283,7 +388,12 @@ def run_codex(row: dict[str, str], index: int, args: argparse.Namespace, snapsho
 
     status, detail = parse_status(final_message)
     if return_code not in {0, None} and status == 'unknown':
-        detail = f'Codex exited with code {return_code}: {detail}'
+        detail = f'{args.agent} exited with code {return_code}: {detail}'
+
+    if is_rate_limited(final_message) or is_rate_limited(detail):
+        if not RATE_LIMIT_EVENT.is_set():
+            RATE_LIMIT_EVENT.set()
+            print(f'[rate-limit] detected on role {index} ({row.get("company_slug","")}); short-circuiting remaining roles', flush=True)
 
     record = {
         'id': row.get('id', ''),
@@ -294,7 +404,8 @@ def run_codex(row: dict[str, str], index: int, args: argparse.Namespace, snapsho
         'apply_url': row.get('apply_url', ''),
         'snapshot_date': snapshot_date,
         'session': session,
-        'codex_return_code': return_code,
+        'agent': args.agent,
+        'agent_return_code': return_code,
         'output_path': ledger_path(args.repo, final_path),
         'log_path': ledger_path(args.repo, log_path),
         'started_at': started_at,
@@ -314,6 +425,8 @@ def selected_rows(rows: list[dict[str, str]], statuses: dict[str, dict[str, Any]
             continue
         if not row.get('apply_url'):
             continue
+        if not args.include_federal_defense and row.get('federal_defense_note') == 'check-federal/defense':
+            continue
         previous = statuses.get(role_id)
         if previous:
             previous_status = previous.get('status')
@@ -326,7 +439,8 @@ def selected_rows(rows: list[dict[str, str]], statuses: dict[str, dict[str, Any]
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description='Apply to latest shortlist roles with Codex subagents')
+    parser = argparse.ArgumentParser(description='Apply to latest shortlist roles with claude or codex subagents')
+    parser.add_argument('--agent', choices=['claude', 'codex'], default='codex', help='which agent CLI to launch per role')
     parser.add_argument('--repo', type=Path, default=REPO_ROOT)
     parser.add_argument('--latest', type=Path, default=Path('shortlists/latest.json'))
     parser.add_argument('--pool', choices=['fresh', 'backlog', 'both'], default='fresh')
@@ -340,6 +454,12 @@ def main() -> None:
     parser.add_argument('--prepare-browser', dest='prepare_browser', action='store_true')
     parser.add_argument('--no-prepare-browser', dest='prepare_browser', action='store_false')
     parser.set_defaults(prepare_browser=True)
+    parser.add_argument('--headless', dest='headed', action='store_false', help='Run agent-browser without --headed (no visible window). May trip anti-bot on stricter sites.')
+    parser.add_argument('--headed', dest='headed', action='store_true', help='Run agent-browser with --headed (visible window, default).')
+    parser.set_defaults(headed=True)
+    parser.add_argument('--browser-profile', default='', help='agent-browser --profile value; default empty')
+    parser.add_argument('--browser-session-name', default='openapply', help='agent-browser --session-name value')
+    parser.add_argument('--chrome-executable', default='', help='Path to a real Chrome binary; default empty uses agent-browser bundled Chromium (lighter on memory). Pass /Applications/Google Chrome.app/Contents/MacOS/Google Chrome to avoid the "Chrome for Testing" anti-bot signal at higher memory cost.')
     parser.add_argument('--browser-wait-ms', type=int, default=3000)
     parser.add_argument('--sandbox', default='danger-full-access', choices=['read-only', 'workspace-write', 'danger-full-access'])
     parser.add_argument('--model', default='')
@@ -347,8 +467,14 @@ def main() -> None:
     parser.add_argument('--timeout-minutes', type=int, default=45)
     parser.add_argument('--retry-status', default='', help='comma-separated statuses to retry, e.g. needs_input,blocked')
     parser.add_argument('--only-id', default='', help='comma-separated role ids to apply regardless of order')
+    parser.add_argument('--include-federal-defense', action='store_true', help='allow auto-applying roles flagged as federal/defense instead of skipping them')
     parser.add_argument('--dry-run', action='store_true')
     args = parser.parse_args()
+
+    if not args.model and args.agent == 'claude':
+        args.model = 'sonnet'
+    if not args.model and args.agent == 'codex':
+        args.model = 'gpt-5.5'
 
     args.repo = args.repo.resolve()
     args.status = repo_path(args.repo, args.status)
@@ -358,8 +484,8 @@ def main() -> None:
     args.skill_path = args.skill_path.expanduser()
 
     if not args.dry_run:
-        if not shutil.which('codex'):
-            raise SystemExit('codex CLI not found on PATH')
+        if not shutil.which(args.agent):
+            raise SystemExit(f'{args.agent} CLI not found on PATH')
         if not shutil.which('agent-browser'):
             raise SystemExit('agent-browser CLI not found on PATH')
         validate_json_file(args.applicant_profile, 'Applicant profile')
@@ -399,14 +525,20 @@ def main() -> None:
         return
 
     max_workers = max(1, min(args.parallel, len(todo)))
+    if args.prepare_browser:
+        close_all_browser_sessions(args.repo)
     print(f'Launching {len(todo)} role(s) from {latest["date"]} with parallel={max_workers}', flush=True)
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = {}
         for index, row in enumerate(todo, 1):
             print(f'Starting {index}/{len(todo)}: {row.get("company_slug", "")} - {row.get("title", "")}', flush=True)
-            futures[executor.submit(run_codex, row, index, args, latest['date'])] = row
+            futures[executor.submit(run_agent, row, index, args, latest['date'])] = row
         for future in as_completed(futures):
             record = future.result()
+            if record.pop('_skip_ledger', False):
+                reason = 'infra error' if record.get('status') == 'infra_error' else 'rate limit'
+                print(f'Skipped ({reason}, not ledgered): {record.get("company_slug","")} - {record.get("title","")} :: {record.get("detail","")}', flush=True)
+                continue
             append_status(args.status, record)
             print(f'Finished: {record["detail"]}', flush=True)
 
