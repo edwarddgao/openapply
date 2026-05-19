@@ -11,6 +11,8 @@ Outputs:
   shortlists/date=YYYY-MM-DD/summary.json
   shortlists/date=YYYY-MM-DD/report.md
 """
+from __future__ import annotations
+
 import argparse
 import csv
 import html
@@ -33,12 +35,25 @@ ROLE_RE = re.compile(r'''(?ix)\b(
   full[- ]?stack|fullstack|web\s+engineer|mobile\s+engineer|ios\s+engineer|
   android\s+engineer|firmware|embedded|cloud\s+engineer|platform\s+engineer|
   infrastructure\s+engineer|devops|site\s+reliability|sre\b|systems\s+engineer|
-  qa\s+engineer|test\s+engineer|automation\s+engineer|
-  data\s+(engineer|analyst|scientist|platform|infrastructure)|analytics\s+engineer|
-  business\s+intelligence|bi\s+engineer|machine\s+learning|ml\b|ai\s+engineer|
+  qa\s+engineer|test\s+engineer|
+  data\s+(engineer|platform|infrastructure)|analytics\s+engineer|
+  bi\s+engineer|machine\s+learning|ml\b|ai\s+engineer|
   artificial\s+intelligence|research\s+engineer|bioinformatics|computational\s+biologist|
-  quantitative\s+(developer|researcher|analyst|engineer)
+  quantitative\s+(developer|researcher|engineer)
 )\b''')
+
+INDUSTRIAL_CONTROLS_TITLE_RE = re.compile(r'\b(plc|scada|hvac|controls\s+(engineer|developer)|industrial\s+(automation|systems|controls)|process\s+automation|instrumentation\s+engineer)\b', re.I)
+CAD_PROGRAMMER_TITLE_RE = re.compile(r'\bcad\s+programmer\b', re.I)
+
+ANALYST_TITLE_RE = re.compile(r'\banalyst\b', re.I)
+SCIENTIST_TITLE_RE = re.compile(r'\bscientist\b', re.I)
+SALESFORCE_TITLE_RE = re.compile(r'\bsalesforce\b', re.I)
+BUSINESS_AUTOMATION_TITLE_RE = re.compile(r'business\s+automation', re.I)
+SUPPORT_TITLE_RE = re.compile(r'\bsupport\b', re.I)
+TESTER_TITLE_RE = re.compile(r'\btester\b', re.I)
+PHD_MS_REQUIRED_TITLE_RE = re.compile(r'\bph\.?d\b|\bm\.?s\.?\s+required|advanced\s+degree\s+required|graduate\s+degree\s+required', re.I)
+RESEARCHER_TITLE_RE = re.compile(r'\bresearcher\b', re.I)
+POSTDOC_FELLOW_TITLE_RE = re.compile(r'\b(postdoc|post-doc|postdoctoral|fellowship)\b|postdoctoral\s+fellow|\bfellow\b', re.I)
 
 ENTRY_TITLE_RE = re.compile(r'''(?ix)\b(
   entry[- ]?level|junior|jr\.?|new\s+grad|new\s+graduate|recent\s+graduate|
@@ -66,7 +81,7 @@ LIKELY_MID_TITLE_RE = re.compile(r'''(?ix)\b(
   sde\s*(iii|3)\b|level\s*3\b|l3\b
 )\b''')
 
-SENIOR_TITLE_RE = re.compile(r'\b(senior|sr\.?|staff|principal|lead|manager|director|head of|vp|vice president|architect)\b', re.I)
+SENIOR_TITLE_RE = re.compile(r'\b(senior|sr\.?|(?<!technical )staff|principal|lead|manager|director|head of|vp|vice president|architect)\b', re.I)
 INTERN_TITLE_RE = re.compile(r'\b(intern|internship|co[- ]?op|coop|working student|student researcher)\b', re.I)
 
 NONTECH_TITLE_RE = re.compile(r'''(?ix)\b(
@@ -75,11 +90,17 @@ NONTECH_TITLE_RE = re.compile(r'''(?ix)\b(
   operations\s+associate|special\s+ops|recruit|talent|people\s+partner|finance|
   billing|credit\s+analyst|investment\s+analyst|clinical|nurse|physician|
   recipe\s+developer|raw\s+materials\s+developer|materials\s+developer|
-  curriculum\s+developer|instructional\s+developer|content\s+developer|business\s+development
+  curriculum\s+developer|instructional\s+developer|content\s+developer|business\s+development|
+  home\s+developer|property\s+developer|land\s+developer|real\s+estate\s+developer|housing\s+developer|
+  workforce\s+developer|community\s+developer
 )\b''')
 
 HARDWARE_ONLY_TITLE_RE = re.compile(
-    r'\b(mechanical\s+engineer|electrical\s+engineer|manufacturing\s+engineer|field\s+engineer|civil\s+engineer|structural\s+engineer)\b',
+    r'\b(mechanical\s+engineer|electrical\s+engineer|manufacturing\s+engineer|field\s+engineer|civil\s+engineer|structural\s+engineer|'
+    r'hardware\s+(engineer|systems\s+engineer|systems|design)|asic\s+(engineer|design|physical)|fpga\s+(engineer|design)|'
+    r'rf\s+engineer|optical\s+engineer|photonics\s+engineer|chip\s+design|physical\s+design|soc\s+design|'
+    r'analog\s+engineer|mixed[- ]signal\s+engineer|power\s+engineer|board\s+designer|pcb\s+designer|'
+    r'validation\s+engineer|test\s+technician)\b',
     re.I,
 )
 
@@ -109,6 +130,7 @@ REMOTE_RE = re.compile(r'\b(remote|distributed|anywhere|global|worldwide|home ba
 HYBRID_RE = re.compile(r'\b(hybrid|office|onsite|on-site|in office|hq|headquarters)\b', re.I)
 
 FOREIGN_RE = re.compile(r'''(?ix)\b(
+  costa\s+rica|
   latin\s+america|latam|mexico|europe|emea|united\s+kingdom|uk|england|scotland|ireland|
   london|bristol|dublin|spain|madrid|barcelona|france|paris|germany|berlin|munich|
   italy|rome|milan|netherlands|amsterdam|poland|warsaw|romania|portugal|lisbon|
@@ -116,7 +138,7 @@ FOREIGN_RE = re.compile(r'''(?ix)\b(
   kazakhstan|ukraine|india|bengaluru|bangalore|delhi|mumbai|hyderabad|singapore|
   australia|sydney|melbourne|new\s+zealand|japan|tokyo|korea|seoul|china|beijing|
   shanghai|philippines|vietnam|thailand|indonesia|malaysia|israel|tel\s+aviv|turkey|
-  uae|dubai|brazil|argentina|colombia|chile|peru|south\s+africa
+  uae|dubai|brazil|brasil|sao\s+paulo|s%C3%A3o\s+paulo|s%E3o\s+paulo|s\xc3\xa3o\s+paulo|rio\s+de\s+janeiro|belo\s+horizonte|brasilia|salvador|fortaleza|curitiba|recife|porto\s+alegre|argentina|buenos\s+aires|colombia|bogota|chile|santiago|peru|lima|south\s+africa|johannesburg|cape\s+town
 )\b''')
 
 SECURITY_RE = re.compile(r'''(?ix)\b(
@@ -130,6 +152,25 @@ SECURITY_TITLE_RE = re.compile(r'(?ix)(\bsecret\b|top\s+secret|ts/sci|\bsci\b|cl
 SPONSOR_RE = re.compile(r'\b(visa sponsorship|sponsorship|will not sponsor|do not sponsor|unable to sponsor|without sponsorship|h-?1b|h1b|tn visa|tn status)\b', re.I)
 TN_POSITIVE_RE = re.compile(r'\b(tn visa|tn status|visa sponsorship available|sponsor visas|sponsorship available|h-?1b transfer)\b', re.I)
 FEDERAL_RE = re.compile(r'\b(federal|dod|department of defense|army|navy|air force|space force|government|public sector|homeland security|intelligence community|cia|nsa|fbi|defense|aerospace|military)\b', re.I)
+US_CA_TAIL_RE = re.compile(r'(?ix)(united\s+states|usa|u\.s\.|us|canada|AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|IA|ID|IL|IN|KS|KY|LA|MA|MD|MI|MN|MO|MS|MT|NC|ND|NE|NH|NJ|NM|NV|NY|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VA|VT|WA|WI|WV|WY|ON|BC|QC|AB|MB|SK|NS|NB|NL|PE|ontario|british\s+columbia|quebec|alberta|manitoba|saskatchewan|nova\s+scotia|new\s+brunswick|newfoundland|prince\s+edward\s+island)')
+
+
+def location_tails(locations: str) -> list[str]:
+    tails = []
+    for loc in re.split(r'[;|]', locations):
+        parts = [part.strip() for part in loc.split(',') if part.strip()]
+        if len(parts) >= 2:
+            tails.append(parts[-1])
+    return tails
+
+
+def has_foreign_country_tail(locations: str) -> bool:
+    # Trust explicit trailing country tokens over city-name matches like "San Jose".
+    return any(not US_CA_TAIL_RE.fullmatch(tail) and not US_CA_RE.search(tail) for tail in location_tails(locations))
+
+
+def has_us_ca_tail(locations: str) -> bool:
+    return any(US_CA_TAIL_RE.fullmatch(tail) or US_CA_RE.search(tail) for tail in location_tails(locations))
 
 TAG_RE = re.compile(r'<[^>]+>')
 WS_RE = re.compile(r'\s+')
@@ -207,14 +248,18 @@ def age_bucket(age: int | None) -> str:
 
 def role_type(title: str, department: str) -> str:
     text = f'{title} {department}'.lower()
+    if re.search(r'\b(cnc|machinist|sheet\s+metal|tool\s+&\s+die|toolmaker|welder|fabricator|cad\s+drafter|gd&t|g-?code|machining|lathe|milling)\b', text):
+        return 'Manufacturing/CNC'
+    if re.search(r'\b(data (annotat|labeler|labeling|labelling|contributor|rater|tutor|trainer|specialist)|data annotation|annotation specialist|ai tutor|ai trainer|ai data (annotat|labeler|trainer|tutor|specialist|contributor|rater|moderator)|rlhf|model trainer|content moderator)\b', text):
+        return 'Data/Annotation'
+    if re.search(r'\b(test engineer|engineer\s+in\s+test|qa engineer|qa automation|qa analyst|quality assurance|sdet|software\s+development\s+engineer\s+in\s+test|test automation)\b', text):
+        return 'Test/QA'
     if re.search(r'\b(data scientist|machine learning|ml\b|ai engineer|research engineer|bioinformatics|computational|quantitative)\b', text):
         return 'Data/ML'
     if re.search(r'\b(data engineer|data analyst|analytics engineer|business intelligence|bi engineer|data platform)\b', text):
         return 'Data/Analytics'
     if re.search(r'\b(platform|infrastructure|devops|site reliability|sre|systems engineer|cloud engineer)\b', text):
         return 'Platform/Infra'
-    if re.search(r'\b(test engineer|qa engineer|qa automation|automation engineer)\b', text):
-        return 'Test/QA'
     if re.search(r'\b(firmware|embedded)\b', text):
         return 'Embedded/Firmware'
     if re.search(r'\b(front|backend|full[- ]?stack|fullstack|web|mobile|ios|android|developer|programmer|software)\b', text):
@@ -223,12 +268,15 @@ def role_type(title: str, department: str) -> str:
 
 
 def location_bucket(locations: str, remote: bool) -> str:
-    if remote or REMOTE_RE.search(locations) or REGION_ONLY_RE.match(locations):
+    has_us_ca_city = bool(US_CA_RE.search(locations))
+    if (remote or REMOTE_RE.search(locations) or REGION_ONLY_RE.match(locations)) and not has_us_ca_city:
         return 'remote-or-region'
-    has_us_ca = bool(US_CA_RE.search(locations) or US_CA_CODE_RE.search(locations))
     has_foreign = bool(FOREIGN_RE.search(locations))
-    if has_foreign and not has_us_ca:
+    if has_foreign and not has_us_ca_city:
         return 'foreign-or-unknown'
+    if has_foreign_country_tail(locations) and not has_us_ca_tail(locations):
+        return 'foreign-or-unknown'
+    has_us_ca = has_us_ca_city or bool(US_CA_CODE_RE.search(locations))
     if has_us_ca and has_foreign:
         return 'mixed-us-ca-foreign-onsite'
     if has_us_ca and HYBRID_RE.search(locations):
@@ -407,24 +455,55 @@ def normalize(row: dict[str, Any], snapshot_date: date) -> dict[str, Any]:
     }
 
 
+RECRUITER_AGGREGATOR_SLUGS = frozenset({
+    'jack-jill-external-ats',
+})
+
+
 def removal_reasons(job: dict[str, Any], excluded_role_types: set[str], backlog_days: int) -> list[str]:
     reasons = []
     title = job['title']
     text = job['_full_text']
+    if job['company_slug'] in RECRUITER_AGGREGATOR_SLUGS:
+        reasons.append(f'recruiter-aggregator:{job["company_slug"]}')
     if job['role_type'] in excluded_role_types:
         reasons.append(f'excluded-role:{job["role_type"]}')
     if SENIOR_TITLE_RE.search(title):
         reasons.append('senior-title')
     if INTERN_TITLE_RE.search(title):
         reasons.append('intern-title')
-    if NONTECH_TITLE_RE.search(title):
+    if NONTECH_TITLE_RE.search(title) and not re.search(r'\b(software\s+(engineer|developer)|backend\s+engineer|frontend\s+engineer|full[- ]?stack\s+engineer|fullstack\s+engineer|mobile\s+engineer|ios\s+engineer|android\s+engineer|web\s+engineer|machine\s+learning\s+engineer|ml\s+engineer|ai\s+engineer|data\s+(scientist|engineer|analyst)|platform\s+engineer|infrastructure\s+engineer|devops\s+engineer|sre\b|site\s+reliability)\b', title, re.I):
         reasons.append('nontech-title')
+    if ANALYST_TITLE_RE.search(title):
+        reasons.append('analyst-title')
+    if SCIENTIST_TITLE_RE.search(title):
+        reasons.append('scientist-title')
+    if SALESFORCE_TITLE_RE.search(title):
+        reasons.append('salesforce-title')
+    if BUSINESS_AUTOMATION_TITLE_RE.search(title):
+        reasons.append('business-automation-title')
+    if SUPPORT_TITLE_RE.search(title):
+        reasons.append('support-title')
+    if TESTER_TITLE_RE.search(title):
+        reasons.append('tester-title')
+    if PHD_MS_REQUIRED_TITLE_RE.search(title):
+        reasons.append('phd-or-ms-required-title')
+    if RESEARCHER_TITLE_RE.search(title):
+        reasons.append('researcher-title')
+    if POSTDOC_FELLOW_TITLE_RE.search(title):
+        reasons.append('postdoc-or-fellow-title')
+    if INDUSTRIAL_CONTROLS_TITLE_RE.search(title):
+        reasons.append('industrial-controls-title')
+    if CAD_PROGRAMMER_TITLE_RE.search(title):
+        reasons.append('cad-programmer-title')
     if HARDWARE_ONLY_TITLE_RE.search(title) and not re.search(r'\bsoftware|firmware|embedded|data|automation\b', title, re.I):
         reasons.append('hardware-only-title')
     if job['location_bucket'] in {'remote-or-region', 'foreign-or-unknown'}:
         reasons.append(job['location_bucket'])
     if SECURITY_RE.search(text) or SECURITY_TITLE_RE.search(f'{title} {job["department"]}'):
         reasons.append('security-clearance-citizenship')
+    if job.get('federal_defense_note') == 'check-federal/defense':
+        reasons.append('federal-defense-manual-review')
     if job['senior_evidence_type'] in SENIOR_DESCRIPTION_TYPES:
         reasons.append('senior-description')
     if job['age_days'] == '':
@@ -467,7 +546,7 @@ def write_report(path: Path, summary: dict[str, Any]) -> None:
         '',
         f'- Fresh: age <= {summary["fresh_days"]} days',
         f'- Backlog: {summary["fresh_days"] + 1}-{summary["backlog_days"]} days',
-        '- Excludes explicit senior/intern titles, clean senior description signals, remote/region-only locations, security/citizenship/ITAR blockers, and configured role types.',
+        '- Excludes explicit senior/intern titles, clean senior description signals, remote/region-only locations, security/citizenship/ITAR blockers, federal/defense manual-review roles, and configured role types.',
         '',
         '## Result',
         '',
@@ -513,7 +592,7 @@ def main() -> None:
     parser.add_argument('--date', default='latest', help='YYYY-MM-DD or latest')
     parser.add_argument('--out-dir', default='shortlists')
     parser.add_argument('--fresh-days', type=int, default=60)
-    parser.add_argument('--exclude-role-types', default='Test/QA,Embedded/Firmware')
+    parser.add_argument('--exclude-role-types', default='Test/QA,Embedded/Firmware,Data/Annotation,Manufacturing/CNC')
     args = parser.parse_args()
 
     data_dir = Path(args.data_dir)
@@ -549,7 +628,14 @@ def main() -> None:
             job['remove_reasons'] = ''
             backlog.append(job)
 
-    sort_key = lambda row: (row['company_slug'].lower(), row['title'].lower(), row['locations'].lower(), str(row['posted_at']))
+    def posted_timestamp(row: dict[str, Any]) -> float:
+        text = str(row.get('posted_at') or '').replace('Z', '+00:00')
+        try:
+            return datetime.fromisoformat(text).timestamp()
+        except ValueError:
+            return 0.0
+
+    sort_key = lambda row: (-posted_timestamp(row), row['company_slug'].lower(), row['title'].lower(), row['locations'].lower())
     fresh.sort(key=sort_key)
     backlog.sort(key=sort_key)
     removed.sort(key=lambda row: (row.get('remove_reasons', ''),) + sort_key(row))
