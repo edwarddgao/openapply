@@ -854,6 +854,7 @@ coreflow
 coreoftheheart
 coretylynt
 corevc
+corgi
 coris
 cortex
 corti
@@ -2127,6 +2128,7 @@ marshmallow
 martian
 masabi
 mastodon
+mastra
 materia
 materialsecurity
 mathgpt
