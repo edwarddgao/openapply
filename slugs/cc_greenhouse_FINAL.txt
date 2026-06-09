@@ -724,6 +724,7 @@ azragamesoa
 aztec
 aztecgroup
 azumo
+azuritypharmaceuticals
 azuritypharmaceuticalsindia
 b12
 b2c2
@@ -1127,6 +1128,7 @@ cabinethealth
 caddellconstruction
 cadencehealth
 cadencesolutions
+cadimensions
 cadrehospice
 cadwell
 cafortune
@@ -1729,6 +1731,7 @@ cvjc
 cvx
 cybermediatechnologies
 cybersheath
+cycles
 cyluscybersecurity
 cymulate
 cypresscreekrenewables
@@ -2766,6 +2769,7 @@ grammarly
 granular
 granum
 graphcore
+graphonai
 grassrootsanalytics
 gratadata
 gravitate
@@ -4129,6 +4133,7 @@ mythica
 mythicalgames
 myunidaysltd
 mzwallace
+n26
 n2alljobs
 n2co
 n2cointernal
@@ -4314,6 +4319,7 @@ novisto78
 novo
 novoed
 nozominetworks
+nscaleoperationsukltd
 nsrg
 ntconcepts
 ntx
@@ -4345,6 +4351,7 @@ nzxt
 o1labs
 o2epcminc
 oaklineproperties
+oasis
 oasishealthpartners
 oasislabs
 oasisnetwork
@@ -4876,6 +4883,7 @@ pontera
 pontosoftwareinc
 poppulo
 populus
+portable
 portagecareers
 porternovelli
 portwest
@@ -4935,6 +4943,7 @@ privatehealthmanagement
 privateidentity
 prizepicks
 proalphagroup
+procaresolutions
 processstreet
 proconex
 prodigal
@@ -5267,6 +5276,7 @@ ripplematchinterns
 rise8
 riskified
 riskledger
+rithum
 rithumliboard
 ritterandbrogdenorthodontics
 ritual
@@ -5674,6 +5684,7 @@ snapdocs
 snapmobileinc
 snappy
 snorkelai
+snowcompanies
 snowflakecomputing
 snowpeak
 snyk
@@ -5904,6 +5915,7 @@ striiminc
 strike
 stripe
 stripes
+strivacity
 strivehealth
 strivepharmacy
 striveworks
@@ -5963,6 +5975,7 @@ supportingstrategies1
 supraoracles
 surefirecyber
 sureify
+surfai
 surfair
 surgicalnotes
 survata
@@ -6164,6 +6177,7 @@ thegivingblock
 thegoodfoodinstitute80
 thehackerati
 thehealthmanagementacademy
+thehutgroup
 theiconic
 theinfatuation
 theinformation
@@ -6984,14 +6998,3 @@ zwift
 zynga
 zynga10alabs
 zyngacareers
-azuritypharmaceuticals
-cadimensions
-cycles
-n26
-nscaleoperationsukltd
-portable
-procaresolutions
-rithum
-snowcompanies
-strivacity
-thehutgroup

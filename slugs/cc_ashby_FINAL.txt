@@ -91,12 +91,14 @@ activesite
 adapt
 adaption
 adaptive
+adaptive-innovations
 adaptive-ml
 adaptivesecurity
 adaptyv
 addi
 additiveai
 adept.ai
+aditude
 adthena
 aduro-advisors
 aegis-ai
@@ -351,6 +353,7 @@ aurelian
 aureliussystems
 aurorasolar
 authenticins
+authorium
 authzed
 automat
 autone
@@ -491,6 +494,7 @@ blee
 blink
 bliro
 blissway
+blitzy
 block-labs
 blockdaemon
 blockhouse
@@ -564,6 +568,7 @@ bubble
 buena
 buffer
 builder-prime
+buildforce
 buildlinx
 buildout
 buildwithfern
@@ -683,6 +688,7 @@ chatbase
 chattermill
 checkatrade
 checkly
+checkout.com
 chestnut
 chief
 chilipiper
@@ -727,6 +733,7 @@ clean-nutraceuticals
 clearbank
 clearco
 clearvector
+clera
 cleric
 clerk
 clicklease
@@ -766,6 +773,7 @@ codes-health
 coefficientgiving
 coframe
 cogent-security
+cognita-imaging
 cognition
 cohere
 coinflow
@@ -822,6 +830,7 @@ conquest
 conscious-talent
 console
 constellationspace
+constructor
 context
 continua
 continue
@@ -896,6 +905,7 @@ cubic3
 cuesta-partners
 cultureai
 curie
+current-advisors
 curri
 cursor
 cuspai
@@ -961,6 +971,7 @@ deepnote
 deepsource
 deeptune
 deepwalk
+deeter-analytics
 definelycareers
 dehazelabs
 delfa
@@ -1106,6 +1117,7 @@ embeddable
 embedding-vc
 emberot
 emerald-ai
+emergence
 emergence-capital-partners
 emidat
 empirical
@@ -1123,6 +1135,7 @@ endgame
 endurance-energy
 engflow
 enode
+enpal
 ens-labs
 ent-security
 enter-ai
@@ -1132,6 +1145,7 @@ eos-atomics
 eotlabs
 epay-policy
 ephemera
+epianeuro
 epidemic-sound
 episteme
 epistemix
@@ -1310,6 +1324,7 @@ focused
 focused-energy
 foley
 folio
+fonio
 fonoa
 fonzi-ai
 foodhealthco
@@ -1388,6 +1403,7 @@ galvany
 game-plan-tech
 gamechanger
 gamma
+gamut
 garage
 garage-door-doctor
 garden
@@ -1415,6 +1431,7 @@ genomicsplc
 genpeach
 geobrowser
 geoforce
+geordieai
 get-ivy
 getground
 getpluto
@@ -1549,6 +1566,7 @@ harrison.ai
 hartbeat
 harvey
 hatch
+hatz-ai
 hauler-hero
 haus
 havocai
@@ -1601,6 +1619,7 @@ hilberts
 hims-and-hers
 himsandhers
 hinge-health
+hinoki
 hipeople-official
 hippocratic
 hirehangar
@@ -1612,6 +1631,7 @@ hivemq
 hiverge
 hivesmart-consulting
 hiya
+hobbes
 hockeystack
 hokodo.co
 holywater
@@ -1817,6 +1837,7 @@ justwin
 k-id
 k2space
 k42
+kaigentic
 kaizenlabs
 kalder
 kale
@@ -1963,6 +1984,7 @@ leona
 leonardo.ai
 letta
 levelpath
+levels
 leveragedmedia
 levyelectric
 lexroom
@@ -2036,6 +2058,7 @@ lucidlink
 lucis
 lucra-sports
 luma-ai
+lumai
 lumana
 lumen.energy
 lumilens
@@ -2120,6 +2143,7 @@ maverickbiometals
 maxhome
 maxima
 maxima-consulting
+maximor
 maximustribe
 maxrewards
 maybern
@@ -2172,6 +2196,7 @@ metal
 metal.so
 metalenz
 metamap
+metamorphic
 metaplane
 metaview
 metawork
@@ -2535,6 +2560,7 @@ overjet
 overview
 overviewenergy
 owner
+ownup
 oxeon
 oxio
 oxman
@@ -2589,6 +2615,7 @@ partiful
 partisiablockchain
 partly.com
 partsbase
+partyhat
 passage
 passes
 passport
@@ -3003,6 +3030,7 @@ rightfoot
 righthandtalent
 rilla
 rillet
+rime
 risc
 risczero
 risklabs
@@ -3594,6 +3622,7 @@ the-studio
 thebotcompany
 themindcompany
 themuralgroup
+theori
 thera
 thesis
 thewfsgroup
@@ -3611,6 +3640,7 @@ thresh-power
 thrill-labs
 thrive-alliance-group
 thundercompute
+tides
 tierzero
 tigerdata
 tigereye
@@ -3769,6 +3799,7 @@ v7labs.com
 vacuumgroup
 valence
 valeriehealth
+valid
 valinor
 valkai
 valon
@@ -3913,6 +3944,7 @@ wemod
 wemolo
 wetransfer
 wetravel
+wffa-advisors-careers
 what3words
 whatnot
 wheel
@@ -4038,37 +4070,7 @@ zoe
 zolplay
 zoomlogi
 zowie
+zydro
 zyphra
 zyphraAgentis-Capital-Advisors
 zzazz
-adaptive-innovations
-aditude
-authorium
-blitzy
-buildforce
-checkout.com
-clera
-cognita-imaging
-constructor
-current-advisors
-deeter-analytics
-enpal
-epianeuro
-fonio
-gamut
-geordieai
-hatz-ai
-hinoki
-hobbes
-kaigentic
-levels
-lumai
-maximor
-metamorphic
-ownup
-partyhat
-rime
-theori
-tides
-valid
-wffa-advisors-careers
