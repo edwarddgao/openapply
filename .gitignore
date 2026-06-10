@@ -14,3 +14,5 @@ applications/codex-subagent-logs/
 __pycache__/
 *.pyc
 .DS_Store
+.venv/
+node_modules/
