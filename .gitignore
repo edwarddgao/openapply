@@ -9,6 +9,9 @@ data/
 shortlists/
 experiments/
 applications/codex-subagent-logs/
+applications/ashby_blocked_urls.txt
+applications/blocked-retry/
+applications/x_hiring_gap/
 .cache/
 .claude/
 __pycache__/
