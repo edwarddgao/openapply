@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-"""Launch agent subagents (claude or codex) against the latest OpenApply shortlist.
+"""Launch codex subagents against the latest OpenApply shortlist.
 
 The script reads shortlists/latest.json, skips roles already recorded in the
-application ledger, and starts one non-interactive agent process per selected
-role. Each process receives a unique agent-browser session name; the launcher
-closes that session after the process exits. Agent backend is chosen via
---agent (claude=`claude -p`, codex=`codex exec`); default is claude.
+application ledger, and starts one non-interactive `codex exec` process per
+selected role. Each process receives a unique agent-browser session name; the
+launcher closes that session after the process exits.
 """
 
 from __future__ import annotations
@@ -17,6 +16,7 @@ import json
 import os
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import threading
@@ -27,7 +27,7 @@ from typing import Any
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_SKILL_PATH = Path.home() / '.agents/skills/job-applications/SKILL.md'
+DEFAULT_SKILL_PATH = REPO_ROOT / 'skills/job-applications/SKILL.md'
 DEFAULT_APPLICANT_PROFILE = Path(os.environ.get('OPENAPPLY_APPLICANT_PROFILE', REPO_ROOT / 'config/applicant-profile.json'))
 DEFAULT_APPLICATION_POLICY = Path(os.environ.get('OPENAPPLY_APPLICATION_POLICY', REPO_ROOT / 'config/application-policy.json'))
 DEFAULT_OUTPUT_DIR = Path(os.environ.get('OPENAPPLY_CODEX_OUTPUT_DIR', REPO_ROOT / 'applications/codex-subagent-logs'))
@@ -143,8 +143,6 @@ def prepare_browser_session(row: dict[str, str], session: str, args: argparse.Na
         'agent-browser',
         '--session', session,
     ]
-    if args.chrome_executable:
-        browser_cmd.extend(['--executable-path', args.chrome_executable])
     if args.browser_profile:
         browser_cmd.extend(['--profile', args.browser_profile])
     if args.browser_session_name:
@@ -204,6 +202,13 @@ def build_prompt(row: dict[str, str], session: str, args: argparse.Namespace, sn
 - Open the application URL yourself.
 - Verify all filled values before submitting."""
 
+    if row.get('id', '').startswith('ashby:') or row.get('source', '') == 'ashby':
+        ashby_note = """
+Ashby note: submissions from this kind of session may be flagged as possible spam regardless of how the form is filled. Submit once, wait for the result, and if flagged report Blocked - do not retry in this session.
+"""
+    else:
+        ashby_note = ""
+
     return f"""You are an external job application agent. Apply to exactly one role.
 
 Role:
@@ -220,7 +225,7 @@ Required workflow:
 {browser_instructions}
 - Do not use browser extensions, third-party autofill helpers, or AI autofill tools. Fill forms directly with agent-browser from the applicant profile and policy.
 - Close the agent-browser session when done if possible. The launcher will also attempt cleanup.
-
+{ashby_note}
 Applicant data:
 - Read applicant facts and commitments from {args.applicant_profile}. This JSON profile is the source of truth for contact details, resume path, work authorization, sponsorship, availability, preferences, clearances, screening facts, demographics preferences, education, and languages.
 - Read reusable answer strategy from {args.application_policy}. Use it to apply profile facts to recurring form questions such as referral source, cover letters, in-office commitments, clearance, export-control status, compensation, transcript availability, and negative/conflict screening.
@@ -280,12 +285,47 @@ def build_codex_cmd(args: argparse.Namespace, prompt: str, final_path: Path) -> 
     return cmd
 
 
-def build_claude_cmd(args: argparse.Namespace, prompt: str) -> list[str]:
-    cmd = ['claude', '-p', '--dangerously-skip-permissions']
-    if args.model:
-        cmd.extend(['--model', args.model])
-    cmd.append(prompt)
-    return cmd
+def _kill_process_group(proc: subprocess.Popen) -> None:
+    """SIGKILL the subagent's whole process group, falling back to the lone child."""
+    try:
+        os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+    except (ProcessLookupError, PermissionError):
+        try:
+            proc.kill()
+        except ProcessLookupError:
+            pass
+
+
+def run_subagent(cmd: list[str], *, cwd: Path, timeout: int, stdout: Any) -> int:
+    """Run a subagent, killing the whole process group on timeout.
+
+    subprocess.run(timeout=) only kills the direct child, so codex/agent-browser
+    grandchildren orphan and keep the stdout pipe open, hanging the worker thread
+    far past --timeout-minutes (the timeout-leak that needed manual reaping).
+    Launch in a new session so the subagent leads its own process group, then
+    SIGKILL the entire group on timeout.
+    """
+    proc = subprocess.Popen(
+        cmd,
+        cwd=cwd,
+        stdin=subprocess.DEVNULL,
+        stdout=stdout,
+        stderr=subprocess.STDOUT,
+        text=True,
+        start_new_session=True,
+    )
+    try:
+        proc.communicate(timeout=timeout)
+        return proc.returncode
+    except subprocess.TimeoutExpired:
+        _kill_process_group(proc)
+        # group is dead, so any inherited pipe write-ends are closed: this drains
+        # promptly instead of hanging the way the old subprocess.run(timeout=) did.
+        try:
+            proc.communicate(timeout=30)
+        except subprocess.TimeoutExpired:
+            pass
+        return 124
 
 
 def run_agent(row: dict[str, str], index: int, args: argparse.Namespace, snapshot_date: str) -> dict[str, Any]:
@@ -298,7 +338,7 @@ def run_agent(row: dict[str, str], index: int, args: argparse.Namespace, snapsho
             'title': row.get('title', ''),
             'apply_url': row.get('apply_url', ''),
             'snapshot_date': snapshot_date,
-            'agent': args.agent,
+            'agent': 'codex',
             '_skip_ledger': True,
         }
 
@@ -316,10 +356,7 @@ def run_agent(row: dict[str, str], index: int, args: argparse.Namespace, snapsho
     prompt = build_prompt(row, session, args, snapshot_date)
     final_path.unlink(missing_ok=True)
 
-    if args.agent == 'codex':
-        cmd = build_codex_cmd(args, prompt, final_path)
-    else:
-        cmd = build_claude_cmd(args, prompt)
+    cmd = build_codex_cmd(args, prompt, final_path)
 
     started_at = utc_now()
     return_code = None
@@ -335,32 +372,12 @@ def run_agent(row: dict[str, str], index: int, args: argparse.Namespace, snapsho
                     log_file.write(f'\nPrepared browser session {session}\n')
                     log_file.flush()
             if browser_setup_error is None:
-                if args.agent == 'claude':
-                    proc = subprocess.run(
-                        cmd,
-                        cwd=args.repo,
-                        stdin=subprocess.DEVNULL,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.STDOUT,
-                        text=True,
-                        timeout=args.timeout_minutes * 60,
-                        check=False,
-                    )
-                    log_file.write(proc.stdout)
-                    log_file.flush()
-                    final_path.write_text(proc.stdout, encoding='utf-8')
-                else:
-                    proc = subprocess.run(
-                        cmd,
-                        cwd=args.repo,
-                        stdin=subprocess.DEVNULL,
-                        stdout=log_file,
-                        stderr=subprocess.STDOUT,
-                        text=True,
-                        timeout=args.timeout_minutes * 60,
-                        check=False,
-                    )
-                return_code = proc.returncode
+                return_code = run_subagent(
+                    cmd,
+                    cwd=args.repo,
+                    timeout=args.timeout_minutes * 60,
+                    stdout=log_file,
+                )
     except subprocess.TimeoutExpired:
         return_code = 124
     finally:
@@ -375,7 +392,7 @@ def run_agent(row: dict[str, str], index: int, args: argparse.Namespace, snapsho
             'title': row.get('title', ''),
             'apply_url': row.get('apply_url', ''),
             'snapshot_date': snapshot_date,
-            'agent': args.agent,
+            'agent': 'codex',
             '_skip_ledger': True,
         }
 
@@ -388,7 +405,7 @@ def run_agent(row: dict[str, str], index: int, args: argparse.Namespace, snapsho
 
     status, detail = parse_status(final_message)
     if return_code not in {0, None} and status == 'unknown':
-        detail = f'{args.agent} exited with code {return_code}: {detail}'
+        detail = f'codex exited with code {return_code}: {detail}'
 
     if is_rate_limited(final_message) or is_rate_limited(detail):
         if not RATE_LIMIT_EVENT.is_set():
@@ -404,7 +421,7 @@ def run_agent(row: dict[str, str], index: int, args: argparse.Namespace, snapsho
         'apply_url': row.get('apply_url', ''),
         'snapshot_date': snapshot_date,
         'session': session,
-        'agent': args.agent,
+        'agent': 'codex',
         'agent_return_code': return_code,
         'output_path': ledger_path(args.repo, final_path),
         'log_path': ledger_path(args.repo, log_path),
@@ -418,10 +435,13 @@ def selected_rows(rows: list[dict[str, str]], statuses: dict[str, dict[str, Any]
     selected: list[dict[str, str]] = []
     retry_statuses = {part.strip() for part in args.retry_status.split(',') if part.strip()}
     only_ids = {part.strip() for part in args.only_id.split(',') if part.strip()}
+    excluded_companies = {part.strip().lower() for part in args.exclude_company.split(',') if part.strip()}
 
     for row in rows:
         role_id = row.get('id', '')
         if only_ids and role_id not in only_ids:
+            continue
+        if excluded_companies and row.get('company_slug', '').lower() in excluded_companies:
             continue
         if not row.get('apply_url'):
             continue
@@ -439,8 +459,7 @@ def selected_rows(rows: list[dict[str, str]], statuses: dict[str, dict[str, Any]
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description='Apply to latest shortlist roles with claude or codex subagents')
-    parser.add_argument('--agent', choices=['claude', 'codex'], default='codex', help='which agent CLI to launch per role')
+    parser = argparse.ArgumentParser(description='Apply to latest shortlist roles with codex subagents')
     parser.add_argument('--repo', type=Path, default=REPO_ROOT)
     parser.add_argument('--latest', type=Path, default=Path('shortlists/latest.json'))
     parser.add_argument('--pool', choices=['fresh', 'backlog', 'both'], default='fresh')
@@ -459,21 +478,19 @@ def main() -> None:
     parser.set_defaults(headed=True)
     parser.add_argument('--browser-profile', default='', help='agent-browser --profile value; default empty')
     parser.add_argument('--browser-session-name', default='openapply', help='agent-browser --session-name value')
-    parser.add_argument('--chrome-executable', default='', help='Path to a real Chrome binary; default empty uses agent-browser bundled Chromium (lighter on memory). Pass /Applications/Google Chrome.app/Contents/MacOS/Google Chrome to avoid the "Chrome for Testing" anti-bot signal at higher memory cost.')
     parser.add_argument('--browser-wait-ms', type=int, default=3000)
     parser.add_argument('--sandbox', default='danger-full-access', choices=['read-only', 'workspace-write', 'danger-full-access'])
     parser.add_argument('--model', default='')
-    parser.add_argument('--reasoning-effort', default='low')
+    parser.add_argument('--reasoning-effort', default='low', help='codex model_reasoning_effort; higher modes are slower and can time out on routine form filling')
     parser.add_argument('--timeout-minutes', type=int, default=45)
     parser.add_argument('--retry-status', default='', help='comma-separated statuses to retry, e.g. needs_input,blocked')
     parser.add_argument('--only-id', default='', help='comma-separated role ids to apply regardless of order')
+    parser.add_argument('--exclude-company', default='', help='comma-separated company_slug values to skip (e.g. openai for 180-day rate-limit window)')
     parser.add_argument('--include-federal-defense', action='store_true', help='allow auto-applying roles flagged as federal/defense instead of skipping them')
     parser.add_argument('--dry-run', action='store_true')
     args = parser.parse_args()
 
-    if not args.model and args.agent == 'claude':
-        args.model = 'sonnet'
-    if not args.model and args.agent == 'codex':
+    if not args.model:
         args.model = 'gpt-5.5'
 
     args.repo = args.repo.resolve()
@@ -484,8 +501,8 @@ def main() -> None:
     args.skill_path = args.skill_path.expanduser()
 
     if not args.dry_run:
-        if not shutil.which(args.agent):
-            raise SystemExit(f'{args.agent} CLI not found on PATH')
+        if not shutil.which('codex'):
+            raise SystemExit('codex CLI not found on PATH')
         if not shutil.which('agent-browser'):
             raise SystemExit('agent-browser CLI not found on PATH')
         validate_json_file(args.applicant_profile, 'Applicant profile')
