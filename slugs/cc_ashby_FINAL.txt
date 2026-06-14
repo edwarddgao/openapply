@@ -3133,6 +3133,7 @@ sapien
 sardine
 saris-ai
 saronic
+sarvam
 satispay
 satoshilabs
 saturn
