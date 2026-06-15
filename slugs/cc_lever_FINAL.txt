@@ -300,6 +300,7 @@ atomic
 atomicmachines
 atonarp
 atrium
+atrium-therapeutics
 attabotics
 attentive
 audinate
@@ -447,6 +448,7 @@ bluewheelmedia
 blum
 bodo
 bogaardgroup
+bold-orange
 bolster
 boltjobs
 bonedry
@@ -871,6 +873,7 @@ digitalmass
 digitalmediamanagement
 digitalremedy
 digitalturbine
+dilitrust
 dioxycle
 directi
 disher
@@ -1946,6 +1949,7 @@ msce
 mti-inc
 mtspartners
 mujininc
+mulberry
 mulliganfunding
 multiplylabs
 multiversx
@@ -2707,6 +2711,7 @@ siteground
 siteminder
 sitetracker
 skello
+skillcloudhcm
 skillshare
 skims
 skio
@@ -2931,6 +2936,7 @@ tallarium
 tamr
 tanda
 tandemcare
+tandh
 tangraminteriors
 tapasmedia
 tapcart
@@ -3491,9 +3497,3 @@ zurigroup
 zuru
 zushealth
 zuva100ms
-atrium-therapeutics
-bold-orange
-dilitrust
-mulberry
-skillcloudhcm
-tandh
