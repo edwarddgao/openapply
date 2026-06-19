@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Launch codex subagents against the latest OpenApply shortlist.
+"""Launch agent subagents (codex or claude) against the latest OpenApply shortlist.
 
 The script reads shortlists/latest.json, skips roles already recorded in the
-application ledger, and starts one non-interactive `codex exec` process per
-selected role. Each process receives a unique agent-browser session name; the
-launcher closes that session after the process exits.
+application ledger, and starts one non-interactive agent process per selected
+role. Each process receives a unique agent-browser session name; the launcher
+closes that session after the process exits. Agent backend is chosen via
+--agent (codex=`codex exec`, claude=`claude -p`); default is codex.
 """
 
 from __future__ import annotations
@@ -19,7 +20,11 @@ import shutil
 import signal
 import subprocess
 import sys
+import tempfile
 import threading
+import time
+import urllib.error
+import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
@@ -33,6 +38,21 @@ DEFAULT_APPLICATION_POLICY = Path(os.environ.get('OPENAPPLY_APPLICATION_POLICY',
 DEFAULT_OUTPUT_DIR = Path(os.environ.get('OPENAPPLY_CODEX_OUTPUT_DIR', REPO_ROOT / 'applications/codex-subagent-logs'))
 DEFAULT_STATUS_PATH = Path('applications/status.jsonl')
 SKIP_STATUSES = {'submitted', 'blocked', 'needs_input'}
+DEFAULT_CHROME_BINARY = os.environ.get(
+    'OPENAPPLY_CHROME_BINARY',
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+)
+DEFAULT_CHROME_SOURCE_PROFILE = os.environ.get(
+    'OPENAPPLY_CHROME_SOURCE_PROFILE',
+    str(Path.home() / 'Library/Application Support/Google/Chrome'),
+)
+# Cache/derived dirs to skip when copying the Chrome profile: they bloat the copy
+# and carry none of the signed-in-session signal Ashby's reCAPTCHA/SEON score.
+CDP_CACHE_EXCLUDES = (
+    'Cache/', 'Code Cache/', 'GPUCache/', 'DawnGraphiteCache/', 'DawnWebGPUCache/',
+    'GrShaderCache/', 'ShaderCache/', 'Service Worker/CacheStorage/',
+    'Service Worker/ScriptCache/', 'Service Worker/Database/',
+)
 RATE_LIMIT_PHRASES = (
     "out of extra usage",
     "you've hit your usage limit",
@@ -94,6 +114,7 @@ def load_statuses(path: Path) -> dict[str, dict[str, Any]]:
     if not path.exists():
         return {}
     statuses: dict[str, dict[str, Any]] = {}
+    ever_submitted: set[str] = set()
     for lineno, line in enumerate(path.read_text(encoding='utf-8').splitlines(), 1):
         if not line.strip():
             continue
@@ -105,6 +126,12 @@ def load_statuses(path: Path) -> dict[str, dict[str, Any]]:
         role_id = item.get('id')
         if role_id:
             statuses[role_id] = item
+            if item.get('status') == 'submitted':
+                ever_submitted.add(role_id)
+    # Flag roles we've EVER submitted so selected_rows never re-applies, even if a
+    # later event (spam-flag retry / 'already applied' / crash) flipped last-status.
+    for role_id in ever_submitted:
+        statuses[role_id]['_ever_submitted'] = True
     return statuses
 
 
@@ -137,28 +164,169 @@ def run_agent_browser(repo: Path, command: list[str], log_file: Any, timeout: in
     return proc.stdout
 
 
+def _cdp_http(port: int, path: str, method: str = 'GET', timeout: float = 5.0) -> Any:
+    req = urllib.request.Request(f'http://127.0.0.1:{port}{path}', method=method)
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        body = resp.read().decode('utf-8')
+    return json.loads(body) if body.strip().startswith(('{', '[')) else body
+
+
+def _cdp_close_other_pages(port: int, keep_id: str) -> None:
+    """Close every 'page' target except keep_id.
+
+    agent-browser's `connect` auto-picks a target and does NOT reliably honor a
+    specific page's WebSocket URL — with the initial about:blank or the
+    Gemini-in-Chrome companion (gemini.google.com/glic) also present, it binds to
+    the wrong one. Leaving a single page target makes the bind deterministic.
+    Best-effort.
+    """
+    try:
+        targets = _cdp_http(port, '/json')
+    except (urllib.error.URLError, OSError, json.JSONDecodeError):
+        return
+    for tgt in targets if isinstance(targets, list) else []:
+        if tgt.get('type') == 'page' and tgt.get('id') and tgt.get('id') != keep_id:
+            try:
+                _cdp_http(port, '/json/close/' + tgt['id'])
+            except (urllib.error.URLError, OSError, json.JSONDecodeError):
+                pass
+
+
+def start_cdp_chrome(args: argparse.Namespace) -> dict[str, Any]:
+    """Copy the real Chrome profile and launch it headed with a CDP port.
+
+    Returns a state dict for teardown. A FULL profile copy (minus caches) launched
+    with clean flags carries the live signed-in Google session that Ashby's
+    reCAPTCHA/SEON scoring needs; a 3-file copy or anonymous/automation session
+    gets spam-flagged. Measured 6/6 across 6 companies on 2026-06-10.
+
+    macOS only as written: the copied cookies are Keychain-encrypted and only the
+    real Chrome binary (on the Keychain ACL) can decrypt them.
+    """
+    src = Path(args.chrome_source_profile).expanduser()
+    if not (src / 'Default').exists():
+        raise SystemExit(f'Chrome source profile not found (need a signed-in profile): {src}')
+    if not Path(args.chrome_binary).exists():
+        raise SystemExit(f'Chrome binary not found: {args.chrome_binary}')
+    if not shutil.which('rsync'):
+        raise SystemExit('rsync not found on PATH (needed for --cdp-profile)')
+
+    tmpdir = Path(tempfile.mkdtemp(prefix='oa_cdp_chrome_'))
+    (tmpdir / 'Default').mkdir(parents=True, exist_ok=True)
+    shutil.copy2(src / 'Local State', tmpdir / 'Local State')
+    rsync = ['rsync', '-a']
+    for exclude in CDP_CACHE_EXCLUDES:
+        rsync.extend(['--exclude', exclude])
+    rsync.extend([str(src / 'Default') + '/', str(tmpdir / 'Default') + '/'])
+    subprocess.run(rsync, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    chrome_cmd = [
+        args.chrome_binary,
+        f'--user-data-dir={tmpdir}',
+        f'--remote-debugging-port={args.cdp_port}',
+        '--remote-allow-origins=*',
+        '--no-first-run', '--no-default-browser-check',
+        '--window-size=1280,900',
+        'about:blank',
+    ]
+    proc = subprocess.Popen(
+        chrome_cmd,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        start_new_session=True,
+    )
+    deadline = time.monotonic() + 30
+    while time.monotonic() < deadline:
+        try:
+            _cdp_http(args.cdp_port, '/json/version')
+            break
+        except (urllib.error.URLError, OSError, ConnectionError, json.JSONDecodeError):
+            time.sleep(0.5)
+    else:
+        _kill_process_group(proc)
+        shutil.rmtree(tmpdir, ignore_errors=True)
+        raise SystemExit(f'CDP did not come up on port {args.cdp_port} within 30s')
+
+    print(f'[cdp] launched Chrome on profile copy {tmpdir} (port {args.cdp_port})', flush=True)
+    return {'proc': proc, 'tmpdir': tmpdir, 'port': args.cdp_port}
+
+
+def stop_cdp_chrome(state: dict[str, Any] | None) -> None:
+    if not state:
+        return
+    proc = state.get('proc')
+    if proc is not None:
+        _kill_process_group(proc)
+    shutil.rmtree(state.get('tmpdir'), ignore_errors=True)
+
+
+def cdp_new_tab(port: int, url: str) -> str:
+    """Open a fresh page tab and return its webSocketDebuggerUrl.
+
+    Creating the tab explicitly (and connecting agent-browser to this specific
+    target) avoids agent-browser's auto-pick grabbing the Gemini-in-Chrome
+    companion target (gemini.google.com/glic) that this profile auto-opens.
+    """
+    target = url or 'about:blank'
+    try:
+        tab = _cdp_http(port, '/json/new?' + target, method='PUT', timeout=15)
+    except urllib.error.HTTPError as exc:
+        if exc.code != 405:
+            raise
+        tab = _cdp_http(port, '/json/new?' + target, method='GET', timeout=15)
+    tid = tab.get('id')
+    ws = tab.get('webSocketDebuggerUrl')
+    if not (tid and ws):
+        raise RuntimeError(f'CDP new tab missing id/webSocketDebuggerUrl: {tab}')
+    # Wait for the tab to start navigating off about:blank, then make it the only
+    # page target so agent-browser binds to it deterministically.
+    deadline = time.monotonic() + 8
+    while time.monotonic() < deadline:
+        try:
+            cur = next((t for t in _cdp_http(port, '/json') if t.get('id') == tid), None)
+        except (urllib.error.URLError, OSError, json.JSONDecodeError):
+            break
+        if cur and (cur.get('url') or 'about:blank') != 'about:blank':
+            break
+        time.sleep(0.3)
+    _cdp_close_other_pages(port, tid)
+    return ws
+
+
 def prepare_browser_session(row: dict[str, str], session: str, args: argparse.Namespace, log_file: Any) -> None:
     close_browser_session(args.repo, session)
-    browser_cmd = [
-        'agent-browser',
-        '--session', session,
-    ]
-    if args.browser_profile:
-        browser_cmd.extend(['--profile', args.browser_profile])
-    if args.browser_session_name:
-        browser_cmd.extend(['--session-name', args.browser_session_name])
-    if args.headed:
-        browser_cmd.append('--headed')
-    browser_cmd.extend([
-        '--args', '--disable-blink-features=AutomationControlled',
-        'open', row.get('apply_url', ''),
-    ])
-    run_agent_browser(
-        args.repo,
-        browser_cmd,
-        log_file,
-        timeout=120,
-    )
+    url = row.get('apply_url', '')
+    if args.cdp_profile:
+        # Open the role in a dedicated CDP tab that cdp_new_tab makes the only page
+        # target, then bind agent-browser to it (see cdp_new_tab for why).
+        ws = cdp_new_tab(args.cdp_port, url)
+        run_agent_browser(
+            args.repo,
+            ['agent-browser', '--session', session, 'connect', ws],
+            log_file,
+            timeout=60,
+        )
+    else:
+        browser_cmd = [
+            'agent-browser',
+            '--session', session,
+        ]
+        if args.browser_profile:
+            browser_cmd.extend(['--profile', args.browser_profile])
+        if args.browser_session_name:
+            browser_cmd.extend(['--session-name', args.browser_session_name])
+        if args.headed:
+            browser_cmd.append('--headed')
+        browser_cmd.extend([
+            '--args', '--disable-blink-features=AutomationControlled',
+            'open', url,
+        ])
+        run_agent_browser(
+            args.repo,
+            browser_cmd,
+            log_file,
+            timeout=120,
+        )
     run_agent_browser(args.repo, ['agent-browser', '--session', session, 'wait', '--load', 'networkidle'], log_file)
     if args.browser_wait_ms > 0:
         run_agent_browser(args.repo, ['agent-browser', '--session', session, 'wait', str(args.browser_wait_ms)], log_file)
@@ -194,19 +362,22 @@ def session_name(row: dict[str, str], index: int) -> str:
 
 def build_prompt(row: dict[str, str], session: str, args: argparse.Namespace, snapshot_date: str) -> str:
     if args.prepare_browser:
-        browser_instructions = f"""- Use the already-prepared agent-browser session named {session}; the launcher has already opened the application URL in a headed browser session.
-- Do not close, reopen, relaunch, or change browser launch flags before inspecting the page.
+        browser_instructions = f"""- A browser session is ALREADY prepared and the application URL is ALREADY open in it. On EVERY agent-browser command, pass exactly `--session {session}` (this exact flag and value) to target it.
+- Do NOT pass `--session-name`; do NOT run `open`, `connect`, `navigate`, `launch`, or otherwise relaunch/reopen the browser before submitting. Those create a DIFFERENT browser context that loses the prepared signed-in session and gets the submission flagged as spam. Only inspect, fill, verify, and submit inside the existing `--session {session}`.
 - Fill and verify the form manually using the applicant profile and policy before submitting."""
     else:
         browser_instructions = f"""- Use agent-browser for browser automation with unique session name: {session}.
 - Open the application URL yourself.
 - Verify all filled values before submitting."""
 
-    if row.get('id', '').startswith('ashby:') or row.get('source', '') == 'ashby':
+    is_ashby = row.get('id', '').startswith('ashby:') or row.get('source', '') == 'ashby'
+    if is_ashby and not args.cdp_profile:
         ashby_note = """
 Ashby note: submissions from this kind of session may be flagged as possible spam regardless of how the form is filled. Submit once, wait for the result, and if flagged report Blocked - do not retry in this session.
 """
     else:
+        # In --cdp-profile mode the session carries the live signed-in identity, so
+        # spam flags are not expected; submit once and read the result normally.
         ashby_note = ""
 
     return f"""You are an external job application agent. Apply to exactly one role.
@@ -235,6 +406,7 @@ Applicant data:
 Rules:
 - Do not apply to any other role.
 - Do not invent facts.
+- Keep every free-text / essay / open-ended / "why us" answer to 1-2 sentences maximum (see the answer policy's free_text_answer_length). Never write paragraph-length or multi-point narrative responses, even when a longer word limit is allowed.
 - Submit only if all required answers are known.
 - If a required answer cannot be inferred, stop and return Needs input with exact question text.
 - On Greenhouse validation errors, inspect aria-invalid="true" / *-error fields. For invalid custom dropdowns, reselect via a different path; visible selected text alone may not clear validation.
@@ -285,6 +457,14 @@ def build_codex_cmd(args: argparse.Namespace, prompt: str, final_path: Path) -> 
     return cmd
 
 
+def build_claude_cmd(args: argparse.Namespace, prompt: str) -> list[str]:
+    cmd = ['claude', '-p', '--dangerously-skip-permissions']
+    if args.model:
+        cmd.extend(['--model', args.model])
+    cmd.append(prompt)
+    return cmd
+
+
 def _kill_process_group(proc: subprocess.Popen) -> None:
     """SIGKILL the subagent's whole process group, falling back to the lone child."""
     try:
@@ -296,7 +476,7 @@ def _kill_process_group(proc: subprocess.Popen) -> None:
             pass
 
 
-def run_subagent(cmd: list[str], *, cwd: Path, timeout: int, stdout: Any) -> int:
+def run_subagent(cmd: list[str], *, cwd: Path, timeout: int, stdout: Any) -> tuple[int, str | None]:
     """Run a subagent, killing the whole process group on timeout.
 
     subprocess.run(timeout=) only kills the direct child, so codex/agent-browser
@@ -304,6 +484,10 @@ def run_subagent(cmd: list[str], *, cwd: Path, timeout: int, stdout: Any) -> int
     far past --timeout-minutes (the timeout-leak that needed manual reaping).
     Launch in a new session so the subagent leads its own process group, then
     SIGKILL the entire group on timeout.
+
+    Returns (return_code, captured_stdout). captured_stdout is the decoded stdout
+    string when `stdout` is subprocess.PIPE (the claude backend, whose final
+    message IS its stdout), and None when streaming straight to a file (codex).
     """
     proc = subprocess.Popen(
         cmd,
@@ -315,17 +499,17 @@ def run_subagent(cmd: list[str], *, cwd: Path, timeout: int, stdout: Any) -> int
         start_new_session=True,
     )
     try:
-        proc.communicate(timeout=timeout)
-        return proc.returncode
+        out, _ = proc.communicate(timeout=timeout)
+        return proc.returncode, out
     except subprocess.TimeoutExpired:
         _kill_process_group(proc)
         # group is dead, so any inherited pipe write-ends are closed: this drains
         # promptly instead of hanging the way the old subprocess.run(timeout=) did.
         try:
-            proc.communicate(timeout=30)
+            out, _ = proc.communicate(timeout=30)
         except subprocess.TimeoutExpired:
-            pass
-        return 124
+            out = None
+        return 124, out
 
 
 def run_agent(row: dict[str, str], index: int, args: argparse.Namespace, snapshot_date: str) -> dict[str, Any]:
@@ -338,7 +522,7 @@ def run_agent(row: dict[str, str], index: int, args: argparse.Namespace, snapsho
             'title': row.get('title', ''),
             'apply_url': row.get('apply_url', ''),
             'snapshot_date': snapshot_date,
-            'agent': 'codex',
+            'agent': args.agent,
             '_skip_ledger': True,
         }
 
@@ -356,7 +540,10 @@ def run_agent(row: dict[str, str], index: int, args: argparse.Namespace, snapsho
     prompt = build_prompt(row, session, args, snapshot_date)
     final_path.unlink(missing_ok=True)
 
-    cmd = build_codex_cmd(args, prompt, final_path)
+    if args.agent == 'codex':
+        cmd = build_codex_cmd(args, prompt, final_path)
+    else:
+        cmd = build_claude_cmd(args, prompt)
 
     started_at = utc_now()
     return_code = None
@@ -372,12 +559,28 @@ def run_agent(row: dict[str, str], index: int, args: argparse.Namespace, snapsho
                     log_file.write(f'\nPrepared browser session {session}\n')
                     log_file.flush()
             if browser_setup_error is None:
-                return_code = run_subagent(
-                    cmd,
-                    cwd=args.repo,
-                    timeout=args.timeout_minutes * 60,
-                    stdout=log_file,
-                )
+                if args.agent == 'claude':
+                    # claude -p prints the final assistant message to stdout, so
+                    # capture it: mirror it into the log and write it to final_path
+                    # so the final-message extraction below treats it like codex's
+                    # --output-last-message file.
+                    return_code, captured = run_subagent(
+                        cmd,
+                        cwd=args.repo,
+                        timeout=args.timeout_minutes * 60,
+                        stdout=subprocess.PIPE,
+                    )
+                    if captured:
+                        log_file.write(captured)
+                        log_file.flush()
+                        final_path.write_text(captured, encoding='utf-8')
+                else:
+                    return_code, _ = run_subagent(
+                        cmd,
+                        cwd=args.repo,
+                        timeout=args.timeout_minutes * 60,
+                        stdout=log_file,
+                    )
     except subprocess.TimeoutExpired:
         return_code = 124
     finally:
@@ -392,7 +595,7 @@ def run_agent(row: dict[str, str], index: int, args: argparse.Namespace, snapsho
             'title': row.get('title', ''),
             'apply_url': row.get('apply_url', ''),
             'snapshot_date': snapshot_date,
-            'agent': 'codex',
+            'agent': args.agent,
             '_skip_ledger': True,
         }
 
@@ -405,7 +608,7 @@ def run_agent(row: dict[str, str], index: int, args: argparse.Namespace, snapsho
 
     status, detail = parse_status(final_message)
     if return_code not in {0, None} and status == 'unknown':
-        detail = f'codex exited with code {return_code}: {detail}'
+        detail = f'{args.agent} exited with code {return_code}: {detail}'
 
     if is_rate_limited(final_message) or is_rate_limited(detail):
         if not RATE_LIMIT_EVENT.is_set():
@@ -421,7 +624,7 @@ def run_agent(row: dict[str, str], index: int, args: argparse.Namespace, snapsho
         'apply_url': row.get('apply_url', ''),
         'snapshot_date': snapshot_date,
         'session': session,
-        'agent': 'codex',
+        'agent': args.agent,
         'agent_return_code': return_code,
         'output_path': ledger_path(args.repo, final_path),
         'log_path': ledger_path(args.repo, log_path),
@@ -449,6 +652,8 @@ def selected_rows(rows: list[dict[str, str]], statuses: dict[str, dict[str, Any]
             continue
         previous = statuses.get(role_id)
         if previous:
+            if previous.get('_ever_submitted'):
+                continue  # never re-apply to anything we've ever successfully submitted
             previous_status = previous.get('status')
             if previous_status in SKIP_STATUSES and previous_status not in retry_statuses:
                 continue
@@ -459,7 +664,8 @@ def selected_rows(rows: list[dict[str, str]], statuses: dict[str, dict[str, Any]
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description='Apply to latest shortlist roles with codex subagents')
+    parser = argparse.ArgumentParser(description='Apply to latest shortlist roles with codex or claude subagents')
+    parser.add_argument('--agent', choices=['claude', 'codex'], default='codex', help='which agent CLI to launch per role')
     parser.add_argument('--repo', type=Path, default=REPO_ROOT)
     parser.add_argument('--latest', type=Path, default=Path('shortlists/latest.json'))
     parser.add_argument('--pool', choices=['fresh', 'backlog', 'both'], default='fresh')
@@ -479,6 +685,10 @@ def main() -> None:
     parser.add_argument('--browser-profile', default='', help='agent-browser --profile value; default empty')
     parser.add_argument('--browser-session-name', default='openapply', help='agent-browser --session-name value')
     parser.add_argument('--browser-wait-ms', type=int, default=3000)
+    parser.add_argument('--cdp-profile', action='store_true', help='EXPERIMENTAL: copy the real Chrome profile, launch it headed with a CDP port, and drive it via agent-browser CDP. Carries the live signed-in Google session Ashby reCAPTCHA/SEON scoring needs (6/6 in testing 2026-06-10); plain headless sessions are spam-flagged 50-86%% of the time. macOS only; needs a signed-in Chrome profile.')
+    parser.add_argument('--cdp-port', type=int, default=9222, help='CDP port for --cdp-profile Chrome')
+    parser.add_argument('--chrome-binary', default=DEFAULT_CHROME_BINARY, help='real Chrome binary for --cdp-profile')
+    parser.add_argument('--chrome-source-profile', default=DEFAULT_CHROME_SOURCE_PROFILE, help='Chrome user-data dir to copy for --cdp-profile (must hold a signed-in profile)')
     parser.add_argument('--sandbox', default='danger-full-access', choices=['read-only', 'workspace-write', 'danger-full-access'])
     parser.add_argument('--model', default='')
     parser.add_argument('--reasoning-effort', default='low', help='codex model_reasoning_effort; higher modes are slower and can time out on routine form filling')
@@ -490,8 +700,16 @@ def main() -> None:
     parser.add_argument('--dry-run', action='store_true')
     args = parser.parse_args()
 
-    if not args.model:
+    if not args.model and args.agent == 'claude':
+        args.model = 'sonnet'
+    if not args.model and args.agent == 'codex':
         args.model = 'gpt-5.5'
+
+    if args.cdp_profile and not args.prepare_browser:
+        raise SystemExit('--cdp-profile requires --prepare-browser (the launcher connects each role to a CDP tab)')
+    if args.cdp_profile and args.parallel > 1:
+        print('[cdp] --cdp-profile drives one shared Chrome serially; forcing --parallel 1', flush=True)
+        args.parallel = 1
 
     args.repo = args.repo.resolve()
     args.status = repo_path(args.repo, args.status)
@@ -501,8 +719,8 @@ def main() -> None:
     args.skill_path = args.skill_path.expanduser()
 
     if not args.dry_run:
-        if not shutil.which('codex'):
-            raise SystemExit('codex CLI not found on PATH')
+        if not shutil.which(args.agent):
+            raise SystemExit(f'{args.agent} CLI not found on PATH')
         if not shutil.which('agent-browser'):
             raise SystemExit('agent-browser CLI not found on PATH')
         validate_json_file(args.applicant_profile, 'Applicant profile')
@@ -542,22 +760,34 @@ def main() -> None:
         return
 
     max_workers = max(1, min(args.parallel, len(todo)))
-    if args.prepare_browser:
+    if args.prepare_browser and not args.cdp_profile:
+        # Clear any stale agent-browser daemon sessions so daemon-scoped launch
+        # flags (--headed/--args) are honored on a clean start. Skipped in
+        # --cdp-profile mode: there we attach to the externally-launched Chrome via
+        # `connect`, so the daemon's own browser and flags are irrelevant -- and
+        # `close --all` would also tear down the unrelated hermes agent-browser
+        # daemon that shares the default socket.
         close_all_browser_sessions(args.repo)
+    cdp_state: dict[str, Any] | None = None
+    if args.cdp_profile:
+        cdp_state = start_cdp_chrome(args)
     print(f'Launching {len(todo)} role(s) from {latest["date"]} with parallel={max_workers}', flush=True)
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = {}
-        for index, row in enumerate(todo, 1):
-            print(f'Starting {index}/{len(todo)}: {row.get("company_slug", "")} - {row.get("title", "")}', flush=True)
-            futures[executor.submit(run_agent, row, index, args, latest['date'])] = row
-        for future in as_completed(futures):
-            record = future.result()
-            if record.pop('_skip_ledger', False):
-                reason = 'infra error' if record.get('status') == 'infra_error' else 'rate limit'
-                print(f'Skipped ({reason}, not ledgered): {record.get("company_slug","")} - {record.get("title","")} :: {record.get("detail","")}', flush=True)
-                continue
-            append_status(args.status, record)
-            print(f'Finished: {record["detail"]}', flush=True)
+    try:
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {}
+            for index, row in enumerate(todo, 1):
+                print(f'Starting {index}/{len(todo)}: {row.get("company_slug", "")} - {row.get("title", "")}', flush=True)
+                futures[executor.submit(run_agent, row, index, args, latest['date'])] = row
+            for future in as_completed(futures):
+                record = future.result()
+                if record.pop('_skip_ledger', False):
+                    reason = 'infra error' if record.get('status') == 'infra_error' else 'rate limit'
+                    print(f'Skipped ({reason}, not ledgered): {record.get("company_slug","")} - {record.get("title","")} :: {record.get("detail","")}', flush=True)
+                    continue
+                append_status(args.status, record)
+                print(f'Finished: {record["detail"]}', flush=True)
+    finally:
+        stop_cdp_chrome(cdp_state)
 
 
 if __name__ == '__main__':
