@@ -3417,6 +3417,7 @@ staycation
 steadily
 stealth-healthtech-startup
 stealth-start-up
+stealth-startup
 stealthventurecapitalfirm
 stedi
 steel
@@ -3551,6 +3552,7 @@ tapblaze
 tapcart
 tapcheck
 taptapsend
+tar
 tarro
 tasman
 tavahealth
