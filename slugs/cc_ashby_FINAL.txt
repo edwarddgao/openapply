@@ -388,6 +388,7 @@ axlora
 baba
 babylonchain
 babylonlabs
+backbone
 backflip
 backflip.ai
 backmarket
