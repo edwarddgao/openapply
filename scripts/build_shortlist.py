@@ -411,13 +411,19 @@ def read_jobs(data_dir: Path, snapshot_date: str) -> Iterable[dict[str, Any]]:
     if not paths:
         raise SystemExit(f'No parquet files found for date={snapshot_date} under {data_dir}')
     columns = [
-        'id', 'source', 'source_slug', 'title', 'apply_url', 'description_html', 'employment_type',
+        'id', 'source_slug', 'title', 'apply_url', 'description_html', 'employment_type',
         'department', 'locations', 'remote', 'posted_at', 'salary_min', 'salary_max',
         'salary_currency', 'salary_period',
     ]
     for path in paths:
         table = pq.read_table(path, columns=columns)
-        yield from table.to_pylist()
+        # `source` is a Hive partition key, not a physical Parquet column. Derive it
+        # from source=<ats>/ instead of relying on PyArrow to infer parent partitions
+        # when it is given an individual file path.
+        source = path.parent.name.removeprefix('source=')
+        for row in table.to_pylist():
+            row['source'] = source
+            yield row
 
 
 def normalize(row: dict[str, Any], snapshot_date: date) -> dict[str, Any]:
