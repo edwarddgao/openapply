@@ -4,7 +4,7 @@ An open dataset of active job postings, refreshed daily from public ATS APIs.
 
 - **Dataset:** https://huggingface.co/datasets/edwarddgao/open-apply-jobs (see HF for current row counts)
 - **Sources:** Greenhouse, Lever, Ashby
-- **Refresh:** daily at 06:00 UTC via GitHub Actions
+- **Refresh:** raw dataset daily at 06:00 UTC via GitHub Actions
 
 ## Demo
 
@@ -74,6 +74,8 @@ Records follow a subset of [schema.org JobPosting](https://schema.org/JobPosting
 Partitions published before the timestamp migration used a best-effort `posted_at` field. For Greenhouse rows in those historical partitions, `posted_at` was populated from `updated_at` when present, so it may represent the last modification time rather than the original publication time. New partitions populate `posted_at` from the original publish/create field and expose `updated_at` separately when the ATS provides it.
 
 ## Local run
+
+Shortlist generation is intentionally local. It applies candidate-specific filters and must not block collection or publication of the public dataset.
 
 ```bash
 pip install -r requirements.txt
