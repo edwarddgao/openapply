@@ -1,3 +1,5 @@
+100ms
+11855760-canada-inc
 15five
 174powerglobal
 1840
@@ -25,6 +27,8 @@
 AviveSolutions
 BTSE
 BlueMatrix
+BreezeBio
+CVRx
 Catbird
 Clearer
 ClinicalHealthNetworkForTransformation
@@ -38,6 +42,7 @@ Ionicpartners
 Loop AI
 LuminDigital
 MBRDNA
+Meirowitz-Wasserberg
 MissionWired
 NICMAP
 NJStateOfficeofInnovation
@@ -46,11 +51,15 @@ NoibuTechnologies
 NuvoAir
 QuantumWorkplace
 RoboticAssistanceDevices
+SpaceSystemsIntegration
+SwiftlySystems
 Terraformation
+The-Battery-Network
 Trend-Health-Partners
 TrilogyFederal
 Washmen
 WindsorManagement
+Zero21
 abacus
 ableserve
 ablspacesystems
@@ -73,6 +82,7 @@ acl
 aclaimant
 acord
 acpl
+acronaviation
 acselhealth
 act
 actian
@@ -164,12 +174,14 @@ alloy
 alltrails
 alluxio
 allworknow
+alom
 alpinestars
 altaml
 altarum
 altoida
 altrio
 aluna
+alveotechnologies
 amaro
 amaze
 amberbio
@@ -177,6 +189,7 @@ ambercycle
 amberelectric
 ambirobotics
 ambrook
+americaatwork
 amiri
 amityfdn
 ampd-energy
@@ -206,6 +219,7 @@ anlatan
 anomali
 anotherco
 anovium
+ans
 ansatzcapital
 anthropic
 anticapital
@@ -220,6 +234,7 @@ aofl
 aogarciaagency
 aon3d
 apartmentlife
+apcoholdings
 apdscorporate
 aperturehealth
 apex
@@ -250,6 +265,7 @@ aptible
 aqemia.com
 aquabyte
 aquarium
+aqueduct-tech
 arable
 aragon
 arbitalhealth
@@ -303,10 +319,12 @@ atrium
 atrium-therapeutics
 attabotics
 attentive
+attovia-therapeutics
 audinate
 augmedix
 augustbioservices
 aurora-dev
+australianethical
 auth0
 authentic8
 autify
@@ -314,11 +332,13 @@ autofi
 automatiq
 automox
 autoroboto
+auw
 ava
 avalanchestudios
 avalerehealth
 avante
 aventon
+avero
 avertium
 aviahealth
 avioconsulting
@@ -474,6 +494,7 @@ brainstorminc
 branch.co
 branch.gg
 brand-knew
+braviantholdings
 brazoderecho
 brevo
 brewbird
@@ -543,6 +564,7 @@ capchase
 capital
 capitalsolutionsgroup
 capricor
+capstan-medical
 captivateiq
 carboncapture
 carbonhealth
@@ -573,6 +595,7 @@ catalist
 catalyze
 catenamedia
 causal-app
+cavellrisk
 ccmr3
 cdcfoundation
 cef
@@ -761,6 +784,7 @@ creadits
 creatordeck
 cred
 credo
+crescent-biopharma
 cresta
 crestoperations
 crgo
@@ -787,6 +811,7 @@ cubegroup
 culdesac
 cullinanoncology
 culturetrip
+cuningham
 curai
 curbio
 curimeta
@@ -795,6 +820,7 @@ curiositymedia
 curology
 currencycloud
 curri
+cwsc
 cx2
 cxnpl
 cxtsoftware
@@ -860,6 +886,7 @@ deuna
 devcycle
 device42
 devsoftam
+dexcarehealth
 dexterity
 dga
 dialogdesign
@@ -923,6 +950,7 @@ durin
 dutch
 dwavesys
 dwolla
+dynamic-connections
 dynamiccatholic
 dynamoai
 dynavax
@@ -940,6 +968,7 @@ ebury
 ecldc
 economicmodeling
 econstruct
+ecosystem
 edacious
 edenhealth
 edera
@@ -1007,11 +1036,14 @@ entefy
 enter-rcm-llc
 entrata
 envato-2
+enveda
 envedabio
 envisionemploymentsolutions
 epicio
 epifi
 episci
+epm
+epoch-ai
 epsilon3
 eqbank
 equativ
@@ -1078,6 +1110,7 @@ federato
 feedmedia
 fehrandpeers
 feldinc
+felix-construction
 fevo
 ffws
 fi
@@ -1179,6 +1212,7 @@ fuellabs
 fulcrumpro
 fullscreen
 fullscript
+fullspectrumsoftware
 fullstacklabs
 fullyvested
 fundapps
@@ -1189,12 +1223,15 @@ futureof-life
 fwf
 fwgsolutions
 fynd
+fyzicalhq
 g2i
 gagezero
+galatea
 galatea-associates
 galepartners
 galvanick
 gantri
+gatchealth
 gate
 gate.io
 gather-health
@@ -1224,6 +1261,7 @@ getduranta
 getfable
 getlabs
 getmaple
+getmidas
 getmysa
 getpoint
 getsquire
@@ -1239,6 +1277,7 @@ gigster
 girlswhocode
 givebutter
 givinghhc
+glacierfish
 glass-health-inc
 glide
 glints
@@ -1275,6 +1314,7 @@ gostudion
 goswift
 gotit
 gotogroup
+gouconnect
 gouspack
 govini
 gpsfx
@@ -1303,6 +1343,7 @@ groupbyinc
 groupthink
 grove
 gsr
+gtifabrication
 gts
 guidestareldercare
 guidewire
@@ -1321,6 +1362,7 @@ handoff
 hannaandersson
 hap-capital
 happn
+happy-sleep
 happyco
 happyhiller
 happymoney
@@ -1337,6 +1379,7 @@ hatchit
 haus
 havenparkcommunities
 hawaiianhost
+haywardtyler
 hcvt
 hdvi
 hdworks
@@ -1347,6 +1390,7 @@ health-atscale
 healthcare
 healthebay
 healthtensor
+healx
 heard
 hearsaysystems
 heartbeathealth
@@ -1387,6 +1431,7 @@ hivemapper
 hivemind-capital
 hiver
 hlkagency
+hmbl-tech
 hone
 honeybeerobotics
 honeycomb
@@ -1402,6 +1447,7 @@ hotstar
 hottopic
 houzz
 howgood
+hsag
 hubla
 huckleberrylabs
 huma
@@ -1424,6 +1470,7 @@ icertis
 icodde
 idealistconsulting
 idealscorp
+ideasunited
 ideayabio
 idmworks
 idt
@@ -1478,6 +1525,7 @@ innophos
 innovationdept
 innovativesol-2
 inpay-2
+insiderone
 insify
 insightm
 insomniacdesign
@@ -1514,7 +1562,9 @@ iovlabs
 iphi
 ippon
 iron_hack
+ironflow
 ironox
+iru
 irvine-clinical
 isee
 ispace-inc
@@ -1524,6 +1574,7 @@ iterative
 ivo
 iyzico
 jacquard
+jam-loop
 jamcity
 janeapp
 januaryinc
@@ -1686,12 +1737,14 @@ levelai
 levelup
 lever
 leverdemo
+leverdemo956
 levvel
 lexeotx
 lexingtonmedical
 liatrio
 liberatii
 life
+lifeforce
 lifen
 lifestance
 lightci
@@ -1769,6 +1822,7 @@ lyciatherapeutics
 lyraclinical
 lyracollective
 lyrahealth
+lyrebirdhealth
 lyterian
 m-kopa
 m13
@@ -1784,6 +1838,8 @@ madisonei
 maestra
 magicalbeginningslc
 magicgames
+magnals
+magnet-defense
 magnetforensics
 magnify
 magnopus
@@ -1832,6 +1888,7 @@ matterworks
 maverickx
 max-retail
 maxmind
+mayer-llp
 mbrdna
 mbta
 mcaconnect
@@ -1854,6 +1911,7 @@ meds
 meesho
 meetalbert
 meetingstreetschools
+meetingtomorrow
 megaport
 meili
 melitagroup
@@ -1875,6 +1933,7 @@ metabase
 metagood
 metallicus
 metalpay
+metaprise.ai
 metaprisebanking
 metasite
 metatheory
@@ -1896,6 +1955,7 @@ mindbloom
 mindtickle
 minesense
 minted
+mirastarfcu
 mirror
 missioncap
 missioncloud
@@ -1914,6 +1974,7 @@ mobisystems
 modeln
 modern-age
 modernintelligence
+modernlife
 modjo
 modsquad
 modulate
@@ -1923,6 +1984,7 @@ moltenindustries
 moment-ranks
 momentfactory
 momenti-inc
+momentshospice-2
 momsmeals
 mona
 moneyboxapp
@@ -1937,6 +1999,7 @@ moorecolson
 morningbrew
 morningconsult
 mosaic-2
+mosaictherapy
 mostly-ai
 mostudio
 motional
@@ -1946,6 +2009,7 @@ moxionpower
 mrss
 mryum
 msce
+msconsultants
 mti-inc
 mtspartners
 mujininc
@@ -1965,6 +2029,7 @@ mypassglobal
 myplacehealth
 mythic-ai.com
 mytos
+myubiquity
 myvessel
 myvest
 nahc
@@ -2004,7 +2069,9 @@ nextech
 nextgenfed
 nexthreat.com
 nextmillennium
+nextovation
 nexuse-group
+neye-systems-inc.
 nfq
 niagenbioscience
 nibiru
@@ -2033,6 +2100,8 @@ notabene
 novaspace
 novatalent
 novir
+novosfiber
+nphub
 npowermedicine
 nrwl
 ntdsoftware
@@ -2065,12 +2134,14 @@ omnidesigntech
 omnidian
 omnisend
 onaroll
+onboarded
 onceuponafarm
 ondofinance
 onefootball
 onehouse
 oneimpression
 oneteam
+onetogether-solutions
 onit
 oomnitza
 oowlish
@@ -2111,6 +2182,7 @@ oxman
 oxylabs
 p-1ai
 p3vetpartners
+paceline
 pachama
 pacific-environment
 pacificoenergy
@@ -2125,6 +2197,7 @@ papara
 paralleldomain
 parallelwireless
 paramedicservices
+parcelvision
 pardon
 parkplace
 partoo
@@ -2192,6 +2265,7 @@ pieinsurance
 pigment
 pillarbiosciences
 pillow
+pine-services
 pingcap
 pingwind
 pinkoi
@@ -2376,6 +2450,7 @@ qualysoft
 quandri
 quantcast
 quantco
+quantco-
 quantinuum
 quantlabs
 quantumcircuits
@@ -2413,6 +2488,7 @@ radpowerbikes-2
 rahr
 rai
 railroad19
+raine
 rainfocus
 rainforest
 raiseforgood
@@ -2429,6 +2505,7 @@ raptstudio
 raptv
 rarible
 raven
+ravl_io
 raya
 raydiant
 reach.industries
@@ -2493,10 +2570,12 @@ restaurant365
 restream
 retailmenot
 retailreinvented
+retired
 retro
 revealtech
 reveelgroup
 revefi
+revenueanalytics
 reverielabs
 revero
 revhealth
@@ -2510,6 +2589,7 @@ revolutionspace
 revzilla
 rewatch
 rewind.ai
+rezolutebio
 rezotx
 rfa-2
 rgi
@@ -2541,6 +2621,7 @@ rivr
 ro
 roadrunner-studios
 roadrunnerwm
+robbinsrecruiting
 robinpowered
 roboflow
 roboticresearch
@@ -2571,6 +2652,7 @@ rs21
 rsandf-2
 ruangguru
 runforsomething
+runlaminar
 runwaysafe
 rupa
 rushdownstudio
@@ -2591,6 +2673,7 @@ sait
 sakon
 sakuu
 saleor
+salesdemo-jr
 salesflow
 salvohealth
 samacare
@@ -2648,12 +2731,14 @@ sentibio
 seoulrobotics
 sep
 septerna
+sequel-med-tech
 seranbio
 serigraph
 serotonin
 serv-u-success
 serverfarm
 servicerocket
+servicewire
 sesame
 seven-starling
 sevenbridges
@@ -2696,10 +2781,12 @@ signinsolutions
 siilo
 sila
 silasg
+silhouette
 silo
 silverbackstrategies
 silvustechnologies
 simberobotics
+simonmed
 simpl
 simplebet
 simpleventures
@@ -2750,6 +2837,7 @@ snowfork
 snowplow
 snowplowanalytics
 sofarsounds
+softdocs
 softrams
 softworld
 solarlandscape
@@ -2781,6 +2869,7 @@ sparkclimatesolutions
 spawglass
 speakeasyapi
 spear
+spear-ai
 spectral
 spekit
 spendesk
@@ -2796,6 +2885,7 @@ spotify
 spreedly
 spreetail
 springboard
+springrecruits
 sprinterhealth
 sprintfwd
 sprinto
@@ -2853,6 +2943,7 @@ studiothree
 study.com
 studypoint
 sublimesystems
+subsense
 subspacelabs
 sugarcrm
 suger
@@ -2885,6 +2976,7 @@ supportninja
 sure
 surfshark
 swapcard
+swiftconnect
 swiggy
 swile
 swimply
@@ -2914,6 +3006,7 @@ sysdig
 system1
 syw.com
 t1
+t5datacenters
 t6talentpartners
 tachyus
 tackle
@@ -2973,6 +3066,7 @@ tensorwave
 tenstorrent
 teramind
 terawattinfrastructure
+termgrid
 terminus
 termius
 terra
@@ -3046,6 +3140,7 @@ thrivemarket
 thuma
 thunkable
 thuuz
+tiberius
 tiket
 tildei
 timelycare
@@ -3071,6 +3166,7 @@ tonal
 tonic
 tonkean
 tonsser
+topanga
 topazlabs
 tophat
 topia
@@ -3087,6 +3183,7 @@ tpgsi
 traackr
 traba
 traceable-ai
+trackoff
 tracksuit-limited
 tracktik
 tractian
@@ -3114,6 +3211,7 @@ trevipay
 tri
 triallibrary
 tribe-payments
+trility
 trinityhunt
 trio
 trip-ninja
@@ -3152,6 +3250,7 @@ tul
 tunnl-data
 turing-labs
 turvo
+tusker
 tutorintelligence
 twelvelabs
 twentyfirstcenturybrand
@@ -3169,6 +3268,7 @@ udacity
 udemy
 uei
 ufonia
+ullico
 ultragenyx
 ultrahealthproviders
 umbragestudios
@@ -3176,6 +3276,7 @@ umpqua-health
 unbabel
 uncountable
 unico
+unify
 unifyconsulting
 uniphore
 unisoninfra
@@ -3290,6 +3391,7 @@ viome
 vipdesk
 vippetcare
 virtual-facility
+virtualitics
 virtus
 visby
 viseven
@@ -3302,6 +3404,7 @@ vivenu
 vivrelle
 vivsoft
 vivun
+vogo
 volantetech
 voleon
 volka
@@ -3355,18 +3458,22 @@ websummit
 weinfuse
 wellfit
 welocalize
+weloglobal
 wemaintain
 wepay
 wepclinical
 weride
 wesalute
 westair
+westyost
+wgsn
 whatwapp
 whereby
 whiterabbit
 whoop
 whymonster
 wilburlabs
+willowhealth.com
 willowinc
 winamax
 windfalldata
@@ -3407,6 +3514,7 @@ workwave
 workwhilejobs
 world-view-enterprises-inc.
 worldover
+worldscape-technology
 woven-by-toyota
 woven-planet
 wpromote
