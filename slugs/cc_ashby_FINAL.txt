@@ -3218,6 +3218,7 @@ padlet
 pageport
 pagos
 pahdo
+paires
 paireyewear
 palette-media
 palettelabs
@@ -4929,6 +4930,7 @@ winona
 wiremock
 wirescreen
 wisdom
+wisdom-ai
 wiseradvisor
 wisp
 wispr-flow
