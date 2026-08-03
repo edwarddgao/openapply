@@ -130,7 +130,10 @@ def main() -> None:
 
     text = "" if sys.stdin.isatty() else sys.stdin.read()
     known = load_known()
-    known_all = {s for sset in known.values() for s in sset}
+    known_normalized = {
+        ats: {slug.lower() for slug in slugs}
+        for ats, slugs in known.items()
+    }
 
     # Path 1: direct slugs from URLs -> (ats, slug)
     direct: set[tuple[str, str]] = set()
@@ -150,7 +153,11 @@ def main() -> None:
                     candidates.add((ats, v))
 
     # dedupe vs known; combine. Direct slugs are also verified by probe.
-    to_check = {(ats, s) for ats, s in (direct | candidates) if s not in known_all}
+    to_check = {
+        (ats, slug)
+        for ats, slug in (direct | candidates)
+        if slug.lower() not in known_normalized[ats]
+    }
 
     def check(item):
         ats, slug = item
