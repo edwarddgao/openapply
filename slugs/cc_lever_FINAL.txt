@@ -207,6 +207,7 @@ analyticpartners
 anavationllc
 anchorage
 andersencorp
+andersgroup
 anduril
 angel
 angellist
@@ -2873,6 +2874,7 @@ spear-ai
 spectral
 spekit
 spendesk
+sphere-laboratories
 spiceai
 spinai
 spinwheel
