@@ -40,6 +40,7 @@ Cirrus Systems
 Citizen Health
 Contradict Capital
 DiffractiveLabs
+Discovery-Loop
 Dispatch
 Easygenerator
 Edison Scientific
@@ -1288,6 +1289,7 @@ dimred
 dipper
 directive
 discern
+discovery-loop
 dispatch
 displai
 distributed-spectrum

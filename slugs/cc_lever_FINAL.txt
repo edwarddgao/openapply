@@ -802,6 +802,7 @@ crumbl
 cruxinformatics
 cruxocm
 crypto
+crypto-banter
 crypto-innovation
 crytek
 csaassociates
