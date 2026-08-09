@@ -1569,6 +1569,7 @@ feldera
 felicity
 felix
 fella
+fence-finance
 fence-masters-inc
 fermat
 fermataenergy
