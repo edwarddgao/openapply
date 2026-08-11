@@ -1615,6 +1615,7 @@ firecrawl
 firefly-co
 firetiger
 firewall
+fireworks
 fireworks.ai
 first-resonance
 firstbase
