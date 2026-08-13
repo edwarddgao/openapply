@@ -3495,6 +3495,7 @@ polygon-labs
 polymarket
 polymath
 polytomic
+pomelo-care
 pomeloinc
 poolside
 poolside-infrastructure-company
