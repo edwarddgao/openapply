@@ -1980,6 +1980,7 @@ happyscribe.com
 hargravetechnologies
 harmattan-ai
 harmonic
+harmonic-ai
 harmonic-security-inc
 harmony
 harperinsure

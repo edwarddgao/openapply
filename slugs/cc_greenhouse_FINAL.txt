@@ -928,6 +928,7 @@ billiontoone
 billtrust
 billtrust1
 biltrewards
+binance
 binanceus
 biofourmis
 biograph
