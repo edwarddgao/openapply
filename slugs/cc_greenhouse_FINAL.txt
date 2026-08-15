@@ -2866,6 +2866,7 @@ glenechogroup
 glia
 glide
 globalaccelerator
+globaldimensionsllc
 globalenergyallianceforpeopleandplanetgeappllc
 globalfishingwatch
 globalhealthcareexchangeinc
@@ -6976,6 +6977,7 @@ universalaudio
 universaldx
 universalhydrogen
 universityofchicago
+universityofchicagoeconomics
 unknownworlds
 unlimitedtechnology
 unlock
