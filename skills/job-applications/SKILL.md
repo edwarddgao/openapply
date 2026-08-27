@@ -103,19 +103,25 @@ Simplify Copilot autofill is only usable from the user's live signed-in Chrome (
 - Direct job-board URLs are often more reliable than embedded iframes.
 - If clicking submit does not work, try `document.querySelector('form').requestSubmit()`.
 - Greenhouse security-code fallback uses 8-character codes and fields commonly named `#security-input-0` through `#security-input-7`.
-- Search Gmail for security-code emails from both US and EU Greenhouse senders:
+- Fetch the security code with one command. It searches both US and EU Greenhouse senders over IMAP, polls until the mail lands, and prints the code as JSON:
 
 ```bash
-gws gmail users messages list --params '{"userId":"me","q":"newer_than:1d from:(no-reply@us.greenhouse-mail.io OR no-reply@eu.greenhouse-mail.io) subject:(Security code for your application to COMPANY)","maxResults":5}' --format json
+python3 scripts/gmail_imap.py security-code --company "COMPANY" --wait 90
 ```
 
-- Read the message and use the snippet or HTML body to extract the code:
-
-```bash
-gws gmail users messages get --params '{"userId":"me","id":"MESSAGE_ID","format":"full"}' --format json
+```json
+{
+  "code": "N9NYu5Bu",
+  "subject": "Security code for your application to COMPANY",
+  "received": "2026-08-24T09:14:14+00:00",
+  "context": "Copy and paste this code into the security code field on your application: N9NYu5Bu After you"
+}
 ```
 
-- If `gws` returns `invalid_grant: Token has been expired or revoked`, every security-code role in the batch will fail the same way. Report `blocked_on_gmail_auth` (do not ask the user for codes role-by-role); the user must re-run `gws auth login` interactively, after which these roles are retryable.
+- Codes are 8 characters and **case-sensitive and mixed-case** (`N9NYu5Bu`, `xQHmGBMT`). Type them exactly as printed; do not upper-case them.
+- Check `context` before using the code — it is the surrounding sentence, so a wrong match is visible rather than silent.
+- Exit codes: `0` code found, `1` no matching mail within `--wait` (trigger the resend and retry once), `2` credentials missing or rejected.
+- On exit `2`, every security-code role in the batch will fail the same way. Report `blocked_on_gmail_auth` (do not ask the user for codes role-by-role); these roles stay retryable once the app password is restored. The command's own error text says how to re-add it.
 
 - If React select widgets show values but validation still fails, inspect `window.__remixContext.state.loaderData` for `submitPath`, `confirmationPath`, `jobPost.questions`, and `jobPost.fingerprint`. Submit via Greenhouse's JSON endpoint only when the UI is clearly broken and the payload can be built from visible user-entered values.
 - Greenhouse API payload shape:

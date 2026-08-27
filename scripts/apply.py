@@ -53,6 +53,7 @@ CDP_CACHE_EXCLUDES = (
     'GrShaderCache/', 'ShaderCache/', 'Service Worker/CacheStorage/',
     'Service Worker/ScriptCache/', 'Service Worker/Database/',
 )
+CDP_PROFILE_COPY_ATTEMPTS = 3
 RATE_LIMIT_PHRASES = (
     "out of extra usage",
     "you've hit your usage limit",
@@ -61,8 +62,24 @@ RATE_LIMIT_PHRASES = (
     "you have hit your limit",
     "usage limit reached",
     "rate limit",
+    # claude -p wording; "session limit" is not caught by the usage-limit phrases
+    # above, so without these a quota wall burns the rest of the batch as failures.
+    "session limit",
+    "usage limit",
+    "limit reached",
+    "limit · resets",
 )
 RATE_LIMIT_EVENT = threading.Event()
+STOP_EVENT = threading.Event()
+ACTIVE_SUBAGENTS: set[subprocess.Popen] = set()
+ACTIVE_SUBAGENTS_LOCK = threading.Lock()
+# First message that tripped RATE_LIMIT_EVENT, persisted to RATE_LIMIT_MARKER on
+# exit so the overnight runner can parse the quota reset time and resume after it.
+RATE_LIMIT_DETAIL: list[str] = []
+RATE_LIMIT_MARKER = Path('applications/rate_limit_marker.json')
+# Distinct exit code (EX_TEMPFAIL) meaning "quota exhausted mid-batch, work remains";
+# callers can wait for the reset and re-run — the ledger makes re-runs idempotent.
+RATE_LIMIT_EXIT_CODE = 75
 
 
 def is_rate_limited(text: str) -> bool:
@@ -192,6 +209,34 @@ def _cdp_close_other_pages(port: int, keep_id: str) -> None:
                 pass
 
 
+def copy_chrome_profile(src: Path, dst: Path, *, attempts: int = CDP_PROFILE_COPY_ATTEMPTS) -> None:
+    """Copy a live Chrome profile, retrying transient partial transfers."""
+    rsync = ['rsync', '-a']
+    for exclude in CDP_CACHE_EXCLUDES:
+        rsync.extend(['--exclude', exclude])
+    rsync.extend([str(src) + '/', str(dst) + '/'])
+
+    for attempt in range(1, attempts + 1):
+        result = subprocess.run(rsync, capture_output=True, text=True)
+        if result.returncode == 0:
+            return
+        detail = (result.stderr or result.stdout or 'no diagnostic output').strip()
+        print(
+            f'[cdp] profile copy attempt {attempt}/{attempts} failed '
+            f'(rsync exit {result.returncode}): {detail}',
+            file=sys.stderr,
+            flush=True,
+        )
+        if result.returncode != 23 or attempt == attempts:
+            raise subprocess.CalledProcessError(
+                result.returncode,
+                rsync,
+                output=result.stdout,
+                stderr=result.stderr,
+            )
+        time.sleep(0.5)
+
+
 def start_cdp_chrome(args: argparse.Namespace) -> dict[str, Any]:
     """Copy the real Chrome profile and launch it headed with a CDP port.
 
@@ -212,13 +257,13 @@ def start_cdp_chrome(args: argparse.Namespace) -> dict[str, Any]:
         raise SystemExit('rsync not found on PATH (needed for --cdp-profile)')
 
     tmpdir = Path(tempfile.mkdtemp(prefix='oa_cdp_chrome_'))
-    (tmpdir / 'Default').mkdir(parents=True, exist_ok=True)
-    shutil.copy2(src / 'Local State', tmpdir / 'Local State')
-    rsync = ['rsync', '-a']
-    for exclude in CDP_CACHE_EXCLUDES:
-        rsync.extend(['--exclude', exclude])
-    rsync.extend([str(src / 'Default') + '/', str(tmpdir / 'Default') + '/'])
-    subprocess.run(rsync, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    try:
+        (tmpdir / 'Default').mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src / 'Local State', tmpdir / 'Local State')
+        copy_chrome_profile(src / 'Default', tmpdir / 'Default')
+    except BaseException:
+        shutil.rmtree(tmpdir, ignore_errors=True)
+        raise
 
     chrome_cmd = [
         args.chrome_binary,
@@ -338,6 +383,14 @@ def append_status(path: Path, record: dict[str, Any]) -> None:
         file.write(json.dumps(record, sort_keys=True) + '\n')
 
 
+STATUS_MARKERS = (
+    ('submitted', 'submitted:'),
+    ('blocked', 'blocked:'),
+    ('needs_input', 'needs input:'),
+    ('needs_input', 'needs_input:'),
+)
+
+
 def parse_status(message: str) -> tuple[str, str]:
     text = ' '.join(message.strip().split())
     lower = re.sub(r'^[\W_]+', '', text.lower())
@@ -347,6 +400,19 @@ def parse_status(message: str) -> tuple[str, str]:
         return 'blocked', text
     if lower.startswith('needs input') or lower.startswith('needs_input'):
         return 'needs_input', text
+    # Agents sometimes lead with a transparency note (e.g. reporting a prompt-injection
+    # attempt embedded in a form field) and put the verdict after it. Fall back to the
+    # last explicit "<status>:" marker. Without this those land in 'unknown', which is
+    # not in SKIP_STATUSES, so an already-submitted role stays eligible and gets a
+    # duplicate application on the next run. Requiring the colon keeps incidental prose
+    # ("Blocked: ... could not be submitted") from matching the wrong status.
+    best: tuple[int, str] | None = None
+    for status, marker in STATUS_MARKERS:
+        idx = lower.rfind(marker)
+        if idx != -1 and (best is None or idx > best[0]):
+            best = (idx, status)
+    if best is not None:
+        return best[1], text
     return 'unknown', text or 'no final message'
 
 
@@ -380,6 +446,19 @@ Ashby note: submissions from this kind of session may be flagged as possible spa
         # spam flags are not expected; submit once and read the result normally.
         ashby_note = ""
 
+    if args.gmail:
+        gmail_note = ""
+    else:
+        # Gmail access is broken for this whole batch, so the security-code lookup in
+        # the skill cannot succeed for any role. Say so up front rather than letting
+        # each agent burn a turn on a mail fetch that is guaranteed to fail.
+        gmail_note = """
+Gmail is UNAVAILABLE for this run: the IMAP app password is missing or rejected. Do NOT run `scripts/gmail_imap.py`.
+- If this application requires an emailed verification/security code (e.g. a Greenhouse security code), stop immediately and return exactly: Blocked - blocked_on_gmail_auth: Gmail unavailable this run, cannot retrieve the emailed verification code.
+- Do not ask the user for the code. These roles stay retryable once access is restored.
+- Every other step is unaffected; only email-code roles are blocked by this.
+"""
+
     return f"""You are an external job application agent. Apply to exactly one role.
 
 Role:
@@ -396,7 +475,7 @@ Required workflow:
 {browser_instructions}
 - Do not use browser extensions, third-party autofill helpers, or AI autofill tools. Fill forms directly with agent-browser from the applicant profile and policy.
 - Close the agent-browser session when done if possible. The launcher will also attempt cleanup.
-{ashby_note}
+{ashby_note}{gmail_note}
 Applicant data:
 - Read applicant facts and commitments from {args.applicant_profile}. This JSON profile is the source of truth for contact details, resume path, work authorization, sponsorship, availability, preferences, clearances, screening facts, demographics preferences, education, and languages.
 - Read reusable answer strategy from {args.application_policy}. Use it to apply profile facts to recurring form questions such as referral source, cover letters, in-office commitments, clearance, export-control status, compensation, transcript availability, and negative/conflict screening.
@@ -476,6 +555,15 @@ def _kill_process_group(proc: subprocess.Popen) -> None:
             pass
 
 
+def request_stop() -> None:
+    """Stop active role agents and keep queued roles out of the ledger."""
+    STOP_EVENT.set()
+    with ACTIVE_SUBAGENTS_LOCK:
+        active = list(ACTIVE_SUBAGENTS)
+    for proc in active:
+        _kill_process_group(proc)
+
+
 def run_subagent(cmd: list[str], *, cwd: Path, timeout: int, stdout: Any) -> tuple[int, str | None]:
     """Run a subagent, killing the whole process group on timeout.
 
@@ -498,21 +586,39 @@ def run_subagent(cmd: list[str], *, cwd: Path, timeout: int, stdout: Any) -> tup
         text=True,
         start_new_session=True,
     )
+    with ACTIVE_SUBAGENTS_LOCK:
+        ACTIVE_SUBAGENTS.add(proc)
     try:
-        out, _ = proc.communicate(timeout=timeout)
-        return proc.returncode, out
-    except subprocess.TimeoutExpired:
-        _kill_process_group(proc)
-        # group is dead, so any inherited pipe write-ends are closed: this drains
-        # promptly instead of hanging the way the old subprocess.run(timeout=) did.
         try:
-            out, _ = proc.communicate(timeout=30)
+            out, _ = proc.communicate(timeout=timeout)
+            return proc.returncode, out
         except subprocess.TimeoutExpired:
-            out = None
-        return 124, out
+            _kill_process_group(proc)
+            # group is dead, so any inherited pipe write-ends are closed: this drains
+            # promptly instead of hanging the way the old subprocess.run(timeout=) did.
+            try:
+                out, _ = proc.communicate(timeout=30)
+            except subprocess.TimeoutExpired:
+                out = None
+            return 124, out
+    finally:
+        with ACTIVE_SUBAGENTS_LOCK:
+            ACTIVE_SUBAGENTS.discard(proc)
 
 
 def run_agent(row: dict[str, str], index: int, args: argparse.Namespace, snapshot_date: str) -> dict[str, Any]:
+    if STOP_EVENT.is_set():
+        return {
+            'id': row.get('id', ''),
+            'status': 'skipped_stopped',
+            'detail': 'Skipped: pipeline stop requested',
+            'company_slug': row.get('company_slug', ''),
+            'title': row.get('title', ''),
+            'apply_url': row.get('apply_url', ''),
+            'snapshot_date': snapshot_date,
+            'agent': args.agent,
+            '_skip_ledger': True,
+        }
     if RATE_LIMIT_EVENT.is_set():
         return {
             'id': row.get('id', ''),
@@ -613,6 +719,7 @@ def run_agent(row: dict[str, str], index: int, args: argparse.Namespace, snapsho
     if is_rate_limited(final_message) or is_rate_limited(detail):
         if not RATE_LIMIT_EVENT.is_set():
             RATE_LIMIT_EVENT.set()
+            RATE_LIMIT_DETAIL.append(detail or final_message)
             print(f'[rate-limit] detected on role {index} ({row.get("company_slug","")}); short-circuiting remaining roles', flush=True)
 
     record = {
@@ -676,6 +783,10 @@ def main() -> None:
     parser.add_argument('--applicant-profile', type=Path, default=DEFAULT_APPLICANT_PROFILE)
     parser.add_argument('--application-policy', type=Path, default=DEFAULT_APPLICATION_POLICY)
     parser.add_argument('--skill-path', type=Path, default=DEFAULT_SKILL_PATH)
+    parser.add_argument('--no-gmail', dest='gmail', action='store_false',
+                        help='Gmail access is unavailable: skip roles needing an emailed '
+                             'verification code as blocked_on_gmail_auth instead of attempting them.')
+    parser.set_defaults(gmail=True)
     parser.add_argument('--prepare-browser', dest='prepare_browser', action='store_true')
     parser.add_argument('--no-prepare-browser', dest='prepare_browser', action='store_false')
     parser.set_defaults(prepare_browser=True)
@@ -719,6 +830,8 @@ def main() -> None:
     args.skill_path = args.skill_path.expanduser()
 
     if not args.dry_run:
+        # Clear any stale marker from a previous quota-limited batch.
+        repo_path(args.repo, RATE_LIMIT_MARKER).unlink(missing_ok=True)
         if not shutil.which(args.agent):
             raise SystemExit(f'{args.agent} CLI not found on PATH')
         if not shutil.which('agent-browser'):
@@ -781,16 +894,34 @@ def main() -> None:
             for future in as_completed(futures):
                 record = future.result()
                 if record.pop('_skip_ledger', False):
-                    reason = 'infra error' if record.get('status') == 'infra_error' else 'rate limit'
+                    if record.get('status') == 'infra_error':
+                        reason = 'infra error'
+                    elif record.get('status') == 'skipped_stopped':
+                        reason = 'stop requested'
+                    else:
+                        reason = 'rate limit'
                     print(f'Skipped ({reason}, not ledgered): {record.get("company_slug","")} - {record.get("title","")} :: {record.get("detail","")}', flush=True)
                     continue
                 append_status(args.status, record)
                 print(f'Finished: {record["detail"]}', flush=True)
     finally:
         stop_cdp_chrome(cdp_state)
+    if STOP_EVENT.is_set():
+        raise KeyboardInterrupt
+    if RATE_LIMIT_EVENT.is_set():
+        marker = repo_path(args.repo, RATE_LIMIT_MARKER)
+        marker.parent.mkdir(parents=True, exist_ok=True)
+        marker.write_text(json.dumps({
+            'detail': RATE_LIMIT_DETAIL[0] if RATE_LIMIT_DETAIL else '',
+            'written_at': utc_now(),
+        }, indent=2), encoding='utf-8')
+        print(f'[rate-limit] quota exhausted mid-batch; exiting {RATE_LIMIT_EXIT_CODE} so callers can resume after reset', flush=True)
+        sys.exit(RATE_LIMIT_EXIT_CODE)
 
 
 if __name__ == '__main__':
+    signal.signal(signal.SIGTERM, lambda _signum, _frame: request_stop())
+    signal.signal(signal.SIGINT, lambda _signum, _frame: request_stop())
     try:
         main()
     except KeyboardInterrupt:
