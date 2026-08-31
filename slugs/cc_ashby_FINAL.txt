@@ -17,6 +17,7 @@
 3imembers
 3y-health
 42dot
+51f67855-3ba7-445a-99bb-97e9f5093e4b
 5bluesoftware
 7gen
 80000hours
@@ -185,6 +186,7 @@ aibidia
 aic
 aida
 aidkit
+aim
 aim4hire
 aion
 aios
@@ -266,8 +268,10 @@ ambient.ai
 amboss
 ambral
 ambrook
+ambrosia-energy
 amca
 ameba
+amenitiz
 americaachieves
 american
 american-housing
@@ -281,6 +285,7 @@ amper
 amperos
 ampersand
 amplify
+amplitude
 amplo
 anagram
 anam
@@ -452,6 +457,7 @@ atlas
 atlas-privacy
 atlasonc
 atlasresidential
+atlys
 atmoicindustries
 atmos
 atob
@@ -481,6 +487,7 @@ auger
 augmodo
 augrade
 augur
+augurai
 august
 august-health
 augustus
@@ -503,6 +510,7 @@ avantos
 avaprotocol
 avelios-medical
 aven
+aveni
 avent-industrial-inc
 aventure
 avenue
@@ -519,6 +527,7 @@ axilon
 axiom
 axiom-co
 axiombio
+axiommath
 axion
 axionray
 axle-careers
@@ -699,6 +708,7 @@ boostly
 bootloop
 botanictonics
 bounce
+bowatt
 bracket-bot
 braiins
 brainbaselabs
@@ -829,6 +839,7 @@ cased
 cashmereai
 cashq
 casium
+casperstudios
 cassidy
 cassihome
 castle
@@ -1008,11 +1019,13 @@ cointracker
 coldstartventures
 collective
 collegevine.com
+collider
 collinear-ai
 colonist
 color-health
 column
 columntax
+comand-ai
 comena
 comfy-org
 comind
@@ -1024,6 +1037,7 @@ commodityai
 common-fund
 commonroom
 commons
+commonsense
 commonware
 community
 community-preservation-corporation
@@ -1036,10 +1050,12 @@ compass-surgical-partners
 complement
 complete
 complete-robot
+complir
 composio
 composite
 compound
 compound-eye
+compresr
 compscience
 compyl
 comstruct
@@ -1274,6 +1290,7 @@ develop-health
 devsavant
 dex
 dexmate
+dext-careers
 dgpt
 di-ati
 diagrid
@@ -1299,6 +1316,7 @@ ditto
 dittoai
 diversified-botanics
 divineresearch
+dlc-inc
 docebo
 docker
 docplanner
@@ -1336,6 +1354,7 @@ dourolabs.xyz
 dovetail
 dovly
 doxy.me
+dragonfruit.ai
 drata
 dreamhq
 dreamthree
@@ -1663,6 +1682,7 @@ flosports
 flourish
 flowcarbon
 flowengineering
+flowgen
 flowhub
 flowtel
 flox
@@ -1688,6 +1708,7 @@ fonoa
 fonzi-ai
 foodhealthco
 footprint
+fordefijobs.ashbyhq.com
 forerunner
 foresight
 foresight-health
@@ -1794,6 +1815,7 @@ gecko-robotics
 gelato
 gem-technologies
 gen-digital
+gen-trellis
 gendo
 general-context
 general-counsel-ai
@@ -1904,6 +1926,7 @@ gravie
 gravity
 gravityclimate
 gravitysketch
+gray
 grayce
 graymatter-robotics
 grayswanai
@@ -1993,8 +2016,10 @@ hatch
 hatz-ai
 hauler-hero
 haus
+haven-headache
 havocai
 hawk
+hawkcell
 hawkeyeinnovations
 haydenai
 haystacknews
@@ -2095,6 +2120,7 @@ hoopla
 hopae
 hoplynk
 hopper
+horizenlabs
 horizon
 horizon3ai
 hospitalio
@@ -2179,6 +2205,7 @@ incention
 inception
 inceptive
 incident
+inclined
 indent
 inductive-automation-llc
 inductive-bio
@@ -2217,6 +2244,7 @@ insite-health
 insitro
 inspectiv
 inspiration-commerce-group
+inspiren
 instil
 instructure
 insurgrid
@@ -2224,6 +2252,7 @@ intangible.ai
 integral
 integral-de
 integrationapp
+intelligence
 intelligent.internet
 intellistack
 intentlab
@@ -2250,6 +2279,7 @@ ionlace
 iota-bio
 iridiumc
 iris
+irissoftwaregroup
 ironcladhq
 irreducible
 irregular
@@ -2352,6 +2382,7 @@ keeper
 kelluu
 keplar
 kepler-ai
+keragon
 kernel
 keru-ai
 kestra
@@ -2485,9 +2516,11 @@ leantechniques
 leap
 leapsome
 learn-ashby
+learn-bedford
 leavitt
 ledge
 ledger
+legal-500
 legend-xyz
 legionhealth
 legora
@@ -2564,6 +2597,7 @@ liv-golf
 liveflow
 liveitup
 livekit
+liven
 liveview-technologies
 livinghr
 llamaindex
@@ -2596,18 +2630,21 @@ loveholidays
 lovelace
 lowercarboncapital
 lpadesignstudios
+lslaw
 ltv
 lua
 lucidlink
 lucis
 lucra-sports
 luma-ai
+lumaai
 lumai
 lumana
 lumbermanufactory
 lumbra
 lumen.energy
 lumilens
+lumin-digital
 luminai
 luminary
 luminoai
@@ -2626,6 +2663,7 @@ lyrebird-health
 lyric
 m-kopa
 m13
+m7health
 mach
 mach9
 machinery-partner
@@ -2902,6 +2940,7 @@ multion
 multiplier-holdings
 multiply
 multiplyai
+multiplymii
 multitude
 multitude insights
 multiverse
@@ -2932,6 +2971,7 @@ namespace
 nango
 nano-qt
 nanograb
+nanonets
 naptha
 nascent
 nash
@@ -2960,6 +3000,7 @@ nelly
 nelo
 nen
 nen-creative
+neno
 neo-tax
 neocognition
 neofinancial
@@ -3128,6 +3169,7 @@ old-well-labs
 oligo
 olive
 olix
+ollama
 olly-olly
 omadaai
 omafertility
@@ -3167,6 +3209,7 @@ opal-os
 opalspend
 open-ledger
 openai
+openai-deployment-company
 openart
 openblock
 opencall
@@ -3212,6 +3255,7 @@ orchestra-bio
 orderful
 ordio
 originhq
+orionsleep
 orita
 orum
 oscilar
@@ -3261,6 +3305,7 @@ pagos
 pahdo
 paires
 paireyewear
+pairtu
 palette-media
 palettelabs
 palladio
@@ -3307,6 +3352,7 @@ partly.com
 partsbase
 partyhat
 passage
+passagehealth
 passes
 passport
 passthrough
@@ -3389,6 +3435,7 @@ phasebiolabs
 phia
 phil
 phinitylabs
+phira-ventures
 phlair
 phoebe
 phoebe-work
@@ -3450,6 +3497,7 @@ playquell
 playson
 please
 pledge.earth
+plenful
 pleo
 pliant
 plinth
@@ -3504,6 +3552,7 @@ poolside-infrastructure-company
 popcorn
 popl
 popsql
+porters
 poseidonaero
 posh
 posh-ai
@@ -3635,6 +3684,7 @@ quantumleap.education
 quantware
 quarks-tech
 quartermaster
+queueinc
 quicknode
 quilter
 quindar
@@ -3651,6 +3701,7 @@ r2
 rabbet
 rabbithole
 rabot
+raccoonai
 rad-intel
 radai
 radar
@@ -3667,6 +3718,7 @@ rain-ai-jobs
 rain-technologies
 rainfallhealth
 rainforest-pay
+raintree-systems
 rallyuxr
 rallyxyz
 ramp
@@ -3685,6 +3737,7 @@ raylu-ai
 re-cap
 reach
 reacher
+reactivemarkets
 read-ai
 readme
 ready
@@ -3821,6 +3874,7 @@ riplo
 ripplestreet
 risc
 risczero
+riseguide
 risklabs
 ritewindow
 ritual-foundation
@@ -3890,6 +3944,7 @@ runway-ml
 rutter
 rwa.xyz
 rwazi
+rwx
 rye
 rythm
 ryvn
@@ -3993,6 +4048,7 @@ second-nature
 seconddinner
 secondnaturecomputing
 securebio
+secureframe
 security-level-5
 sedna
 seekeasy
@@ -4187,11 +4243,13 @@ sound-ventures
 sound.xyz
 source-health
 source-multiplier
+sourcedev
 sourgum
 southgeeks
 sovereign-engineering
 sovra
 soxton
+spaak
 space44
 spacecurve
 spacepanda
@@ -4278,6 +4336,7 @@ stationlabs
 statisfy
 statista
 statsig
+statsports-careers
 stay22
 stayai
 staycation
@@ -4377,6 +4436,7 @@ superorder
 superpilot-labs
 superplane
 superpower
+superseed
 surge-ai
 surgimate
 surreal
@@ -4384,6 +4444,7 @@ surveymonkey
 susteon
 suzy
 svix
+swamp-club
 swan
 swans
 swap
@@ -4515,7 +4576,9 @@ tensec
 tensorlake.ai
 tensorwave
 tensorzero
+tentens-tech
 terac
+teragenenergy
 teraswitch
 terminal
 terminal-industries
@@ -4699,6 +4762,7 @@ trust-wallet
 trustlab
 truthsystems
 truva
+truvity.com
 truvo
 tryalma
 trychroma
@@ -4766,6 +4830,7 @@ upchurch
 upcodes
 updoc
 upflow
+upguard
 uplane
 uplevel
 uprootclean
@@ -4786,6 +4851,7 @@ valency
 valerie-group
 valeriehealth
 valid
+validio
 valinor
 valiussciences
 valkai
@@ -4851,6 +4917,7 @@ vettura
 vibe
 vibecode
 vibiz
+vibrant
 vibrant-practice
 vic.ai
 victorious
@@ -4862,6 +4929,7 @@ viggle
 vigil-markets
 viktor
 village-labs
+villagesql
 vinci4d
 vio
 violet
@@ -4948,6 +5016,7 @@ watneyrobotics
 waveforms-ai
 wayflyer
 waystation
+wayve
 we3
 wealth-com
 wealthsimple
@@ -4978,6 +5047,7 @@ whetstoneresearch
 whippy
 whiskeylibrary
 whitecircle
+whoop
 whop
 widgetfactory
 willow-health
@@ -5046,6 +5116,7 @@ wursta
 www.qogita.com
 wynd-labs
 xalts
+xapien
 xare
 xbowcareers
 xdof
@@ -5115,6 +5186,7 @@ zip security
 ziplines
 zippymh
 zircuit
+znanylekarz
 zodl
 zoe
 zolplay
