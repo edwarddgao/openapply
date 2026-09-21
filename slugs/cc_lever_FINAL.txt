@@ -488,6 +488,7 @@ botify
 bounteous
 boweryfarming
 boxbot
+boxlunch
 bpmcpa
 brafton
 brainnest
@@ -2063,6 +2064,7 @@ newfrontinsurance
 newton
 newwestern
 newwesterncorporate
+nexgenanimalhealth
 nexos
 next-decade
 next-health
@@ -2878,6 +2880,7 @@ spekit
 spendesk
 sphere-laboratories
 spiceai
+spin
 spinai
 spinwheel
 spiria

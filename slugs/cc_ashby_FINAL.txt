@@ -11,6 +11,7 @@
 1sphere
 1st
 1x
+2ndwave
 30mpc
 3commas
 3e
@@ -27,6 +28,7 @@
 8returns
 8vc
 9-mothers
+91b38662-e5a9-4bc3-ade7-44e29d01d343
 9fin
 Ambrosia-Energy
 Antares
@@ -109,6 +111,7 @@ a-team
 a1
 a16z-new-media
 a2zradiology
+a37
 aacigroup
 aaron-school
 aaru
@@ -137,6 +140,7 @@ acorns
 acquird
 acquisition
 across-ai
+activeloop
 activesite
 adapt
 adaption
@@ -151,10 +155,12 @@ addi
 additiveai
 adelphi-ai
 adept.ai
+adexis
 aditude
 adjoe
 adonis
 adthena
+adtucon
 aduro-advisors
 advanced-systems-group
 advanced-technology-group
@@ -185,6 +191,7 @@ ahl-saafai
 aibidia
 aic
 aida
+aidigest
 aidkit
 aim
 aim4hire
@@ -206,6 +213,7 @@ airtasker
 airwallex
 airweave
 aisle
+aisle3
 aiuc
 aiwyn
 aizen
@@ -225,6 +233,7 @@ aletiq
 alexai
 algo1
 algorithmiq.fi
+aligned
 allarahealth
 allen-control-systems
 alleviatehealth
@@ -238,6 +247,7 @@ alloyenterprises
 alloyriver
 allspice
 allswell
+allwage
 allwyn-corp
 almabase
 almedia
@@ -275,6 +285,7 @@ amenitiz
 americaachieves
 american
 american-housing
+american-turbines
 americanoperator
 ami
 amidon
@@ -293,6 +304,7 @@ anara
 anatomy-financial
 andela
 andercore
+andi
 ando
 andotechnologies
 andromeda
@@ -371,8 +383,10 @@ arcada
 arcade
 arcade-ai
 arcadeai
+arceus
 arch
 arch.co
+archerfaris
 archil
 architect
 archive
@@ -382,6 +396,7 @@ arcturus
 arda-therapeutics
 ardea-partners
 arena
+arena-magazine
 arenanet
 argolabs
 argon-ai
@@ -400,6 +415,7 @@ arq
 arqu
 arrakis
 array-behavioral-care
+arrive
 artafinance
 artemis
 artemisanalytics
@@ -538,6 +554,7 @@ axlora
 ayblehealth
 ayosemi
 aztec-labs
+azupay
 b2spin
 baba
 babbel
@@ -565,6 +582,7 @@ base-operations
 base-power
 base0
 basecamp-research
+basecompute
 baseten
 basiccapital
 basis-ai
@@ -611,6 +629,7 @@ bettercloud
 bettermile
 bettermoney
 betterup
+bevaya
 bevel
 beyondmath
 beyondreachlabs
@@ -675,6 +694,7 @@ blockhouse
 blockit
 blockparty
 blockstream
+blocktech
 blockworks
 blooming-health
 blossom-health
@@ -698,6 +718,7 @@ boldgames
 bolna
 bolt-farm
 bonfire
+bonfireanalytics
 bonside
 bookkeeper360
 boom
@@ -753,6 +774,7 @@ bubble
 buena
 buffer
 build
+build-ai
 builder-prime
 buildforce
 buildlinx
@@ -763,6 +785,7 @@ buildwithfern
 built-robotics
 bulletfarm
 bullpen-talent
+bumbleinc
 bunch
 bunkerhillhealth
 buoyant
@@ -811,6 +834,7 @@ cara-ai
 carbonre
 carbonx
 cardboard
+cardflight
 cardless
 carecar
 careers.azx.io
@@ -872,6 +896,7 @@ centralhq
 centralize
 centreforeffectivealtruism
 centuro-global-careers
+century.health
 cerebras
 ceremonia
 certa
@@ -879,6 +904,7 @@ certifid
 certifyos
 certn
 cerve
+cge
 chaidiscovery
 chainalysis
 chainalysis-careers
@@ -897,6 +923,7 @@ chapter
 character
 characterbio
 charge-robotics
+chariotclaims
 charta-health
 chartahealth
 charthop
@@ -1073,6 +1100,7 @@ conduit
 conduit-health
 conetic-group
 confiant
+confidence
 confido
 confluent
 confusioncapital
@@ -1081,6 +1109,7 @@ connectly
 conquest
 conscious-talent
 console
+constellation
 constellationspace
 constructor
 contentoo
@@ -1175,6 +1204,7 @@ cultureai
 culturello
 curie
 current-advisors
+currentsurgical
 curri
 cursor
 curvionblue
@@ -1191,6 +1221,7 @@ cydea
 cygnify
 cylake-inc
 cylinderhealth
+cytix
 cytora.com
 cyvl
 d-matrix
@@ -1215,6 +1246,7 @@ datalab
 dataleap
 datalogics
 dataplor
+dataro
 datasnipper
 datasnipper.com
 datastealth
@@ -1225,6 +1257,7 @@ datum
 dave
 david-ai
 davidenergy
+davischicago
 davistechnologymanagement
 day9
 daydream
@@ -1233,6 +1266,7 @@ daydreamlive
 dayjob-ai
 dcblox
 dclimate
+ddn
 dealmaker
 dealops
 dearestcare
@@ -1297,6 +1331,7 @@ diagrid
 dialo
 dialogueai
 didask
+differential.bio
 diffit
 difflogic
 digichem
@@ -1309,6 +1344,7 @@ discern
 discovery-loop
 dispatch
 displai
+distance
 distributed-spectrum
 distributor-wire-cable
 distyl
@@ -1322,6 +1358,7 @@ docker
 docplanner
 docstation
 doctolib
+doctoralia-brasil
 doctoralia-spain
 doctronic
 doe
@@ -1407,6 +1444,7 @@ edvisorly
 edwin
 effective-ai
 egra
+egym
 eigen
 eigen-labs
 eightsleep
@@ -1443,6 +1481,7 @@ emanate
 embeddable
 embedding-vc
 ember-life-sciences
+emberai
 emberos
 emberot
 emerald-ai
@@ -1465,6 +1504,7 @@ endex
 endgame
 endra
 endurance-energy
+eneba
 engflow
 engram
 enode
@@ -1479,6 +1519,7 @@ enzo-health
 eon
 eos-atomics
 eotlabs
+epackpro
 epay-policy
 ephemera
 epianeuro
@@ -1588,6 +1629,7 @@ feldera
 felicity
 felix
 fella
+fellowai
 fence-finance
 fence-masters-inc
 fermat
@@ -1595,6 +1637,7 @@ fermataenergy
 fermi
 fern
 fernstone
+ferocia
 ferovinum
 ferryhealth
 fetch-pet-health
@@ -1623,6 +1666,7 @@ findarbor
 finmid.com
 finni-health
 finnihealth
+finny
 finout
 finto
 fintool
@@ -1636,6 +1680,7 @@ firetiger
 firewall
 fireworks
 fireworks.ai
+firmable
 first-resonance
 firstbase
 firstbaseio
@@ -1659,6 +1704,7 @@ flatfile
 flawless
 fledge
 fleek
+fleet
 fleetcraft
 fleetline
 fleetpulse
@@ -1705,6 +1751,7 @@ folio
 fomo-labs
 fonio
 fonoa
+fonzi
 fonzi-ai
 foodhealthco
 footprint
@@ -1720,6 +1767,7 @@ forgepoint
 forma
 formal
 formance
+formbio
 formenergy
 formula
 fort
@@ -1765,6 +1813,7 @@ fresnosummit
 friendliai
 frontcareers
 frontier-health
+fronzafrancis
 fruitist
 fs-studio
 ftmo
@@ -1784,6 +1833,7 @@ further
 furtherai
 fuse
 fuser
+futrue-neuroscience
 future-find
 futureaudioworkshop
 futurefitai
@@ -1852,8 +1902,10 @@ getting-attention
 ghost
 gigaml
 gigaton
+gigi
 gigsafe
 gimlet
+gismart
 gitbook
 gitpod
 gitstart
@@ -1877,6 +1929,7 @@ glyphic
 gmke-law
 go-augment
 go-nimbly
+goaly
 goanagram
 gohenry
 going
@@ -1921,6 +1974,7 @@ granular-energy.com
 grapevine
 graphite
 graphitehq
+graphyte
 gratia
 gravie
 gravity
@@ -1979,6 +2033,7 @@ hadrian-automation
 hadrius
 halasystems.com
 halborn
+hall-cpa
 halliday
 halluminate
 halo-cures
@@ -2039,6 +2094,7 @@ healthtech-1
 heart-and-soil
 heart-mind-talent
 hebbia-ai
+hedge
 hedra
 heidihealth.com.au
 heirloomcarbon
@@ -2095,6 +2151,7 @@ hireveterans
 hiring-cafe
 hiring-pros
 hitpayapp.com
+hive-autonomy
 hive.co
 hived
 hivehealth
@@ -2168,6 +2225,7 @@ hyperscale
 hyperscience
 hyperspell
 hypha
+hyphametrics
 i-onx
 i3d
 i6
@@ -2192,6 +2250,7 @@ illumio
 imagineart
 immersivelabs
 immunara
+immunic-therapeutics
 impossible-foods
 imprint
 improbable
@@ -2253,6 +2312,7 @@ integral
 integral-de
 integrationapp
 intelligence
+intelligence-security-laboratories
 intelligent.internet
 intellistack
 intentlab
@@ -2296,6 +2356,7 @@ iwoca.co.uk
 iyo
 jaaq
 jack-jill-external-ats
+jameda
 jampack-ai
 jamssoftware
 jane
@@ -2369,6 +2430,7 @@ kalos
 kalshi
 kamiwaza
 kantiv
+kantoko
 karman
 karrotcare
 kastle
@@ -2394,6 +2456,7 @@ khan-tech
 kick
 kicksaw
 kiddom
+kijimea
 kikoff
 kiln.fi
 kilocode
@@ -2455,6 +2518,7 @@ koyfin
 kpr
 kraken-kinetics
 kraken.com
+krakentech
 kranz-consulting
 krea
 krepling
@@ -2538,6 +2602,7 @@ leonardo.ai
 leovegasgroup
 letta
 level
+level-ai
 levelpath
 levels
 leveragedmedia
@@ -2551,6 +2616,7 @@ lido.fi
 life-space-digital
 lifelabs
 lifelabs learning
+liftoffrank
 light
 light-inc
 lightdash
@@ -2584,6 +2650,7 @@ lingopal
 links-academy
 linktree
 linkup
+linro
 lio
 liqid-lig
 liquid
@@ -2633,9 +2700,11 @@ lpadesignstudios
 lslaw
 ltv
 lua
+lucidcomputing
 lucidlink
 lucis
 lucra-sports
+luma
 luma-ai
 lumaai
 lumai
@@ -2656,6 +2725,7 @@ luopay
 lupapets
 luxor
 luzid
+lyceum
 lydian
 lynk
 lyra
@@ -2709,6 +2779,7 @@ manifest-law
 manifest-os
 manifold-industries
 manusai
+manychat
 mapbox
 maple
 marathon
@@ -2720,6 +2791,7 @@ marianaminerals
 mariner-careers
 markarch
 marloo
+marqeta-inc
 marshmallow
 marsorobotics
 martian
@@ -2741,6 +2813,7 @@ matter-intelligence
 matter-labs
 matterlabs
 matterworks
+matx
 maven
 maven-agi
 maverickbiometals
@@ -2796,6 +2869,7 @@ mercator
 merciv
 mercor
 mercura
+mercury
 merge
 mergemoney
 meridian
@@ -2878,6 +2952,7 @@ modernbanc
 modernfertility
 modernfi
 moderntreasury
+modulate
 modus
 moego
 molecule
@@ -2907,6 +2982,7 @@ montecarlodata
 monterra
 montu-uk
 monumental
+moonactive
 moonlake
 moonshot
 moonshot-ai
@@ -3046,6 +3122,7 @@ newlantern
 neworbit
 newschoolfoods
 newtendermint
+newtonx
 newxel
 nexos-ai
 nextdata
@@ -3053,6 +3130,7 @@ nextlinklabs
 nextmatter
 nextpatient
 nexus-cognitive
+nexus-intelligence
 nexus-marketing
 nexus.xyz
 nexxa
@@ -3110,6 +3188,7 @@ novellia
 novig
 novita-ai
 novo
+novogaia
 nox-metals
 noya
 noyo
@@ -3223,6 +3302,7 @@ openhands
 openhomefoundation
 openloophealth
 openlooppartners
+openly
 opennote
 openobserve-careers
 openphilanthropy
@@ -3235,7 +3315,9 @@ oplabs
 opslevel
 opsmill
 optery
+optimal
 optimum
+options-it
 optro
 opus-medical
 opus-training
@@ -3354,6 +3436,7 @@ partyhat
 passage
 passagehealth
 passes
+passionfroot
 passport
 passthrough
 patch.io
@@ -3391,6 +3474,7 @@ pearpop
 pebl
 peec
 peek
+pelico
 pemberton
 pencil
 pennylane
@@ -3423,8 +3507,10 @@ persona.ai
 personainc.ai
 personio
 pesto
+petcircle
 petra-labs
 petra-security
+petual
 pganalyze
 phantom
 phare
@@ -3444,6 +3530,7 @@ phonely
 phonic
 phosphorus.io
 photoroom
+phrase
 phylax
 phylo
 physicalintelligence
@@ -3453,6 +3540,7 @@ pickle
 picknik
 picogrid
 pika
+pikl
 pilgrim
 pillar
 pillarspace
@@ -3469,6 +3557,7 @@ pixelmatters
 place-exchange
 plaid
 plain
+plan-bee-academy
 plancraft
 plane
 planehr
@@ -3480,6 +3569,7 @@ plantingspace
 plasiv
 plasma
 plasmidsaurus
+platform-engineering
 platformed
 plato.so
 platoapp
@@ -3645,6 +3735,7 @@ prox
 proxima
 proxima-fusion
 proximaai
+proximal
 pryzm
 psi
 publiccloudgroup
@@ -3718,6 +3809,7 @@ rain-ai-jobs
 rain-technologies
 rainfallhealth
 rainforest-pay
+rainmaker
 raintree-systems
 rallyuxr
 rallyxyz
@@ -3769,6 +3861,7 @@ redpine
 reducto
 reedsy
 reevo
+refer
 reflect-orbital
 reflectionai
 reflex
@@ -3795,6 +3888,7 @@ releventfp
 relevize
 reliable-robotics
 remarcable-inc
+rematiq-gmbh
 rematter
 remberg
 remedy
@@ -3828,6 +3922,7 @@ reset
 resilience
 resolution
 resolve
+resolveai
 resolvepay
 reson8
 resorcer.com
@@ -3843,7 +3938,9 @@ reteam
 retell-ai
 retro
 rev
+revecore
 revel
+revelrobotics
 revelxdstudio
 revenium
 revenuebase-inc
@@ -3865,6 +3962,7 @@ rhythms
 ribbon-ai
 ricursive
 ridealso
+ridezoomo
 rightfoot
 righthandtalent
 rilla
@@ -3882,6 +3980,7 @@ river
 river-rock-academy
 rivermont-schools
 riveron
+rivertechnologies
 rivet
 rivianvw.tech
 rivora
@@ -3945,6 +4044,7 @@ rutter
 rwa.xyz
 rwazi
 rwx
+rxvantage
 rye
 rythm
 ryvn
@@ -3961,7 +4061,9 @@ safi
 sage-alliance
 sage-alliance-schools
 sagecare
+sagefuture
 sagelabs.ai
+sageox
 sagetap
 sahara
 sail
@@ -3980,6 +4082,7 @@ salonkee
 saltz
 same
 sample-healthcare
+sampura
 sana-roles
 sanctuary
 sandbar
@@ -3987,12 +4090,15 @@ sandboxaq
 sandstone
 sanguinesa
 sanity
+santermedia
 sapien
 sapiom
 sardine
 saris-ai
+sarjai
 saronic
 sarvam
+sash
 satispay
 satoshilabs
 saturn
@@ -4122,6 +4228,7 @@ shuttlelabs
 sibill
 sidebar
 siena
+siepe
 sierra
 sierra-jp
 sierra-studio
@@ -4139,6 +4246,7 @@ silktide
 silnahealth.com
 silver
 sim
+simetrik
 simile
 simondata
 simple-ai
@@ -4154,6 +4262,7 @@ sintra
 sio-logistics
 siro
 sisu
+sitecore
 sitemate
 siteminder
 skalar
@@ -4174,6 +4283,7 @@ skyflow
 skylink
 skylo
 skymavis
+skynrg
 skywatch
 slab
 slant
@@ -4239,6 +4349,7 @@ soris
 sosafe
 soshallwe
 soterinsure
+soulside
 sound-ventures
 sound.xyz
 source-health
@@ -4385,10 +4496,12 @@ streetgroup
 strella
 stride build
 strider-technologies
+strix
 strongdm
 stronghold
 struction
 structionsite
+stryker-digital
 studson
 studyfetch
 stuut-ai
@@ -4424,6 +4537,7 @@ sunset-studios
 supa
 supabase
 super.com
+superbolt
 supercell
 superconductor
 superdial
@@ -4448,6 +4562,7 @@ swamp-club
 swan
 swans
 swap
+swaprail
 swarmaero
 swarmer
 swarmia
@@ -4464,6 +4579,7 @@ sxaler
 sybill-ai
 sydecar
 sygaldry-technologies
+sylvan-labs
 sylvera
 symbiotic
 symbolica-ai
@@ -4481,6 +4597,7 @@ synquery
 synthesia
 synthetic
 synthflow
+syntro
 syrup
 system-initiative
 system2
@@ -4553,6 +4670,7 @@ tectonai
 teero
 teiko
 teio
+tekion
 tekton-dynamics
 telepatia
 teleskope
@@ -4587,6 +4705,7 @@ ternary
 terraai
 terradot
 terrafirma
+terrafirma-inc
 terramate
 terranova
 terrarium
@@ -4613,11 +4732,13 @@ the-global-talent-co
 the-learning-spectrum
 the-llm-data-company
 the-pinnacle-school
+the-rec-hub
 the-spire-school
 the-studio
 the-suite
 the-token-company
 thebotcompany
+theflex
 themindcompany
 themuralgroup
 theori
@@ -4685,6 +4806,7 @@ tokenmetrics
 toku
 tolan
 tolken
+tolmo
 toma
 tome
 tomo
@@ -4754,12 +4876,14 @@ truelogic
 truemed
 trueshort
 trulioo
+trulioo-coopandinterns
 trunk
 trunk tools
 trunktools
 truss
 trust-wallet
 trustlab
+trustly
 truthsystems
 truva
 truvity.com
@@ -4818,6 +4942,7 @@ uniti
 unitxlabs
 unity-advisory
 universalagi
+universe
 universe-group
 unlearn
 unlikelyai
@@ -4845,6 +4970,7 @@ useful
 usekernel
 usul
 v7labs.com
+va4u
 vacuumgroup
 valence
 valency
@@ -4882,6 +5008,8 @@ vaultplatform
 vcluster
 vclusterlabs
 vector
+veda
+veeda-ai
 veeda-labs
 veev
 veezu
@@ -4906,11 +5034,13 @@ verisoul
 verlo
 verne
 versemedical
+vertanical
 vertical-aerospace
 verticalsemi
 vertice
 verto
 vessev
+vessl-ai
 vesta
 vetcove
 vettura
@@ -4947,6 +5077,7 @@ vitable
 vital
 vital-lyfe
 vitalize
+vitesse
 vitl
 vitvio
 vivian-health
@@ -4990,6 +5121,7 @@ vrey
 vst
 vultr
 vultron
+vvd
 vyn
 vynca
 vyro
@@ -5070,12 +5202,14 @@ wiseradvisor
 wisp
 wispr-flow
 wistia
+with-fulcrum
 withcherry
 withclutch
 withco
 withdaydream
 withdefault
 withflex
+within-ai
 withorbital
 withpace
 withpulley
@@ -5096,6 +5230,7 @@ workhero
 workmatelabs
 workos
 workos-inc
+workshop-hiring
 workshop-ventures
 workshoplabs
 worktrace
@@ -5115,6 +5250,7 @@ wundergraph
 wursta
 www.qogita.com
 wynd-labs
+x-idian
 xalts
 xapien
 xare
@@ -5133,12 +5269,14 @@ xoul
 xoxo-ai
 xpreso
 xyz-reality
+yadda
 yazio
 ycombinator
 yeet
 yellow3d
 yendo
 yepoda
+ygo
 yobi
 yolabs
 yondercard
@@ -5193,6 +5331,7 @@ zolplay
 zoomlogi
 zowie
 zuru
+zus-health
 zydro
 zyphra
 zyphraAgentis-Capital-Advisors
