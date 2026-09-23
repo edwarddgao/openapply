@@ -235,6 +235,70 @@ def cmd_security_code(args: argparse.Namespace) -> int:
     return 1
 
 
+# Workday candidate-account mail: "Verify your candidate account" carries
+# {tenant}.wdN.myworkdayjobs.com/{site}/activate/<token>/ and "Reset your password
+# for your candidate account" carries .../passwordreset/<token>/. Senders vary by
+# tenant (x@otp.workday.com, workday@bbva.com), so match on subject and link host.
+WORKDAY_LINK_RE = re.compile(
+    r'https://([\w-]+)\.wd\d+\.myworkdayjobs\.com/[^\s"\'<>]*?/(activate|passwordreset)/[^\s"\'<>]+'
+)
+
+
+def search_workday_links(client: imaplib.IMAP4_SSL, tenant: str, kind: str,
+                         within_minutes: int) -> list[dict[str, Any]]:
+    days = max(1, (within_minutes + 1439) // 1440)
+    client.select(MAILBOX, readonly=True)
+    status, data = client.search(None, 'X-GM-RAW', f'"subject:(candidate account) newer_than:{days}d"')
+    if status != 'OK' or not data or not data[0]:
+        return []
+    results: list[dict[str, Any]] = []
+    cutoff = time.time() - within_minutes * 60
+    for uid in data[0].split()[-25:]:
+        status, fetched = client.fetch(uid, '(RFC822)')
+        if status != 'OK' or not fetched or not isinstance(fetched[0], tuple):
+            continue
+        message = email.message_from_bytes(fetched[0][1])
+        received = email.utils.parsedate_to_datetime(message.get('Date', ''))
+        if received and received.timestamp() < cutoff:
+            continue
+        for match in WORKDAY_LINK_RE.finditer(unescape(message_text(message))):
+            if match.group(1).lower() == tenant.lower() and match.group(2) == kind:
+                results.append({
+                    'link': match.group(0),
+                    'kind': kind,
+                    'received': received.isoformat() if received else None,
+                })
+                break
+    results.sort(key=lambda row: row['received'] or '', reverse=True)
+    return results
+
+
+def cmd_workday_link(args: argparse.Namespace) -> int:
+    address = args.address or profile_address()
+    client = connect(address)
+    try:
+        deadline = time.time() + args.wait
+        while True:
+            matches = search_workday_links(client, args.tenant, args.kind, args.within_minutes)
+            if matches:
+                print(json.dumps(matches[0], indent=2))
+                return 0
+            if time.time() >= deadline:
+                break
+            time.sleep(args.poll_interval)
+    finally:
+        try:
+            client.logout()
+        except (imaplib.IMAP4.error, OSError):
+            pass
+    print(json.dumps({
+        'error': f'no Workday {args.kind} link found',
+        'tenant': args.tenant,
+        'waited_seconds': args.wait,
+    }, indent=2))
+    return 1
+
+
 def cmd_check(args: argparse.Namespace) -> int:
     address = args.address or profile_address()
     result: dict[str, Any] = {'address': address, 'available': False, 'error': None}
@@ -265,6 +329,15 @@ def main() -> int:
     code.add_argument('--within-minutes', type=int, default=15,
                       help='ignore codes older than this (default 15)')
     code.set_defaults(func=cmd_security_code)
+
+    link = sub.add_parser('workday-link', help='fetch a Workday account activation or password-reset link')
+    link.add_argument('--tenant', required=True, help='Workday tenant, the first label of {tenant}.wdN.myworkdayjobs.com')
+    link.add_argument('--kind', choices=('activate', 'passwordreset'), default='activate')
+    link.add_argument('--wait', type=int, default=120, help='seconds to keep polling (default 120)')
+    link.add_argument('--poll-interval', type=int, default=5)
+    link.add_argument('--within-minutes', type=int, default=15,
+                      help='ignore mail older than this (default 15)')
+    link.set_defaults(func=cmd_workday_link)
 
     args = parser.parse_args()
     try:

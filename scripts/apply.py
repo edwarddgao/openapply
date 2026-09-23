@@ -24,6 +24,7 @@ import tempfile
 import threading
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
@@ -271,6 +272,9 @@ def start_cdp_chrome(args: argparse.Namespace) -> dict[str, Any]:
         f'--remote-debugging-port={args.cdp_port}',
         '--remote-allow-origins=*',
         '--no-first-run', '--no-default-browser-check',
+        # Workday's WOTC tax-credit questionnaire opens in a popup; blocked, the
+        # application cannot continue (apogee pilot, 2026-09-22).
+        '--disable-popup-blocking',
         '--window-size=1280,900',
         'about:blank',
     ]
@@ -426,6 +430,33 @@ def session_name(row: dict[str, str], index: int) -> str:
     return f'codex-{index}-{safe_slug(row.get("company_slug", "company"), "company")}-{digest}'
 
 
+# One shared Workday candidate-account password (user's choice, 2026-09-22), kept in
+# the login keychain and handed to agents only as an environment variable so the
+# literal never lands in a prompt, transcript or log:
+#     security add-generic-password -s openapply-workday -a <applicant email> -w
+WORKDAY_KEYCHAIN_SERVICE = 'openapply-workday'
+WORKDAY_PASSWORD_ENV = 'OPENAPPLY_WORKDAY_PASSWORD'
+
+
+def load_workday_password(applicant_profile: Path) -> bool:
+    """Export the Workday password to the environment subagents inherit."""
+    if os.environ.get(WORKDAY_PASSWORD_ENV):
+        return True
+    try:
+        profile = json.loads(applicant_profile.read_text(encoding='utf-8'))
+        address = next(str(v['email']) for v in profile.values() if isinstance(v, dict) and v.get('email'))
+        found = subprocess.run(
+            ['/usr/bin/security', 'find-generic-password', '-s', WORKDAY_KEYCHAIN_SERVICE, '-a', address, '-w'],
+            capture_output=True, text=True, timeout=30,
+        )
+    except (OSError, ValueError, StopIteration, subprocess.SubprocessError):
+        return False
+    if found.returncode != 0 or not found.stdout.strip():
+        return False
+    os.environ[WORKDAY_PASSWORD_ENV] = found.stdout.strip()
+    return True
+
+
 def build_prompt(row: dict[str, str], session: str, args: argparse.Namespace, snapshot_date: str) -> str:
     if args.prepare_browser:
         browser_instructions = f"""- A browser session is ALREADY prepared and the application URL is ALREADY open in it. On EVERY agent-browser command, pass exactly `--session {session}` (this exact flag and value) to target it.
@@ -459,6 +490,16 @@ Gmail is UNAVAILABLE for this run: the IMAP app password is missing or rejected.
 - Every other step is unaffected; only email-code roles are blocked by this.
 """
 
+    is_workday = row.get('id', '').startswith('workday:') or row.get('source', '') == 'workday'
+    if not is_workday:
+        workday_note = ""
+    else:
+        tenant = urllib.parse.urlsplit(row.get('apply_url', '')).hostname or ''
+        tenant = tenant.split('.', 1)[0]
+        workday_note = f"""
+Workday: the user has authorized creating a candidate account on this tenant ({tenant}) with the shared password in ${WORKDAY_PASSWORD_ENV}. Follow the skill's Workday section. Type the password only as the shell variable, e.g. `agent-browser fill <ref> "${WORKDAY_PASSWORD_ENV}"`; never echo, print or expand it into your output. Fetch activation / password-reset links with `python3 scripts/gmail_imap.py workday-link --tenant {tenant} --kind activate|passwordreset`.
+"""
+
     return f"""You are an external job application agent. Apply to exactly one role.
 
 Role:
@@ -475,7 +516,7 @@ Required workflow:
 {browser_instructions}
 - Do not use browser extensions, third-party autofill helpers, or AI autofill tools. Fill forms directly with agent-browser from the applicant profile and policy.
 - Close the agent-browser session when done if possible. The launcher will also attempt cleanup.
-{ashby_note}{gmail_note}
+{ashby_note}{gmail_note}{workday_note}
 Applicant data:
 - Read applicant facts and commitments from {args.applicant_profile}. This JSON profile is the source of truth for contact details, resume path, work authorization, sponsorship, availability, preferences, clearances, screening facts, demographics preferences, education, and languages.
 - Read reusable answer strategy from {args.application_policy}. Use it to apply profile facts to recurring form questions such as referral source, cover letters, in-office commitments, clearance, export-control status, compensation, transcript availability, and negative/conflict screening.
@@ -872,6 +913,15 @@ def main() -> None:
         print('No eligible roles selected')
         return
 
+    if any(row.get('id', '').startswith('workday:') for row in todo) \
+            and not load_workday_password(args.applicant_profile):
+        # No ledger entry: these stay eligible for the first run after the keychain
+        # item is added, instead of burning into 'blocked'.
+        skipped = [row for row in todo if row.get('id', '').startswith('workday:')]
+        todo = [row for row in todo if not row.get('id', '').startswith('workday:')]
+        print(f'Skipping {len(skipped)} Workday role(s): no keychain item {WORKDAY_KEYCHAIN_SERVICE}', flush=True)
+        if not todo:
+            return
     max_workers = max(1, min(args.parallel, len(todo)))
     if args.prepare_browser and not args.cdp_profile:
         # Clear any stale agent-browser daemon sessions so daemon-scoped launch

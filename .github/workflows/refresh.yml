@@ -28,7 +28,9 @@ jobs:
         run: echo "date=$(date -u +%Y-%m-%d)" >> $GITHUB_OUTPUT
 
       - name: fetch jobs
-        run: python oa_adapter.py --workers 16 --out jobs.jsonl
+        # Published dataset stays on the original three full-board sources; the newer
+        # adapters (workday, smartrecruiters) keep only recent role-like postings.
+        run: python oa_adapter.py --workers 16 --ats greenhouse,lever,ashby --out jobs.jsonl
 
       - name: convert to parquet
         run: python scripts/jsonl_to_parquet.py jobs.jsonl data --date ${{ steps.d.outputs.date }}

@@ -239,10 +239,47 @@ Ashby's React custom controls do NOT register `agent-browser click`, coordinate 
 
 Answer every question from the applicant profile, application policy, and resume. Do NOT answer technical-knowledge screening questions ("explain X", "what is Y", "write code for Z") or guess on export-control / "are you a US person" country-list questions — return Needs input for those.
 
-## Workday And Custom ATS Notes
+## Workday Notes
 
-- Be cautious with account creation and multi-step applications.
-- If the site requires login, persistent account setup, assessment, or detailed employment history not present in the resume, ask before continuing.
+The user has authorized a candidate account on every Workday tenant, all with one shared password (2026-09-22). It is in `$OPENAPPLY_WORKDAY_PASSWORD` when the launcher prompt says so; if the prompt does not mention it, do not create accounts or reset passwords.
+
+- **Never expose the password.** Type it only as the shell variable: `agent-browser fill <ref> "$OPENAPPLY_WORKDAY_PASSWORD"`. Do not echo it, read it back from the page, or put it in any output.
+- The tenant is the first label of the host: `nvidia.wd5.myworkdayjobs.com` → `nvidia`.
+
+### Getting signed in
+
+1. Open the job URL and click **Apply**. Prefer **Autofill with Resume** (upload the resume PDF); **Use My Last Application** is also fine. Avoid **Apply with LinkedIn**/**Apply with Indeed**.
+2. At the sign-in dialog, try **Sign In** with the profile email and the shared password first.
+3. If sign-in says the account does not exist, click **Create Account**: email, password, verify password, tick the terms checkbox, submit.
+4. If sign-in fails with wrong email/password, the user has an older account there with a different password. Click **Forgot your password?**, submit the email, then run `python3 scripts/gmail_imap.py workday-link --tenant <tenant> --kind passwordreset`, open the returned `link`, set the new password to the shared one, and sign in.
+5. If Workday says to verify the email, run `python3 scripts/gmail_imap.py workday-link --tenant <tenant> --kind activate`, open the `link`, then sign in and reopen the job URL if the redirect does not land back on the application.
+6. On `workday-link` exit 1 (nothing arrived within the wait), return **Blocked - workday_email_link_missing: <kind> for <tenant>**. On exit 2, return **Blocked - blocked_on_gmail_auth**.
+7. Change nothing else on the account (email, profile settings, job alerts, talent community opt-ins).
+
+### Filling the pages
+
+Workday walks through ~5 pages with **Save and Continue**; errors show as a red banner/count at the top. Re-snapshot after every page.
+
+- **My Information**: "How did you hear about us" → pick a job-board/website option (e.g. `Job Board`, `Company Website`, `Other`); "Previously worked for <company>?" → No unless the profile says otherwise. Phone device type `Mobile`. Country dropdown before the address fields (it re-renders them).
+- **My Experience**: resume parsing pre-fills work and education. Check each entry against the resume and fix garbled titles/dates; delete blank entries Workday leaves behind (they fail validation). Education: the profile's degree/school/dates. Add LinkedIn/GitHub/portfolio under Websites. Skills and languages are optional; skip unless required. If it demands employment history that is not on the resume, return Needs input.
+- **Application Questions**: answer from the profile and policy exactly as for other ATSs (Common Answer Policy below).
+- **Voluntary Disclosures**: decline/`I do not wish to answer` for demographics; tick the required terms/consent checkbox.
+- **Self Identify** (disability): `I do not want to answer`, the applicant's name, and today's date.
+- **Take Assessment / WOTC** (Work Opportunity Tax Credit questionnaire, often from a third-party vendor): it opens in a new tab or window. Run `agent-browser tab list`, switch to the new tab, and pick the opt-out/decline path (`Opt Out`, `I do not wish to participate`). If no opt-out exists, answer every question `No`/`Decline`. Then switch back to the Workday tab and continue.
+- **Review**: submit.
+
+Mechanics: Workday dropdowns are buttons that open a listbox; click the button, then the option. Prompt/multiselect fields (school, field of study, "how did you hear") are search boxes: type, press Enter, click the matching result. Date fields are MM/YYYY segments; fill each segment separately.
+
+### Result
+
+- **Submitted**: an "Application Submitted"/"Congratulations" page, or the role listed under **My Applications/Candidate Home**. Include the page URL.
+- "You have already applied for this job" → **Submitted** (already applied), with that text.
+- Assessments, video interviews, or a required cover letter with no policy answer → **Needs input** with the exact requirement.
+
+## Custom ATS Notes
+
+- Be cautious with account creation and multi-step applications on ATSs other than Workday.
+- If such a site requires login, persistent account setup, assessment, or detailed employment history not present in the resume, ask before continuing.
 - Avoid saving credentials or making permanent account changes unless the user explicitly asks.
 
 ## Common Answer Policy

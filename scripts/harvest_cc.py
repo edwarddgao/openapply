@@ -34,6 +34,20 @@ ATS = {
     'ashby':      ('com,ashbyhq,jobs)',
                    re.compile(r'jobs\.ashbyhq\.com/([a-zA-Z0-9][\w.-]{1,48})', re.I),
                    {'api', 'embed', 'assets', 'static', 'common'}),
+    'rippling':   ('com,rippling,ats)',
+                   re.compile(r'ats\.rippling\.com/(?:[a-z]{2}-[A-Z]{2}/)?([a-zA-Z0-9][\w.-]{1,48})', re.I),
+                   {'api', 'embed', 'assets', 'static', 'robots.txt', 'sitemap.xml', 'favicon.ico', '_next'}),
+    # Workday boards live at {tenant}.wd{N}.myworkdayjobs.com/[locale/]{site}; the
+    # slug keeps all three as tenant/wdN/site since the jobs API needs each one.
+    'workday':    ('com,myworkdayjobs,',
+                   re.compile(r'//([\w-]+)\.(wd\d+)\.myworkdayjobs\.com/(?:[a-z]{2}-[a-z]{2}/)?([a-zA-Z0-9][\w-]{1,64})', re.I),
+                   {'wday', 'api', 'assets', 'static', 'robots', 'sitemap', 'favicon', 'job', 'jobs', 'details', 'login', 'userhome', 'apply', 'search', 'llms', 'es', 'en', 'fr', 'de', 'pt', 'ja', 'zh'}),
+    'smartrecruiters': ('com,smartrecruiters,jobs)',
+                   re.compile(r'jobs\.smartrecruiters\.com/(?:[a-z]{2}(?:-[a-z]{2})?/)?([a-zA-Z0-9][\w.-]{1,48})', re.I),
+                   {'api', 'oneclick-ui', 'sr-jobs', 'assets', 'static', 'robots.txt', 'sitemap.xml', 'favicon.ico', 'ui', 'job', 'jobs'}),
+    'gem':        ('com,gem,jobs)',
+                   re.compile(r'jobs\.gem\.com/([a-zA-Z0-9][\w.-]{1,48})', re.I),
+                   {'api', 'embed', 'assets', 'static', 'robots.txt', 'sitemap.xml', 'favicon.ico', '_next'}),
 }
 
 
@@ -121,6 +135,12 @@ def extract_from_cdx_range(crawl, cdx_file, offset, length, regex, skip):
         m = regex.search(meta.get('url', ''))
         if not m:
             continue
+        if m.re.groups == 3:
+            # Internal-only boards list roles outsiders cannot apply to.
+            if m.group(3).lower() in skip or re.search(r'internal|employee_referral|displaced', m.group(3), re.I):
+                continue
+            slugs.add('/'.join(g.lower() for g in m.groups()))
+            continue
         s = m.group(1).lower().rstrip('.-_')
         if s and s not in skip and len(s) >= 2:
             slugs.add(s)
@@ -132,6 +152,7 @@ def main():
     ap.add_argument('--slug-dir', default='slugs')
     ap.add_argument('--n-crawls', type=int, default=5, help='number of most-recent CC snapshots to query')
     ap.add_argument('--cache-dir', default='.cache/cc', help='where to cache cluster.idx files')
+    ap.add_argument('--ats', default=','.join(ATS), help='comma-separated subset of ATS to harvest')
     args = ap.parse_args()
 
     out_dir = Path(args.slug_dir)
@@ -146,7 +167,8 @@ def main():
     for crawl in crawls:
         print(f'=== {crawl} ===', flush=True)
         idx = fetch_cluster_idx(crawl, cache_dir)
-        for ats, (prefix, regex, skip) in ATS.items():
+        for ats in args.ats.split(','):
+            prefix, regex, skip = ATS[ats]
             ranges = find_ranges(idx, prefix)
             if not ranges:
                 print(f'  {ats:<12} no matching cluster.idx ranges', flush=True)

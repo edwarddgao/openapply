@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Open-Apply: 3 ATS adapters → canonical JobPosting JSONL.
+"""Open-Apply: ATS adapters → canonical JobPosting JSONL.
 
 Usage:
   python3 oa_adapter.py --slug-dir slugs --out jobs.jsonl --limit 10
@@ -8,6 +8,7 @@ import argparse, json, sys, time, urllib.request, urllib.error, urllib.parse, re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field, asdict
 from typing import Optional, List, Dict, Any
+from datetime import datetime
 
 UA = 'Mozilla/5.0 (open-apply/0.1)'
 TIMEOUT = 20
@@ -15,7 +16,7 @@ TIMEOUT = 20
 @dataclass
 class JobPosting:
     id: str                         # {source}:{slug}:{native_id}
-    source: str                     # greenhouse|lever|ashby|workable|smartrecruiters
+    source: str                     # greenhouse|lever|ashby|rippling|gem|workday|smartrecruiters
     source_slug: str                # tenant slug on the ATS
     title: str
     apply_url: str
@@ -148,10 +149,210 @@ def _parse_num(s: str) -> Optional[float]:
     try: return float(s) * mul
     except ValueError: return None
 
+# ---------- Rippling ----------
+# The board list omits description, dates and pay; each job needs a detail fetch.
+def fetch_rippling(slug: str) -> List[JobPosting]:
+    base = f'https://ats.rippling.com/api/v2/board/{urllib.parse.quote(slug)}/jobs'
+    items, page = [], 0
+    while True:
+        d = http_json(f'{base}?pageSize=100&page={page}')
+        items += d.get('items') or []
+        page += 1
+        if page >= (d.get('totalPages') or 0): break
+    out = []
+    for it in items:
+        try:
+            j = http_json(f'{base}/{urllib.parse.quote(it["id"])}')
+        except urllib.error.HTTPError:
+            j = {}
+        desc = j.get('description') or {}
+        locs = [l.get('name') for l in (it.get('locations') or []) if l.get('name')]
+        kinds = {l.get('workplaceType') for l in (it.get('locations') or [])}
+        pay = next(iter(j.get('payRangeDetails') or []), {})
+        out.append(JobPosting(
+            id=f"rippling:{slug}:{it.get('id')}",
+            source='rippling', source_slug=slug,
+            title=it.get('name') or '',
+            apply_url=it.get('url') or f'https://ats.rippling.com/{slug}/jobs/{it.get("id")}',
+            description_html=''.join(filter(None, [desc.get('company'), desc.get('role')])) or None,
+            employment_type=(j.get('employmentType') or {}).get('id'),
+            department=(it.get('department') or {}).get('name'),
+            locations=locs,
+            remote=('REMOTE' in kinds) if kinds - {None} else None,
+            posted_at=j.get('createdOn'),
+            salary_min=pay.get('rangeStart'), salary_max=pay.get('rangeEnd'),
+            salary_currency=pay.get('currency'), salary_period=pay.get('frequency'),
+        ))
+    return out
+
+# ---------- Gem ----------
+def fetch_gem(slug: str) -> List[JobPosting]:
+    url = f'https://api.gem.com/job_board/v0/{urllib.parse.quote(slug)}/job_posts/'
+    d = http_json(url)
+    out = []
+    if not isinstance(d, list): return out
+    for j in d:
+        offices = [((o.get('location') or {}).get('name')) for o in (j.get('offices') or [])]
+        loc_name = (j.get('location') or {}).get('name')
+        locs = list(dict.fromkeys(filter(None, [loc_name] + offices)))
+        out.append(JobPosting(
+            id=f"gem:{slug}:{j.get('id')}",
+            source='gem', source_slug=slug,
+            title=j.get('title') or '',
+            apply_url=j.get('absolute_url') or f'https://jobs.gem.com/{slug}/{j.get("id")}',
+            description_html=j.get('content'),
+            employment_type=j.get('employment_type'),
+            department=next((d.get('name') for d in (j.get('departments') or []) if isinstance(d, dict)), None),
+            locations=locs,
+            remote=(j.get('location_type') == 'remote') if j.get('location_type') else None,
+            posted_at=j.get('first_published_at') or j.get('created_at'),
+            updated_at=j.get('updated_at'),
+        ))
+    return out
+
+# ---------- Workday ----------
+# Slug is tenant/wdN/site. The list API only gives title and a relative "Posted N
+# Days Ago", newest first, so page until postings age past WORKDAY_MAX_AGE and
+# only fetch details (description, start date) for titles the shortlist would keep.
+WORKDAY_MAX_AGE = 30
+WORKDAY_MAX_PAGES = 50
+
+def http_post_json(url: str, body: dict, timeout: int = TIMEOUT, retries: int = 2) -> Any:
+    last = None
+    for attempt in range(retries + 1):
+        try:
+            req = urllib.request.Request(url, data=json.dumps(body).encode(), method='POST', headers={
+                'User-Agent': UA, 'Accept': 'application/json', 'Content-Type': 'application/json'})
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                return json.loads(r.read())
+        except urllib.error.HTTPError as e:
+            if e.code not in RETRYABLE_STATUS: raise
+            last = e
+        except (urllib.error.URLError, TimeoutError, ConnectionError) as e:
+            last = e
+        time.sleep(1 + attempt)
+    raise last
+
+def _workday_age_days(posted_on: str) -> Optional[int]:
+    s = (posted_on or '').lower()
+    if 'today' in s: return 0
+    if 'yesterday' in s: return 1
+    m = re.search(r'(\d+)\+?\s*days', s)
+    return int(m.group(1)) + (1 if '+' in s else 0) if m else None
+
+_role_re = None
+def _workday_role_like(title: str) -> bool:
+    global _role_re
+    if _role_re is None:
+        sys.path.insert(0, 'scripts')
+        from build_shortlist import ROLE_RE
+        _role_re = ROLE_RE
+    return bool(_role_re.search(title))
+
+def fetch_workday(slug: str) -> List[JobPosting]:
+    tenant, dc, site = slug.split('/')
+    host = f'https://{tenant}.{dc}.myworkdayjobs.com'
+    base = f'{host}/wday/cxs/{tenant}/{site}'
+    postings = []
+    for page in range(WORKDAY_MAX_PAGES):
+        d = http_post_json(f'{base}/jobs', {'limit': 20, 'offset': page * 20, 'searchText': '', 'appliedFacets': {}})
+        batch = d.get('jobPostings') or []
+        postings += batch
+        ages = [_workday_age_days(p.get('postedOn')) for p in batch]
+        if len(batch) < 20 or (ages and all(a is not None and a > WORKDAY_MAX_AGE for a in ages)):
+            break
+    wanted = [p for p in postings
+              if p.get('externalPath') and _workday_role_like(p.get('title') or '')
+              and (_workday_age_days(p.get('postedOn')) or 0) <= WORKDAY_MAX_AGE]
+
+    def detail(p):
+        try:
+            return p, http_json(f'{base}{p["externalPath"]}').get('jobPostingInfo') or {}
+        except urllib.error.HTTPError:
+            return p, None
+
+    out = []
+    with ThreadPoolExecutor(4) as ex:
+        details = list(ex.map(detail, wanted))
+    for p, j in details:
+        if j is None or j.get('canApply') is False: continue
+        locs = [j.get('location') or p.get('locationsText')] + (j.get('additionalLocations') or [])
+        locs = [l for l in locs if l]
+        out.append(JobPosting(
+            id=f"workday:{tenant}:{j.get('id') or p['externalPath']}",
+            source='workday', source_slug=slug,
+            title=j.get('title') or p.get('title') or '',
+            apply_url=j.get('externalUrl') or f'{host}/{site}{p["externalPath"]}',
+            description_html=j.get('jobDescription'),
+            employment_type=j.get('timeType'),
+            locations=locs,
+            remote=any('remote' in l.lower() for l in locs) or None,
+            posted_at=j.get('startDate'),
+        ))
+    return out
+
+# ---------- SmartRecruiters ----------
+# The postings list has title, location and releasedDate but no description, so
+# (as for Workday) only fetch details for recent, role-like titles.
+SMARTRECRUITERS_MAX_AGE = 30
+
+def fetch_smartrecruiters(slug: str) -> List[JobPosting]:
+    base = f'https://api.smartrecruiters.com/v1/companies/{urllib.parse.quote(slug)}/postings'
+    cutoff = time.time() - SMARTRECRUITERS_MAX_AGE * 86400
+    postings, offset = [], 0
+    while True:
+        d = http_json(f'{base}?limit=100&offset={offset}')
+        batch = d.get('content') or []
+        postings += batch
+        offset += len(batch)
+        if not batch or offset >= (d.get('totalFound') or 0): break
+
+    def recent(p):
+        try:
+            return datetime.fromisoformat(p['releasedDate'].replace('Z', '+00:00')).timestamp() >= cutoff
+        except (KeyError, TypeError, ValueError):
+            return True
+
+    wanted = [p for p in postings if recent(p) and _workday_role_like(
+        f"{p.get('name') or ''} {(p.get('department') or {}).get('label') or ''}")]
+
+    def detail(p):
+        try:
+            return p, http_json(f'{base}/{urllib.parse.quote(str(p["id"]))}')
+        except urllib.error.HTTPError:
+            return p, None
+
+    out = []
+    with ThreadPoolExecutor(4) as ex:
+        details = list(ex.map(detail, wanted))
+    for p, j in details:
+        if j is None or j.get('active') is False: continue
+        loc = j.get('location') or p.get('location') or {}
+        place = loc.get('fullLocation') or ', '.join(filter(None, [loc.get('city'), loc.get('region'), (loc.get('country') or '').upper()]))
+        sections = ((j.get('jobAd') or {}).get('sections') or {})
+        out.append(JobPosting(
+            id=f"smartrecruiters:{slug}:{p.get('id')}",
+            source='smartrecruiters', source_slug=slug,
+            title=p.get('name') or '',
+            apply_url=j.get('postingUrl') or f'https://jobs.smartrecruiters.com/{slug}/{p.get("id")}',
+            description_html=''.join((sections.get(k) or {}).get('text') or '' for k in
+                                     ('jobDescription', 'qualifications', 'additionalInformation')) or None,
+            employment_type=(p.get('typeOfEmployment') or {}).get('label'),
+            department=(p.get('department') or {}).get('label'),
+            locations=[place] if place else [],
+            remote=loc.get('remote'),
+            posted_at=p.get('releasedDate'),
+        ))
+    return out
+
 ADAPTERS = {
     'greenhouse': fetch_greenhouse,
     'lever':      fetch_lever,
     'ashby':      fetch_ashby,
+    'rippling':   fetch_rippling,
+    'gem':        fetch_gem,
+    'workday':    fetch_workday,
+    'smartrecruiters': fetch_smartrecruiters,
 }
 
 def run_adapter(ats: str, slug: str) -> tuple:
@@ -167,7 +368,7 @@ def main():
     ap.add_argument('--out', default='oa_jobs.jsonl')
     ap.add_argument('--limit', type=int, default=0, help='max slugs per ATS (0=all)')
     ap.add_argument('--workers', type=int, default=8)
-    ap.add_argument('--ats', default='greenhouse,lever,ashby')
+    ap.add_argument('--ats', default=','.join(ADAPTERS))
     ap.add_argument('--suffix', default='FINAL', help='slug file suffix (FINAL or NEW)')
     args = ap.parse_args()
 
