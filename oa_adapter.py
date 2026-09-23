@@ -159,12 +159,16 @@ def fetch_rippling(slug: str) -> List[JobPosting]:
         items += d.get('items') or []
         page += 1
         if page >= (d.get('totalPages') or 0): break
-    out = []
-    for it in items:
+    def detail(it):
         try:
-            j = http_json(f'{base}/{urllib.parse.quote(it["id"])}')
+            return it, http_json(f'{base}/{urllib.parse.quote(it["id"])}')
         except urllib.error.HTTPError:
-            j = {}
+            return it, {}
+
+    out = []
+    with ThreadPoolExecutor(4) as ex:
+        details = list(ex.map(detail, items))
+    for it, j in details:
         desc = j.get('description') or {}
         locs = [l.get('name') for l in (it.get('locations') or []) if l.get('name')]
         kinds = {l.get('workplaceType') for l in (it.get('locations') or [])}
@@ -276,8 +280,14 @@ def fetch_workday(slug: str) -> List[JobPosting]:
         details = list(ex.map(detail, wanted))
     for p, j in details:
         if j is None or j.get('canApply') is False: continue
-        locs = [j.get('location') or p.get('locationsText')] + (j.get('additionalLocations') or [])
-        locs = [l for l in locs if l]
+        # Workday location labels are free text in either order ("Australia, WA,
+        # Willowdale", "Hyderabad - Phoenix Equinox Tower 2") and misread as US
+        # state codes / cities, so suffix the primary one with its real country.
+        country = (j.get('country') or (j.get('jobRequisitionLocation') or {}).get('country') or {}).get('descriptor')
+        primary = j.get('location') or p.get('locationsText')
+        if primary and country and country.lower() not in primary.lower():
+            primary = f'{primary}, {country}'
+        locs = [l for l in [primary] + (j.get('additionalLocations') or []) if l]
         out.append(JobPosting(
             id=f"workday:{tenant}:{j.get('id') or p['externalPath']}",
             source='workday', source_slug=slug,
@@ -381,6 +391,10 @@ def main():
             print(f'WARN: no slug file for {ats} at {path}', file=sys.stderr); continue
         if args.limit: slugs = slugs[:args.limit]
         for s in slugs: tasks.append((ats, s))
+    # Longest jobs first: Workday and Rippling tenants each need many detail calls, and
+    # queued last they left the pool idling on a long tail (2h fetch, 2026-09-23).
+    slow_first = {'workday': 0, 'rippling': 1, 'smartrecruiters': 2}
+    tasks.sort(key=lambda task: slow_first.get(task[0], 3))
 
     print(f'tasks: {len(tasks)} total, workers={args.workers}', file=sys.stderr)
     ok = err = jobs_total = 0

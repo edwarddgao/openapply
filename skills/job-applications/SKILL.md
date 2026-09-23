@@ -253,7 +253,7 @@ The user has authorized a candidate account on every Workday tenant, all with on
 3. If sign-in says the account does not exist, click **Create Account**: email, password, verify password, tick the terms checkbox, submit.
 4. If sign-in fails with wrong email/password, the user has an older account there with a different password. Click **Forgot your password?**, submit the email, then run `python3 scripts/gmail_imap.py workday-link --tenant <tenant> --kind passwordreset`, open the returned `link`, set the new password to the shared one, and sign in.
 5. If Workday says to verify the email, run `python3 scripts/gmail_imap.py workday-link --tenant <tenant> --kind activate`, open the `link`, then sign in and reopen the job URL if the redirect does not land back on the application.
-6. On `workday-link` exit 1 (nothing arrived within the wait), return **Blocked - workday_email_link_missing: <kind> for <tenant>**. On exit 2, return **Blocked - blocked_on_gmail_auth**.
+6. Run `workday-link` in the foreground and wait for it: it polls the inbox itself for up to 120s and prints the link. Never run it in the background and never end your turn with "waiting for the email" — there is no later turn, so the role is lost (aptiv, baincapital 2026-09-23). On exit 1 (nothing arrived), click the page's **Resend** link if there is one and run it once more with `--wait 180`; if that also exits 1, return **Blocked - workday_email_link_missing: <kind> for <tenant>**. On exit 2, return **Blocked - blocked_on_gmail_auth**.
 7. Change nothing else on the account (email, profile settings, job alerts, talent community opt-ins).
 
 ### Filling the pages

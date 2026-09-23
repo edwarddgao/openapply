@@ -138,7 +138,12 @@ FOREIGN_RE = re.compile(r'''(?ix)\b(
   kazakhstan|ukraine|india|bengaluru|bangalore|delhi|mumbai|hyderabad|singapore|
   australia|sydney|melbourne|new\s+zealand|japan|tokyo|korea|seoul|china|beijing|
   shanghai|philippines|vietnam|thailand|indonesia|malaysia|israel|tel\s+aviv|turkey|
-  uae|dubai|brazil|brasil|sao\s+paulo|s%C3%A3o\s+paulo|s%E3o\s+paulo|s\xc3\xa3o\s+paulo|rio\s+de\s+janeiro|belo\s+horizonte|brasilia|salvador|fortaleza|curitiba|recife|porto\s+alegre|argentina|buenos\s+aires|colombia|bogota|chile|santiago|peru|lima|south\s+africa|johannesburg|cape\s+town
+  uae|dubai|brazil|brasil|sao\s+paulo|s%C3%A3o\s+paulo|s%E3o\s+paulo|s\xc3\xa3o\s+paulo|rio\s+de\s+janeiro|belo\s+horizonte|brasilia|salvador|fortaleza|curitiba|recife|porto\s+alegre|argentina|buenos\s+aires|colombia|bogota|chile|santiago|peru|lima|south\s+africa|johannesburg|cape\s+town|
+  nigeria|lagos|kenya|nairobi|egypt|cairo|ghana|accra|morocco|tunisia|ethiopia|rwanda|
+  saudi\s+arabia|riyadh|qatar|doha|kuwait|bahrain|oman|jordan|lebanon|pakistan|karachi|lahore|
+  bangladesh|dhaka|sri\s+lanka|nepal|norway|oslo|belgium|brussels|luxembourg|greece|
+  croatia|slovakia|slovenia|estonia|tallinn|latvia|riga|cyprus|iceland|tbilisi|
+  guatemala|uruguay|montevideo|ecuador|dominican\s+republic|el\s+salvador|honduras|panama
 )\b''')
 
 SECURITY_RE = re.compile(r'''(?ix)\b(

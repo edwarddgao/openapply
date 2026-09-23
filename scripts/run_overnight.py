@@ -548,7 +548,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--repo', type=Path, default=REPO_ROOT)
     parser.add_argument('--date', default='', help='UTC snapshot date; default today')
-    parser.add_argument('--workers', type=int, default=16, help='ATS refresh workers')
+    parser.add_argument('--workers', type=int, default=32, help='ATS refresh workers')
     parser.add_argument('--max-applications', type=int, default=200, help='daily application safety cap')
     parser.add_argument('--dry-run', action='store_true', help='validate dependencies and preview without refresh or submission')
     parser.add_argument('--no-apply', action='store_true', help='refresh and build the shortlist without submitting applications')
