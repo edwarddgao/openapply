@@ -40,6 +40,11 @@ def main():
         commit_message=f'daily refresh {args.date}',
         delete_patterns=[f'data/date={args.date}/**'],
     )
+    # The card documents the schema, so republish it with the data it describes.
+    card = Path(__file__).resolve().parent.parent / 'dataset_card.md'
+    if card.exists():
+        api.upload_file(path_or_fileobj=str(card), path_in_repo='README.md', repo_id=args.repo_id,
+                        repo_type='dataset', commit_message=f'dataset card ({args.date})')
     print(f'published → https://huggingface.co/datasets/{args.repo_id}')
 
 if __name__ == '__main__':
