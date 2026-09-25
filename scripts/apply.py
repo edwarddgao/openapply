@@ -11,6 +11,7 @@ closes that session after the process exits. Agent backend is chosen via
 from __future__ import annotations
 
 import argparse
+import collections
 import csv
 import hashlib
 import json
@@ -143,7 +144,11 @@ def load_statuses(path: Path) -> dict[str, dict[str, Any]]:
             continue
         role_id = item.get('id')
         if role_id:
+            spam_count = statuses.get(role_id, {}).get('_spam_attempts', 0)
             statuses[role_id] = item
+            if re.search(r'(?i)spam', str(item.get('detail', ''))):
+                spam_count += 1
+            item['_spam_attempts'] = spam_count
             if item.get('status') == 'submitted':
                 ever_submitted.add(role_id)
     # Flag roles we've EVER submitted so selected_rows never re-applies, even if a
@@ -238,6 +243,42 @@ def copy_chrome_profile(src: Path, dst: Path, *, attempts: int = CDP_PROFILE_COP
         time.sleep(0.5)
 
 
+def strip_burned_device_state(profile_dir: Path) -> None:
+    """Remove accumulated Ashby/reCAPTCHA device identity from a profile COPY.
+
+    Root-caused 2026-08-27: spam flags cluster by day (chi2=293 on 40 dof), hit
+    first-time applications, and are independent of company, pacing, form behavior,
+    and agent CLI. The copied profile carried a never-rotated jobs.ashbyhq.com
+    device cookie (created 2026-06-09), Ashby localStorage, a FullStory fs_uid, and
+    the shared _GRECAPTCHA token -- one device identity accumulating every
+    submission ever made (~2.5k), which Ashby's risk model scores episodically.
+    Retries of flagged roles re-flag at 21-33%% vs 2-8%% baseline (Ashby remembers),
+    yet 87%% succeed on later days: a fluctuating device/account score, not form
+    behavior. Stripping this state presents each run as signed-in Google user
+    (the positive signal measured 2026-06-10 to dominate) on a fresh device.
+    Deletes happen on the COPY only, before Chrome launches; the source profile
+    is never touched.
+    """
+    # 2026-08-28 revision: the first version also deleted _GRECAPTCHA and ALL origin
+    # storage. That overshot: a storage-empty browser reads as freshly created, which
+    # is itself a bot signal (the 2026-06-10 anonymous-profile measurements flagged
+    # 50-86%), and the first post-fix run flagged 3/9. Now remove ONLY Ashby's own
+    # first-party state -- the never-rotated device cookie is the accumulator -- and
+    # keep everything that makes the profile look lived-in (_GRECAPTCHA, all other
+    # sites' cookies and storage).
+    default = profile_dir / 'Default'
+    cookies_db = default / 'Cookies'
+    if cookies_db.exists():
+        try:
+            import sqlite3
+            con = sqlite3.connect(cookies_db)
+            con.execute("DELETE FROM cookies WHERE host_key LIKE '%ashbyhq.com'")
+            con.commit()
+            con.close()
+        except Exception as exc:  # non-fatal: a burned identity still submits ~90%
+            print(f'[cdp] cookie strip failed (continuing): {exc}', file=sys.stderr, flush=True)
+
+
 def start_cdp_chrome(args: argparse.Namespace) -> dict[str, Any]:
     """Copy the real Chrome profile and launch it headed with a CDP port.
 
@@ -262,6 +303,11 @@ def start_cdp_chrome(args: argparse.Namespace) -> dict[str, Any]:
         (tmpdir / 'Default').mkdir(parents=True, exist_ok=True)
         shutil.copy2(src / 'Local State', tmpdir / 'Local State')
         copy_chrome_profile(src / 'Default', tmpdir / 'Default')
+        # NOTE 2026-09-05: strip_burned_device_state is deliberately NOT called.
+        # Stripping Ashby's cookies gave every run a brand-new device id from the
+        # same IP and candidate email - a device-churn signature. Fresh-attempt
+        # spam rates rose across the week it ran (4% -> 10% -> 29% -> 40%), vs a
+        # ~10% mean under the stable id. A lived-in, consistent identity wins.
     except BaseException:
         shutil.rmtree(tmpdir, ignore_errors=True)
         raise
@@ -578,9 +624,18 @@ def build_codex_cmd(args: argparse.Namespace, prompt: str, final_path: Path) -> 
 
 
 def build_claude_cmd(args: argparse.Namespace, prompt: str) -> list[str]:
-    cmd = ['claude', '-p', '--dangerously-skip-permissions']
+    # Every turn re-reads the whole context, so trim what the role agent never uses:
+    # account MCP connectors, skills and the default tool set take the base context
+    # from ~27.7k to ~11.5k tokens (measured 2026-09-23). Only Bash (agent-browser,
+    # IMAP helpers) and Read (skill, profile, policy, resume, screenshots) were used.
+    cmd = [
+        'claude', '-p', '--dangerously-skip-permissions',
+        '--strict-mcp-config', '--disable-slash-commands', '--tools=Bash,Read',
+    ]
     if args.model:
         cmd.extend(['--model', args.model])
+    if args.effort:
+        cmd.extend(['--effort', args.effort])
     cmd.append(prompt)
     return cmd
 
@@ -647,6 +702,39 @@ def run_subagent(cmd: list[str], *, cwd: Path, timeout: int, stdout: Any) -> tup
             ACTIVE_SUBAGENTS.discard(proc)
 
 
+# Same-day per-company spam circuit breaker. Ashby scores per-candidate history
+# (retry-after-spam re-flags at 21-33% vs 2-8% baseline), and 2026-08-29 showed a
+# company can flag every attempt all day (elevenlabs: 6/6). After two flags at one
+# company in a run, its remaining roles are deferred WITHOUT a ledger entry, so
+# they stay eligible for a later day instead of burning into 'blocked'.
+SPAM_BY_COMPANY: collections.Counter = collections.Counter()
+SPAM_CIRCUIT_LIMIT = 2
+# A role stops being retried after this many spam-flagged attempts total.
+SPAM_RETRY_MAX_ATTEMPTS = 3
+# Retry success is strongly gap-dependent (measured 2026-08-31 across 749 retry
+# pairs): same-day 39%, next-day 56%, 2-7d ~55-60%, 8d+ 80%. The flag reputation
+# decays over about a week, so wait it out.
+SPAM_RETRY_COOLDOWN_DAYS = 7
+
+
+def today_utc() -> str:
+    return datetime.now(timezone.utc).strftime('%Y-%m-%d')
+
+
+def spam_retry_ready(previous: dict[str, Any]) -> bool:
+    if previous.get('status') != 'blocked':
+        return False
+    if not re.search(r'(?i)spam', str(previous.get('detail', ''))):
+        return False
+    if previous.get('_spam_attempts', 0) >= SPAM_RETRY_MAX_ATTEMPTS:
+        return False
+    try:
+        last = datetime.fromisoformat(str(previous.get('updated_at', '')).replace('Z', '+00:00'))
+    except ValueError:
+        return False
+    return (datetime.now(timezone.utc) - last).days >= SPAM_RETRY_COOLDOWN_DAYS
+
+
 def run_agent(row: dict[str, str], index: int, args: argparse.Namespace, snapshot_date: str) -> dict[str, Any]:
     if STOP_EVENT.is_set():
         return {
@@ -666,6 +754,20 @@ def run_agent(row: dict[str, str], index: int, args: argparse.Namespace, snapsho
             'status': 'skipped_rate_limit',
             'detail': 'Skipped: agent quota exhausted earlier in batch',
             'company_slug': row.get('company_slug', ''),
+            'title': row.get('title', ''),
+            'apply_url': row.get('apply_url', ''),
+            'snapshot_date': snapshot_date,
+            'agent': args.agent,
+            '_skip_ledger': True,
+        }
+
+    company = row.get('company_slug', '')
+    if SPAM_BY_COMPANY[company] >= SPAM_CIRCUIT_LIMIT:
+        return {
+            'id': row.get('id', ''),
+            'status': 'skipped_spam_circuit',
+            'detail': f'Skipped: {SPAM_BY_COMPANY[company]} spam flags at {company} this run; deferring to a later day',
+            'company_slug': company,
             'title': row.get('title', ''),
             'apply_url': row.get('apply_url', ''),
             'snapshot_date': snapshot_date,
@@ -756,8 +858,13 @@ def run_agent(row: dict[str, str], index: int, args: argparse.Namespace, snapsho
     status, detail = parse_status(final_message)
     if return_code not in {0, None} and status == 'unknown':
         detail = f'{args.agent} exited with code {return_code}: {detail}'
+    if status == 'blocked' and re.search(r'(?i)spam', detail):
+        SPAM_BY_COMPANY[company] += 1
 
-    if is_rate_limited(final_message) or is_rate_limited(detail):
+    # Only an agent that produced no parsed result can have hit the quota wall. A
+    # Blocked/Submitted result can quote employer text like "application limit
+    # reached" (Writer, Decagon, OpenAI), which falsely ended batches 33 times.
+    if status == 'unknown' and (is_rate_limited(final_message) or is_rate_limited(detail)):
         if not RATE_LIMIT_EVENT.is_set():
             RATE_LIMIT_EVENT.set()
             RATE_LIMIT_DETAIL.append(detail or final_message)
@@ -782,8 +889,42 @@ def run_agent(row: dict[str, str], index: int, args: argparse.Namespace, snapsho
     return record
 
 
+# Startup ATSs first: they are fast (~2-5 min/role) and where recruiter replies come
+# from. Workday is ~9 min/role at mostly large companies, and its first night
+# brought a 1,359-role backlog that took 115 of 200 slots (2026-09-23), so it goes
+# last and is capped per run; the rest stays eligible for later nights.
+SOURCE_PRIORITY = {'greenhouse': 0, 'ashby': 0, 'lever': 0, 'gem': 0, 'rippling': 0, 'smartrecruiters': 1, 'workday': 2}
+
+
+def row_source(row: dict[str, str]) -> str:
+    return row.get('source') or row.get('id', '').split(':', 1)[0]
+
+
+def parse_source_caps(text: str) -> dict[str, int]:
+    caps = {}
+    for part in text.split(','):
+        name, _, value = part.partition('=')
+        if name.strip() and value.strip():
+            caps[name.strip()] = int(value)
+    return caps
+
+
 def selected_rows(rows: list[dict[str, str]], statuses: dict[str, dict[str, Any]], args: argparse.Namespace) -> list[dict[str, str]]:
+    rows = sorted(rows, key=lambda row: SOURCE_PRIORITY.get(row_source(row), 1))  # stable: keeps fresh-first order within a tier
+    source_caps = parse_source_caps(args.source_cap)
+    # Caps are per run date, not per invocation: quota resumes relaunch apply.py
+    # against the same shortlist, and each would otherwise get a fresh cap.
+    snapshot = getattr(args, 'snapshot_date', '')
+    per_source: collections.Counter = collections.Counter(
+        role_id.split(':', 1)[0] for role_id, record in statuses.items()
+        if snapshot and record.get('snapshot_date') == snapshot)
     selected: list[dict[str, str]] = []
+    spam_retries: list[dict[str, str]] = []
+    # One attempt per (company, title) per run: companies repost the same role under
+    # many ids, and a shared hard blocker then burns a slot per clone (rithumliboard
+    # 2026-09-04: 8 identical "IT Automation Engineer" postings, all blocked by the
+    # same US-residency gate). The clones stay eligible for later runs.
+    seen_company_title: set[tuple[str, str]] = set()
     retry_statuses = {part.strip() for part in args.retry_status.split(',') if part.strip()}
     only_ids = {part.strip() for part in args.only_id.split(',') if part.strip()}
     excluded_companies = {part.strip().lower() for part in args.exclude_company.split(',') if part.strip()}
@@ -798,17 +939,62 @@ def selected_rows(rows: list[dict[str, str]], statuses: dict[str, dict[str, Any]
             continue
         if not args.include_federal_defense and row.get('federal_defense_note') == 'check-federal/defense':
             continue
+        company_title = (row.get('company_slug', '').lower(), ' '.join(row.get('title', '').lower().split()))
+        if company_title in seen_company_title:
+            continue
+        seen_company_title.add(company_title)
         previous = statuses.get(role_id)
         if previous:
             if previous.get('_ever_submitted'):
                 continue  # never re-apply to anything we've ever successfully submitted
             previous_status = previous.get('status')
+            if args.retry_spam and spam_retry_ready(previous):
+                # Transient flags recover, but only after cooling off (80% at 8d+ vs
+                # 56% next-day), and a retry must never displace a first attempt: on
+                # 2026-08-31 next-day retries filled 40 of 52 slots at a 33% yield
+                # while fresh attempts ran 12/12 clean.
+                spam_retries.append(row)
+                continue
             if previous_status in SKIP_STATUSES and previous_status not in retry_statuses:
                 continue
+        source = row_source(row)
+        if source in source_caps and per_source[source] >= source_caps[source]:
+            continue
+        per_source[source] += 1
         selected.append(row)
         if args.limit and len(selected) >= args.limit:
             break
-    return selected
+    remaining = max(0, args.limit - len(selected)) if args.limit else len(spam_retries)
+    tiers = sorted({SOURCE_PRIORITY.get(row_source(row), 1) for row in selected})
+    ordered = [row for tier in tiers for row in interleave_companies(
+        [r for r in selected if SOURCE_PRIORITY.get(row_source(r), 1) == tier])]
+    return ordered + interleave_companies(spam_retries[:remaining])
+
+
+def interleave_companies(rows: list[dict[str, str]]) -> list[dict[str, str]]:
+    """Round-robin the selection by company so no company sees back-to-back submits.
+
+    Shortlist order groups a company's postings together, so a company with several
+    open roles got hit within minutes. At strict-scoring Ashby companies that burst
+    flags near-deterministically (2026-08-28/29: mercor 3-in-3-min and benchling
+    2-in-2-min all spam-flagged, while the same day's FIRST attempt at each company
+    passed). Interleaving costs nothing -- order was otherwise arbitrary -- and
+    spaces same-company attempts by the full rotation of other companies.
+    """
+    queues: dict[str, list[dict[str, str]]] = {}
+    order: list[str] = []
+    for row in rows:
+        company = row.get('company_slug', '')
+        if company not in queues:
+            queues[company] = []
+            order.append(company)
+        queues[company].append(row)
+    result: list[dict[str, str]] = []
+    while len(result) < len(rows):
+        for company in order:
+            if queues[company]:
+                result.append(queues[company].pop(0))
+    return result
 
 
 def main() -> None:
@@ -828,6 +1014,10 @@ def main() -> None:
                         help='Gmail access is unavailable: skip roles needing an emailed '
                              'verification code as blocked_on_gmail_auth instead of attempting them.')
     parser.set_defaults(gmail=True)
+    parser.add_argument('--retry-spam', action='store_true',
+                        help='re-attempt Ashby roles whose last attempt was spam-flagged on an '
+                             'EARLIER day (max 3 flagged attempts per role); 87%% of flagged '
+                             'roles submit successfully on a later-day retry')
     parser.add_argument('--prepare-browser', dest='prepare_browser', action='store_true')
     parser.add_argument('--no-prepare-browser', dest='prepare_browser', action='store_false')
     parser.set_defaults(prepare_browser=True)
@@ -844,7 +1034,11 @@ def main() -> None:
     parser.add_argument('--sandbox', default='danger-full-access', choices=['read-only', 'workspace-write', 'danger-full-access'])
     parser.add_argument('--model', default='')
     parser.add_argument('--reasoning-effort', default='low', help='codex model_reasoning_effort; higher modes are slower and can time out on routine form filling')
+    parser.add_argument('--effort', default='', choices=['', 'low', 'medium', 'high', 'xhigh', 'max'],
+                        help="claude --effort; empty keeps Claude Code's default")
     parser.add_argument('--timeout-minutes', type=int, default=45)
+    parser.add_argument('--source-cap', default='workday=50',
+                        help='per-run caps by source, e.g. workday=50,smartrecruiters=30 (empty for none)')
     parser.add_argument('--retry-status', default='', help='comma-separated statuses to retry, e.g. needs_input,blocked')
     parser.add_argument('--only-id', default='', help='comma-separated role ids to apply regardless of order')
     parser.add_argument('--exclude-company', default='', help='comma-separated company_slug values to skip (e.g. openai for 180-day rate-limit window)')
@@ -892,6 +1086,7 @@ def main() -> None:
         rows.extend(read_rows(path))
 
     statuses = load_statuses(args.status)
+    args.snapshot_date = latest['date']
     todo = selected_rows(rows, statuses, args)
     if args.dry_run:
         print(json.dumps({
@@ -948,6 +1143,8 @@ def main() -> None:
                         reason = 'infra error'
                     elif record.get('status') == 'skipped_stopped':
                         reason = 'stop requested'
+                    elif record.get('status') == 'skipped_spam_circuit':
+                        reason = 'spam circuit breaker'
                     else:
                         reason = 'rate limit'
                     print(f'Skipped ({reason}, not ledgered): {record.get("company_slug","")} - {record.get("title","")} :: {record.get("detail","")}', flush=True)
