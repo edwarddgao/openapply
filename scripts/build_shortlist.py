@@ -18,6 +18,7 @@ import csv
 import html
 import json
 import re
+import sys
 import unicodedata
 from collections import Counter
 from datetime import date, datetime, timezone
@@ -31,23 +32,85 @@ BACKLOG_DAYS = 120
 
 
 ROLE_RE = re.compile(r'''(?ix)\b(
-  software|developer|programmer|frontend|front[- ]?end|backend|back[- ]?end|
+  software|developer|programmer|frontend|front-end|backend|back-end|
+  # Spaced "Front End" / "Back End" is also retail ("Endzone & Loyalty (Front End)"),
+  # heavy equipment ("Front End Loader") and fab shifts ("Front End Nights").
+  (front|back)\s+end\s+([\w/+-]+\s+)?(engineer|developer)|
   full[- ]?stack|fullstack|web\s+engineer|mobile\s+engineer|ios\s+engineer|
   android\s+engineer|firmware|embedded|cloud\s+engineer|platform\s+engineer|
   infrastructure\s+engineer|devops|site\s+reliability|sre\b|systems\s+engineer|
   qa\s+engineer|test\s+engineer|
-  data\s+(engineer|platform|infrastructure)|analytics\s+engineer|
-  bi\s+engineer|machine\s+learning|ml\b|ai\s+engineer|
+  data\s+(engineer|platform|infrastructure|scientist|analyst)|analytics\s+engineer|
+  bi\s+engineer|bi\s+analyst|business\s+analyst|business\s+intelligence|
+  machine\s+learning|ml\b|ai\s+engineer|
   artificial\s+intelligence|research\s+engineer|bioinformatics|computational\s+biologist|
-  quantitative\s+(developer|researcher|engineer)
+  quantitative\s+(developer|researcher|engineer)|
+  founding\s+engineer|member\s+of\s+technical\s+staff|product\s+engineer|
+  security\s+engineer|research\s+scientist|
+  (ios|android)\s+(framework|os|platform)\s+engineer|
+  solutions?\s+engineer|sales\s+engineer|
+  forward[- ]?deployed\s+engineer|forward\s+deployment\s+engineer|
+  implementation\s+engineer|deployment\s+engineer|
+  developer\s+advocate|developer\s+relations|devrel\b|
+  technical\s+writer|technical\s+program\s+manager|
+  product\s+manager|associate\s+product\s+manager|
+  # Software roles named by language, stack, or specialism rather than by the
+  # generic words above. Measured on the 2026-08-24 snapshot, these accounted for
+  # ~1,180 non-senior engineering roles that never reached the removal filters.
+  (java|python|golang|rust|c\+\+|c\#|\.net|dotnet|php|ruby|rails|scala|kotlin|
+   node\.?js|typescript|javascript|elixir|swift)\s+(engineer|developer)|
+  devsecops|sec\s?ops\s+engineer|security\s+operations\s+engineer|
+  cyber\s?security\s+engineer|
+  (robotics|perception|autonomy|motion\s+planning|slam)\s+engineer|
+  (computer\s+vision|nlp|llm|deep\s+learning|gen\s?ai)\s+engineer|
+  (compiler|graphics|kernel|gpu|runtime)\s+engineer|
+  integrations?\s+engineer|automation\s+engineer|growth\s+engineer|
+  reliability\s+engineer|(performance|observability)\s+engineer|
+  applied\s+scientist|
+  (blockchain|smart\s+contract|protocol)\s+engineer|
+  (gameplay|game)\s+engineer|
+  (search|recommendation|ranking)\s+engineer
 )\b''')
 
 INDUSTRIAL_CONTROLS_TITLE_RE = re.compile(r'\b(plc|scada|hvac|controls\s+(engineer|developer)|industrial\s+(automation|systems|controls)|process\s+automation|instrumentation\s+engineer)\b', re.I)
-CAD_PROGRAMMER_TITLE_RE = re.compile(r'\bcad\s+programmer\b', re.I)
+CAD_PROGRAMMER_TITLE_RE = re.compile(r'\b(cad(/\w+)?|mastercam|cnc)\s+programmer\b', re.I)
+# Plant, equipment and hardware work that shares a generic engineering title with
+# software ("Electrical Reliability Engineer", "Pharmaceutical Automation Engineer",
+# "Optical System Integration Engineer", "Flight Systems Engineer"). Measured on
+# the 2026-09-23 snapshot, the first with Workday postings, which carry no department.
+INDUSTRIAL_ENGINEERING_TITLE_RE = re.compile(r'''(?ix)(
+  \b(electrical|mechanical|equipment|plant|manufacturing|pharmaceutical|pharma|power|flight|
+     optical|semiconductor|facilities|chemical|packaging|quality\s*(&|and)\s*)\b
+     [\w\s/&-]{0,25}?\b(reliability|automation|integration|systems|test)\s+engineer|
+  \b(reliability|automation|integration)\s+engineer\b.{0,30}\b(manufacturing|plant|pharma\w*)\b
+)''')
 
-ANALYST_TITLE_RE = re.compile(r'\banalyst\b', re.I)
-SCIENTIST_TITLE_RE = re.compile(r'\bscientist\b', re.I)
+# A clearly technical title beats a generic nontech/support keyword hit elsewhere in
+# the same title ("Software Engineer, Community Support Engineering", "Fullstack
+# Growth Engineer II", "Marketing Analytics Engineer").
+TECH_TITLE_RE = re.compile(r'''(?ix)\b(
+  software\s+(engineer|developer)|backend\s+engineer|frontend\s+engineer|
+  full[- ]?stack\s+(growth\s+)?engineer|fullstack\s+(growth\s+)?engineer|
+  mobile\s+engineer|ios\s+engineer|android\s+engineer|web\s+engineer|
+  machine\s+learning\s+engineer|ml\s+engineer|ai\s+engineer|
+  data\s+(scientist|engineer|analyst)|platform\s+engineer|infrastructure\s+engineer|
+  devops\s+engineer|sre|site\s+reliability|
+  analytics\s+engineer|growth\s+engineer|product\s+engineer|
+  (ios|android|mobile(\s+application)?)\s+developer
+)\b''')
+
+# ROLE_RE deliberately includes quantitative researchers, and ML researchers are the
+# same shape of role; the generic researcher-title removal must not undo that.
+QUANT_ML_RESEARCHER_RE = re.compile(r'\b(quantitative|machine\s+learning|ml)\s+researcher\b', re.I)
+
 SALESFORCE_TITLE_RE = re.compile(r'\bsalesforce\b', re.I)
+# Not a target role (2026-09-23). BI analyst stays: it is closer to data analyst work.
+BUSINESS_ANALYST_TITLE_RE = re.compile(r'\bbusiness\s+(systems\s+)?analyst\b', re.I)
+# Also not target roles (2026-09-25). "Product Engineer" is engineering and stays.
+# Solutions engineers and architects are pre-sales roles too.
+SALES_TITLE_RE = re.compile(r'\b(pre-?)?sales\b|\bsolutions?\s+(engineer|architect)', re.I)
+PRODUCT_MANAGEMENT_TITLE_RE = re.compile(
+    r'\bproduct\s+(manager|owner|management|lead|director|marketing)\b|\bapm\b', re.I)
 BUSINESS_AUTOMATION_TITLE_RE = re.compile(r'business\s+automation', re.I)
 SUPPORT_TITLE_RE = re.compile(r'\bsupport\b', re.I)
 TESTER_TITLE_RE = re.compile(r'\btester\b', re.I)
@@ -57,14 +120,14 @@ POSTDOC_FELLOW_TITLE_RE = re.compile(r'\b(postdoc|post-doc|postdoctoral|fellowsh
 
 ENTRY_TITLE_RE = re.compile(r'''(?ix)\b(
   entry[- ]?level|junior|jr\.?|new\s+grad|new\s+graduate|recent\s+graduate|
-  graduate|early\s+career|university\s+grad|associate\s+(software|data|analytics|machine\s+learning|ml|ai|engineer|developer)|
+  graduate|early\s+career|university\s+grad|(university|campus)\s+hire|associate\s+(software|data|analytics|machine\s+learning|ml|ai|engineer|developer)|
   software\s+engineer\s+(i|1)\b|data\s+(engineer|analyst|scientist)\s+(i|1)\b|
   engineer\s+(i|1)\b|developer\s+(i|1)\b|analyst\s+(i|1)\b
 )\b''')
 
 ENTRY_DESC_RE = re.compile(r'''(?ix)\b(
   entry[- ]?level|junior|new\s+grad|new\s+graduate|recent\s+graduate|
-  early\s+career|university\s+grad|0\s*[-+]\s*2\s+years|0\s*[-+]\s*3\s+years|
+  early\s+career|university\s+grad|(university|campus)\s+hire|0\s*[-+]\s*2\s+years|0\s*[-+]\s*3\s+years|
   0\s*to\s*2\s+years|0\s*to\s*3\s+years|less\s+than\s+2\s+years|
   no\s+prior\s+experience|1\+?\s+years?\s+(of\s+)?experience
 )\b''')
@@ -81,18 +144,24 @@ LIKELY_MID_TITLE_RE = re.compile(r'''(?ix)\b(
   sde\s*(iii|3)\b|level\s*3\b|l3\b
 )\b''')
 
-SENIOR_TITLE_RE = re.compile(r'\b(senior|sr\.?|(?<!technical )staff|principal|lead|manager|director|head of|vp|vice president|architect)\b', re.I)
+SENIOR_TITLE_RE = re.compile(
+    r'\b(senior|snr|sr\.?|(?<!technical )staff|principal|lead|manager|director|head of|vp|vice president|'
+    r'architect|distinguished|chief)\b', re.I)
 INTERN_TITLE_RE = re.compile(r'\b(intern|internship|co[- ]?op|coop|working student|student researcher)\b', re.I)
 
 NONTECH_TITLE_RE = re.compile(r'''(?ix)\b(
-  account\s+executive|sales\s+engineer|solutions?\s+engineer|solution\s+consultant|
-  customer\s+success|product\s+owner|product\s+manager|designer|marketing|growth|
+  account\s+executive|solution\s+consultant|
+  customer\s+success|designer|marketing|growth|
   operations\s+associate|special\s+ops|recruit|talent|people\s+partner|finance|
   billing|credit\s+analyst|investment\s+analyst|clinical|nurse|physician|
+  transcrib(er|ing|e)|transcriptionist|medical\s+transcription|radiology\s+transcription|
+  paralegal|legal\s+assistant|hr\s+coordinator|hr\s+specialist|admin(istrative)?\s+assistant|
+  bookkeeper|payroll\s+specialist|accounts\s+payable|accounts\s+receivable|
   recipe\s+developer|raw\s+materials\s+developer|materials\s+developer|
   curriculum\s+developer|instructional\s+developer|content\s+developer|business\s+development|
   home\s+developer|property\s+developer|land\s+developer|real\s+estate\s+developer|housing\s+developer|
-  workforce\s+developer|community\s+developer
+  workforce\s+developer|community\s+developer|course\s+developer|
+  event\s+programmer|student\s+engagement\s+programmer
 )\b''')
 
 HARDWARE_ONLY_TITLE_RE = re.compile(
@@ -108,9 +177,11 @@ US_CA_RE = re.compile(r'''(?ix)\b(
   united\s+states|usa|u\.s\.|canada|canadian|north\s+america|
   toronto|vancouver|montreal|waterloo|ottawa|calgary|edmonton|kanata|kitchener|winnipeg|
   new\s+york|nyc|san\s+francisco|bay\s+area|seattle|boston|austin|chicago|los\s+angeles|
-  denver|atlanta|miami|dallas|houston|san\s+diego|washington\s+dc|palo\s+alto|
+  denver|atlanta|miami|dallas|houston|san\s+diego|washington\s*,?\s*d\.?c\.?|palo\s+alto|
   mountain\s+view|menlo\s+park|san\s+jose|philadelphia|baltimore|brooklyn|pittsburgh|
-  raleigh|indianapolis|plano|redmond|bellevue|sunnyvale|santa\s+clara|
+  raleigh|indianapolis|plano|redmond|bellevue|sunnyvale|santa\s+clara|san\s+mateo|
+  redwood\s+city|emeryville|fremont|el\s+segundo|phoenix|nashville|salt\s+lake\s+city|
+  detroit|minneapolis|orlando|durham|jersey\s+city|mississauga|laval|
   alabama|alaska|arizona|arkansas|california|colorado|connecticut|delaware|florida|
   georgia|hawaii|idaho|illinois|indiana|iowa|kansas|kentucky|louisiana|maine|
   maryland|massachusetts|michigan|minnesota|mississippi|missouri|montana|nebraska|
@@ -122,8 +193,17 @@ US_CA_RE = re.compile(r'''(?ix)\b(
 )\b''')
 
 US_CA_CODE_RE = re.compile(
-    r'(?:^|[\s,;(/-])(AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|IA|ID|IL|IN|KS|KY|LA|MA|MD|MI|MN|MO|MS|MT|NC|ND|NE|NH|NJ|NM|NV|NY|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VA|VT|WA|WI|WV|WY|ON|BC|QC|AB|MB|SK|NS|NB|NL|PE)(?:$|[\s,;)/-])'
+    r'(?:^|[\s,;(/-])(AL|AK|AZ|AR|CA|CO|CT|DC|DE|FL|GA|HI|IA|ID|IL|IN|KS|KY|LA|MA|MD|MI|MN|MO|MS|MT|NC|ND|NE|NH|NJ|NM|NV|NY|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VA|VT|WA|WI|WV|WY|ON|BC|QC|AB|MB|SK|NS|NB|NL|PE)(?:$|[\s,;)/-])'
 )
+
+# Country abbreviations collide with several state/province codes (DE, IN, IL, NL,
+# PE, and GA), so only the unambiguous subset is allowed to override a city name that
+# also exists abroad (for example Melbourne, FL or Dublin, CA).
+US_CA_SAFE_QUALIFIED_CODE_RE = re.compile(
+    r'(?i)[,;]\s*(?:AL|AK|AZ|AR|CA|CO|CT|DC|FL|HI|IA|ID|KS|KY|LA|MA|MD|MI|MN|MO|MS|MT|NC|ND|NE|NH|NJ|NM|NV|NY|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VA|VT|WA|WI|WV|WY|ON|BC|QC|AB|MB|SK|NS|NB)(?:$|[\s,;)/-])'
+)
+US_MARKER_RE = re.compile(r'(?i)(?:^|[;|,(\[/]|remote\s*[-:]?\s+)\s*US(?:$|\s*[-:/,;)\]]|\s*\(?\s*(?:only|based|remote))')
+SF_ALIAS_RE = re.compile(r'(?i)(?:^|[;|,(])\s*sf(?:\s+(?:hq|headquarters))?\s*(?:$|[;|,)])')
 
 REGION_ONLY_RE = re.compile(r'''(?ix)^\s*(united\s+states(\s+of\s+america)?|usa|u\.s\.|us|canada|north\s+america|americas?)\s*$''')
 REMOTE_RE = re.compile(r'\b(remote|distributed|anywhere|global|worldwide|home based|work from home|wfh)\b', re.I)
@@ -134,10 +214,13 @@ FOREIGN_RE = re.compile(r'''(?ix)\b(
   latin\s+america|latam|mexico|europe|emea|united\s+kingdom|uk|england|scotland|ireland|
   london|bristol|dublin|spain|madrid|barcelona|france|paris|germany|berlin|munich|
   italy|rome|milan|netherlands|amsterdam|poland|warsaw|romania|portugal|lisbon|
-  sweden|stockholm|austria|vienna|denmark|copenhagen|aarhus|serbia|belgrade|armenia|
-  kazakhstan|ukraine|india|bengaluru|bangalore|delhi|mumbai|hyderabad|singapore|
+  sweden|stockholm|austria|vienna|wien|denmark|copenhagen|aarhus|serbia|belgrade|armenia|
+  kazakhstan|ukraine|kyiv|india|bengaluru|bangalore|delhi|mumbai|hyderabad|pune|chennai|
+  gurugram|gurgaon|singapore|hong\s+kong|asia|hungary|budapest|czech(\s+republic|ia)?|prague|
+  switzerland|zurich|finland|helsinki|lithuania|uzbekistan|bulgaria|sofia|malta|romania|bucharest|
+  malaysia|kuala\s+lumpur|turkey|istanbul|taiwan|taipei|
   australia|sydney|melbourne|new\s+zealand|japan|tokyo|korea|seoul|china|beijing|
-  shanghai|philippines|vietnam|thailand|indonesia|malaysia|israel|tel\s+aviv|turkey|
+  shanghai|philippines|vietnam|thailand|indonesia|auckland|israel|tel\s+aviv|
   uae|dubai|brazil|brasil|sao\s+paulo|s%C3%A3o\s+paulo|s%E3o\s+paulo|s\xc3\xa3o\s+paulo|rio\s+de\s+janeiro|belo\s+horizonte|brasilia|salvador|fortaleza|curitiba|recife|porto\s+alegre|argentina|buenos\s+aires|colombia|bogota|chile|santiago|peru|lima|south\s+africa|johannesburg|cape\s+town|
   nigeria|lagos|kenya|nairobi|egypt|cairo|ghana|accra|morocco|tunisia|ethiopia|rwanda|
   saudi\s+arabia|riyadh|qatar|doha|kuwait|bahrain|oman|jordan|lebanon|pakistan|karachi|lahore|
@@ -154,10 +237,75 @@ SECURITY_RE = re.compile(r'''(?ix)\b(
 )\b''')
 
 SECURITY_TITLE_RE = re.compile(r'(?ix)(\bsecret\b|top\s+secret|ts/sci|\bsci\b|clearance|public\s+trust|\bitar\b|u\.s\.\s+person|us\s+person|u\.s\.\s+citizen|us\s+citizen|citizenship)')
+
+# "U.S. Citizenship/Visa required" (or "citizen or work authorization") states work
+# authorization -- citizen OR visa-holder both qualify -- not a citizen-only/clearance
+# blocker. Strip it before the security test so the bare "US citizen" token inside it does
+# not trip the filter. Genuine "must be a U.S. citizen", "citizen or permanent resident",
+# clearance, ITAR, and US-person language elsewhere in the posting still fires.
+WORKAUTH_DISJUNCTION_RE = re.compile(
+    r'(?ix)(?:u\.s\.|us)\s+citizen(?:ship)?\s*(?:/|\bor\b)\s*(?:visas?|work\s+authoriz\w*|employment\s+authoriz\w*)'
+)
 SPONSOR_RE = re.compile(r'\b(visa sponsorship|sponsorship|will not sponsor|do not sponsor|unable to sponsor|without sponsorship|h-?1b|h1b|tn visa|tn status)\b', re.I)
 TN_POSITIVE_RE = re.compile(r'\b(tn visa|tn status|visa sponsorship available|sponsor visas|sponsorship available|h-?1b transfer)\b', re.I)
 FEDERAL_RE = re.compile(r'\b(federal|dod|department of defense|army|navy|air force|space force|government|public sector|homeland security|intelligence community|cia|nsa|fbi|defense|aerospace|military)\b', re.I)
-US_CA_TAIL_RE = re.compile(r'(?ix)(united\s+states|usa|u\.s\.|us|canada|AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|IA|ID|IL|IN|KS|KY|LA|MA|MD|MI|MN|MO|MS|MT|NC|ND|NE|NH|NJ|NM|NV|NY|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VA|VT|WA|WI|WV|WY|ON|BC|QC|AB|MB|SK|NS|NB|NL|PE|ontario|british\s+columbia|quebec|alberta|manitoba|saskatchewan|nova\s+scotia|new\s+brunswick|newfoundland|prince\s+edward\s+island)')
+
+# EEO/anti-discrimination boilerplate mentions federal/military/government in nearly
+# every US posting; a federal term only counts when no EEO anchor sits nearby.
+EEO_CONTEXT_RE = re.compile(r'''(?ix)(
+  equal\s+(employment\s+)?opportunit|e-?verify|discriminat|affirmative\s+action|
+  veteran\s+status|protected\s+veteran|military\s+(service|status)|uniformed\s+service|
+  sexual\s+orientation|gender\s+identity|marital\s+status|national\s+origin|
+  genetic\s+information|reasonable\s+accommodation|characteristics?\s+protected|
+  protected\s+(by|and\s+enforced)|form\s+i-?9|hiv\s+status|civil\s+union
+)''')
+
+EEO_WINDOW = 300
+
+
+# A federal/defense word only blocks when it constrains WHO MAY BE HIRED. The
+# applicant is a Canadian citizen, so clearance, ITAR/EAR, and US-person rules are
+# genuine blockers -- but "we sell to government customers" is not one. Measured on
+# the 2026-08-24 snapshot, 547 roles were dropped for the mention alone, including
+# ordinary startups (Greptile, Ontic, BrainBase) and Clera, whose Founding Engineer
+# had already been applied to through another path.
+FEDERAL_BLOCKER_RE = re.compile(r'''(?ix)\b(
+  security\s+clearance|clearance\s+(required|eligib|level)|ts/sci|top\s+secret|
+  secret\s+clearance|public\s+trust|polygraph|itar|ear\b|export\s+control|
+  us\s+person|u\.s\.\s+person|
+  (must\s+be|require[sd]?)[^.]{0,40}\b(us|u\.s\.|american)\s+citizen|
+  citizenship\s+(is\s+)?required|green\s+card\s+holder
+)\b''')
+
+# Customer/market mentions: the company serves government, it does not gate hiring.
+FEDERAL_MARKET_RE = re.compile(r'''(?ix)(
+  (serve|serving|serves|sell|selling|sells|power|powers|powering|support|supporting|
+   help|helps|helping|provide|provides|providing|built\s+for|designed\s+for|
+   used\s+by|trusted\s+by|work\s+with|teams?\s+in|
+   corporate\s+and|commercial\s+and|enterprise\s+and|
+   customers?|clients?|sectors?|markets?|industries|across|including|such\s+as|
+   partners?|deploy\w*\s+(to|for|with))[^.]{0,60}\b
+  (federal|government|defense|defence|public\s+sector|dod|military|aerospace)\b
+)''')
+
+
+def federal_defense_flag(text: str) -> bool:
+    """True when federal/defense language plausibly gates who can be hired.
+
+    A bare FEDERAL_RE hit is not enough: it fires on customer lists and mission
+    copy. Require an actual hiring blocker (clearance, ITAR, citizenship), or a
+    federal term that is neither EEO boilerplate nor a market/customer mention.
+    """
+    if FEDERAL_BLOCKER_RE.search(text):
+        return True
+    eeo_positions = [m.start() for m in EEO_CONTEXT_RE.finditer(text)]
+    market_spans = [(m.start(), m.end()) for m in FEDERAL_MARKET_RE.finditer(text)]
+    return any(
+        not any(abs(match.start() - pos) <= EEO_WINDOW for pos in eeo_positions)
+        and not any(start <= match.start() <= end for start, end in market_spans)
+        for match in FEDERAL_RE.finditer(text)
+    )
+US_CA_TAIL_RE = re.compile(r'(?ix)(united\s+states|usa|u\.s\.|us|canada|AL|AK|AZ|AR|CA|CO|CT|DC|DE|FL|GA|HI|IA|ID|IL|IN|KS|KY|LA|MA|MD|MI|MN|MO|MS|MT|NC|ND|NE|NH|NJ|NM|NV|NY|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VA|VT|WA|WI|WV|WY|ON|BC|QC|AB|MB|SK|NS|NB|NL|PE|ontario|british\s+columbia|quebec|alberta|manitoba|saskatchewan|nova\s+scotia|new\s+brunswick|newfoundland|prince\s+edward\s+island)')
 
 
 def location_tails(locations: str) -> list[str]:
@@ -170,12 +318,33 @@ def location_tails(locations: str) -> list[str]:
 
 
 def has_foreign_country_tail(locations: str) -> bool:
-    # Trust explicit trailing country tokens over city-name matches like "San Jose".
-    return any(not US_CA_TAIL_RE.fullmatch(tail) and not US_CA_RE.search(tail) for tail in location_tails(locations))
+    # A trailing comma-segment marks the role foreign only when it actually names a
+    # foreign place. Treating every *unrecognized* tail as foreign wrongly dropped US/CA
+    # strings whose tail is a suffixed code ("Dallas, TX - Data Center"), "Remote"
+    # ("United States, Remote"), "DC", or a parenthetical ("San Francisco, CA (Hybrid)",
+    # "(Americas, UTC-3 to UTC-10)") -- it still catches real foreign tails ("San Jose,
+    # Costa Rica") via the curated foreign list.
+    return any(FOREIGN_RE.search(tail) for tail in location_tails(locations))
 
 
 def has_us_ca_tail(locations: str) -> bool:
-    return any(US_CA_TAIL_RE.fullmatch(tail) or US_CA_RE.search(tail) for tail in location_tails(locations))
+    # fullmatch on the bare-code alternation avoids substring bleed ("CA" inside "Rica");
+    # US_CA_CODE_RE additionally catches a boundary-delimited code in a suffixed tail
+    # ("CA - US") so mixed US/foreign lists keep their US option.
+    return any(
+        US_CA_TAIL_RE.fullmatch(tail) or US_CA_RE.search(tail) or US_CA_CODE_RE.search(tail)
+        for tail in location_tails(locations)
+    )
+
+
+def has_foreign_location(locations: str) -> bool:
+    # Some city names are shared across countries. A city paired with an unambiguous
+    # US/Canadian code is domestic (Dublin, CA; Melbourne, FL; Vienna, VA), while a
+    # separate foreign option in the same location list must still be retained.
+    return any(
+        FOREIGN_RE.search(location) and not US_CA_SAFE_QUALIFIED_CODE_RE.search(location)
+        for location in re.split(r'[;|]', locations)
+    )
 
 TAG_RE = re.compile(r'<[^>]+>')
 WS_RE = re.compile(r'\s+')
@@ -188,19 +357,54 @@ REQ_CONTEXT_RE = re.compile(r'''(?ix)\b(
 )\b''')
 BAD_YEAR_CONTEXT_RE = re.compile(r'(?ix)\b(years\s+ago|founded|history|legacy|anniversary|[0-9]{1,2}\s+years\s+old)\b')
 
+# Company tenure phrased as "N years of experience" defeats BAD_YEAR_CONTEXT_RE,
+# because valid_year_context re-allows any "years of experience" wording. The
+# subject is the giveaway: a requirement is about *you*, boilerplate is about the
+# company ("For more than 30 years, Verifone has...", "25 years of experience in
+# software engineering, established in Vienna", "a combined 20 years of expertise").
+# Measured at 53 wrongly-removed roles on the 2026-08-24 snapshot.
+# An explicit requirement verb immediately before the year count settles it: the
+# sentence is addressed to the candidate, whatever company wording sits nearby.
+STRONG_REQ_RE = re.compile(r'''(?ix)\b(
+  require[sd]?|must\s+have|minimum\s+of|at\s+least|qualification|looking\s+for|
+  seeking|you\s+(have|bring|will\s+have)|ideal\s+candidate|we\s+want|proven\s+track
+)\b[^.]{0,25}$''')
+
+COMPANY_TENURE_RE = re.compile(r'''(?ix)(
+  (for\s+)?(more\s+than|over|nearly|almost|combined|spanning)\s+[0-9]{1,2}\s*\+?\s+years|
+  [0-9]{1,2}\s*\+?\s+years\s+(in\s+business|of\s+(innovation|leadership|excellence|operation|service))|
+  # Not bare "have": that also opens candidate bullets ("Have 5+ years of experience").
+  (we|our\s+(company|team|firm)|has|they\s+have)\s+(been\s+)?\w{0,12}\s*[0-9]{1,2}\s*\+?\s+years|
+  # "About Qualysoft 25 years of experience in software engineering, established in Vienna"
+  about\s+\w[\w.&-]*\s+[0-9]{1,2}\s*\+?\s+years|
+  [0-9]{1,2}\s*\+?\s+years\s+of\s+(experience|expertise)[^.]{0,70}?\b
+    (established|headquartered|founded|incorporated|in\s+business)\b
+)''')
+
+
+# NFKD + ascii-ignore deletes these outright ("2–4 years" -> "24 years"),
+# so map them to ascii equivalents first.
+UNICODE_PUNCT_TABLE = str.maketrans({
+    '‐': '-', '‑': '-', '‒': '-', '–': '-',
+    '—': '-', '―': '-', '−': '-',
+    '‘': "'", '’': "'", '“': '"', '”': '"',
+})
+
 
 def clean(value: Any) -> str:
     if value is None:
         return ''
     if isinstance(value, (list, tuple)):
         value = '; '.join(str(v) for v in value if v is not None)
-    value = html.unescape(str(value)).replace('\xa0', ' ')
+    value = html.unescape(str(value)).replace('\xa0', ' ').translate(UNICODE_PUNCT_TABLE)
     value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore').decode('ascii')
     return WS_RE.sub(' ', value).strip()
 
 
 def strip_html(value: Any) -> str:
-    return clean(TAG_RE.sub(' ', str(value or '')))
+    # Greenhouse ships entity-escaped HTML ("&lt;li&gt;"), which TAG_RE cannot see
+    # until it is unescaped.
+    return clean(TAG_RE.sub(' ', html.unescape(str(value or ''))))
 
 
 def latest_date(data_dir: Path) -> str:
@@ -273,10 +477,15 @@ def role_type(title: str, department: str) -> str:
 
 
 def location_bucket(locations: str, remote: bool) -> str:
-    has_us_ca_city = bool(US_CA_RE.search(locations))
+    has_us_ca_city = bool(
+        US_CA_RE.search(locations)
+        or US_CA_SAFE_QUALIFIED_CODE_RE.search(locations)
+        or US_MARKER_RE.search(locations)
+        or SF_ALIAS_RE.search(locations)
+    )
     if (remote or REMOTE_RE.search(locations) or REGION_ONLY_RE.match(locations)) and not has_us_ca_city:
         return 'remote-or-region'
-    has_foreign = bool(FOREIGN_RE.search(locations))
+    has_foreign = has_foreign_location(locations)
     if has_foreign and not has_us_ca_city:
         return 'foreign-or-unknown'
     if has_foreign_country_tail(locations) and not has_us_ca_tail(locations):
@@ -311,6 +520,12 @@ def salary_text(row: dict[str, Any]) -> str:
 
 
 def valid_year_context(text: str, start: int, end: int) -> bool:
+    # Company-tenure wording is checked on a tight window around the match: the
+    # ~500-char context below is wide enough that unrelated requirement language
+    # almost always appears somewhere in it, which is what let boilerplate through.
+    near = text[max(0, start - 60):min(len(text), end + 90)]
+    if COMPANY_TENURE_RE.search(near) and not STRONG_REQ_RE.search(text[max(0, start - 45):start]):
+        return False
     ctx = text[max(0, start - 220):min(len(text), end + 320)]
     if BAD_YEAR_CONTEXT_RE.search(ctx) and not re.search(r'(?i)years?\s+of\s+(relevant\s+)?experience', ctx):
         return False
@@ -348,7 +563,9 @@ def senior_evidence_type(match: dict[str, Any]) -> str:
         return 'strict-range-starts-5plus'
     if match['kind'] == 'range' and lo >= 4 and hi >= 6:
         return 'senior-leaning-range'
-    if match['kind'] == 'range' and hi >= 6:
+    # A range is only a blocker when its LOWER bound is out of reach; "0-7 years"
+    # or "1-6 years" explicitly accepts an early-career candidate.
+    if match['kind'] == 'range' and hi >= 6 and lo >= 2:
         return 'wide-mid-to-senior-range'
     if match['kind'] == 'range' and hi == 5:
         return 'borderline-3to5-ish'
@@ -357,7 +574,15 @@ def senior_evidence_type(match: dict[str, Any]) -> str:
     return 'not-senior-year-signal'
 
 
-SENIOR_DESCRIPTION_TYPES = {'strict-5plus', 'strict-range-starts-5plus', 'wide-mid-to-senior-range', 'senior-leaning-range'}
+# The level is sometimes only in the body ("As a Senior Software Engineer on the
+# ... team", "We're looking for Senior and Staff Software Engineers"). Anchored on
+# hiring/role phrasing so "work alongside senior engineers" does not count.
+SENIOR_ROLE_PHRASE_RE = re.compile(r'''(?ix)\b(
+  (as|hiring|looking\s+for|seeking|we\s+need)\s+(a|an|our)?\s*(senior|sr\.?|staff|principal)\s+
+  ([\w/+-]+\s+){0,3}(engineers?|developers?|scientists?)
+)\b''')
+
+SENIOR_DESCRIPTION_TYPES = {'strict-5plus', 'strict-range-starts-5plus', 'wide-mid-to-senior-range', 'senior-leaning-range', 'senior-role-phrase'}
 
 
 def choose_senior_evidence(matches: list[dict[str, Any]]) -> tuple[str, str]:
@@ -441,6 +666,8 @@ def normalize(row: dict[str, Any], snapshot_date: date) -> dict[str, Any]:
     full_text = f'{title} {department} {description}'
     matches = year_matches(full_text)
     senior_type, senior_match = choose_senior_evidence(matches)
+    if senior_type not in SENIOR_DESCRIPTION_TYPES and (phrase := SENIOR_ROLE_PHRASE_RE.search(description)):
+        senior_type, senior_match = 'senior-role-phrase', phrase.group(0)
     return {
         'id': clean(row.get('id')),
         'source': clean(row.get('source')),
@@ -455,7 +682,7 @@ def normalize(row: dict[str, Any], snapshot_date: date) -> dict[str, Any]:
         'age_bucket': age_bucket(age),
         'salary': salary_text(row),
         'sponsorship_note': sponsorship_note(description),
-        'federal_defense_note': 'check-federal/defense' if FEDERAL_RE.search(full_text) else '',
+        'federal_defense_note': 'check-federal/defense' if federal_defense_flag(full_text) else '',
         'senior_evidence_type': senior_type,
         'senior_evidence_match': senior_match,
         'apply_url': clean(row.get('apply_url')),
@@ -483,23 +710,25 @@ def removal_reasons(job: dict[str, Any], excluded_role_types: set[str], backlog_
         reasons.append('senior-title')
     if INTERN_TITLE_RE.search(title):
         reasons.append('intern-title')
-    if NONTECH_TITLE_RE.search(title) and not re.search(r'\b(software\s+(engineer|developer)|backend\s+engineer|frontend\s+engineer|full[- ]?stack\s+engineer|fullstack\s+engineer|mobile\s+engineer|ios\s+engineer|android\s+engineer|web\s+engineer|machine\s+learning\s+engineer|ml\s+engineer|ai\s+engineer|data\s+(scientist|engineer|analyst)|platform\s+engineer|infrastructure\s+engineer|devops\s+engineer|sre\b|site\s+reliability)\b', title, re.I):
+    if NONTECH_TITLE_RE.search(title) and not TECH_TITLE_RE.search(title):
         reasons.append('nontech-title')
-    if ANALYST_TITLE_RE.search(title):
-        reasons.append('analyst-title')
-    if SCIENTIST_TITLE_RE.search(title):
-        reasons.append('scientist-title')
     if SALESFORCE_TITLE_RE.search(title):
         reasons.append('salesforce-title')
+    if BUSINESS_ANALYST_TITLE_RE.search(title):
+        reasons.append('business-analyst-title')
+    if SALES_TITLE_RE.search(title):
+        reasons.append('sales-title')
+    if PRODUCT_MANAGEMENT_TITLE_RE.search(title):
+        reasons.append('product-management-title')
     if BUSINESS_AUTOMATION_TITLE_RE.search(title):
         reasons.append('business-automation-title')
-    if SUPPORT_TITLE_RE.search(title):
+    if SUPPORT_TITLE_RE.search(title) and not TECH_TITLE_RE.search(title):
         reasons.append('support-title')
     if TESTER_TITLE_RE.search(title):
         reasons.append('tester-title')
     if PHD_MS_REQUIRED_TITLE_RE.search(title):
         reasons.append('phd-or-ms-required-title')
-    if RESEARCHER_TITLE_RE.search(title):
+    if RESEARCHER_TITLE_RE.search(title) and not QUANT_ML_RESEARCHER_RE.search(title):
         reasons.append('researcher-title')
     if POSTDOC_FELLOW_TITLE_RE.search(title):
         reasons.append('postdoc-or-fellow-title')
@@ -507,11 +736,13 @@ def removal_reasons(job: dict[str, Any], excluded_role_types: set[str], backlog_
         reasons.append('industrial-controls-title')
     if CAD_PROGRAMMER_TITLE_RE.search(title):
         reasons.append('cad-programmer-title')
+    if INDUSTRIAL_ENGINEERING_TITLE_RE.search(title) and not re.search(r'\b(software|firmware|embedded|data|cloud|site)\b', title, re.I):
+        reasons.append('industrial-engineering-title')
     if HARDWARE_ONLY_TITLE_RE.search(title) and not re.search(r'\bsoftware|firmware|embedded|data|automation\b', title, re.I):
         reasons.append('hardware-only-title')
     if job['location_bucket'] in {'remote-or-region', 'foreign-or-unknown'}:
         reasons.append(job['location_bucket'])
-    if SECURITY_RE.search(text) or SECURITY_TITLE_RE.search(f'{title} {job["department"]}'):
+    if SECURITY_RE.search(WORKAUTH_DISJUNCTION_RE.sub(' ', text)) or SECURITY_TITLE_RE.search(f'{title} {job["department"]}'):
         reasons.append('security-clearance-citizenship')
     if job.get('federal_defense_note') == 'check-federal/defense':
         reasons.append('federal-defense-manual-review')
@@ -530,6 +761,7 @@ def write_csv(path: Path, rows: list[dict[str, Any]], row_name: str) -> None:
         'locations', 'location_bucket', 'posted_at', 'age_days', 'age_bucket', 'salary',
         'sponsorship_note', 'federal_defense_note', 'senior_evidence_type', 'senior_evidence_match',
         'remove_reasons', 'apply_url', 'department', 'employment_type', 'snippet',
+        'jev_seniority', 'jev_confidence',
     ]
     with path.open('w', newline='', encoding='ascii') as file:
         writer = csv.DictWriter(file, fieldnames=fields, extrasaction='ignore')
@@ -539,6 +771,48 @@ def write_csv(path: Path, rows: list[dict[str, Any]], row_name: str) -> None:
             out[row_name] = index
             out.pop('_full_text', None)
             writer.writerow(out)
+
+
+def jev_screen(kept: list[dict[str, Any]], threshold: float, workers: int, enforce: bool = True) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Ask Jev about rows the regexes left at ambiguous-no-years.
+
+    Every scored row gets jev_seniority / jev_confidence. In enforce mode, confident
+    senior calls are returned for removed.csv (reason jev-likely-senior); apply.py
+    only reads fresh.csv, so a bucket label alone would not stop an application. In
+    shadow mode nothing moves and stats['would_move'] records what would have.
+    Any Jev failure leaves rows where they are rather than failing the build.
+    """
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    from scripts.jev import Jev, job_state
+
+    candidates = [row for row in kept if row['seniority_bucket'] == 'ambiguous-no-years']
+    stats: dict[str, Any] = {'mode': 'enforce' if enforce else 'shadow', 'threshold': threshold,
+                             'candidates': len(candidates), 'scored': 0, 'failed': 0, 'would_move': 0, 'moved': 0}
+    try:
+        jev = Jev()
+    except RuntimeError as exc:
+        print(f'warning: --jev skipped: {exc}', file=sys.stderr)
+        stats['error'] = str(exc)
+        return [], stats
+    # _full_text is "title department description"; the excerpt anchors on the requirements.
+    results = jev.seniority_many([job_state(r['title'], r['department'], r['_full_text']) for r in candidates], workers)
+    moved = []
+    for row, result in zip(candidates, results):
+        if isinstance(result, Exception):
+            stats['failed'] += 1
+            continue
+        stats['scored'] += 1
+        row['jev_seniority'] = result['label']
+        row['jev_confidence'] = f"{result['confidence']:.3f}"
+        if result['label'] == 'senior' and result['confidence'] >= threshold:
+            stats['would_move'] += 1
+            if enforce:
+                row['remove_reasons'] = 'jev-likely-senior'
+                moved.append(row)
+    if stats['failed']:
+        print(f"warning: Jev failed on {stats['failed']} of {len(candidates)} rows; they were kept", file=sys.stderr)
+    stats['moved'] = len(moved)
+    return moved, stats
 
 
 def counts(rows: list[dict[str, Any]], field: str) -> dict[str, int]:
@@ -604,6 +878,14 @@ def main() -> None:
     parser.add_argument('--out-dir', default='shortlists')
     parser.add_argument('--fresh-days', type=int, default=60)
     parser.add_argument('--exclude-role-types', default='Test/QA,Embedded/Firmware,Data/Annotation,Manufacturing/CNC')
+    parser.add_argument('--jev', action='store_true', help='screen ambiguous-no-years rows with TypeSafe Jev (needs OPENROUTER_API_KEY or TYPESAFE_API_KEY)')
+    # shadow: record Jev's answers in the CSVs and summary.json but keep every row;
+    # enforce: move confident senior calls to removed.csv. See scripts/jev_report.py.
+    parser.add_argument('--jev-mode', choices=('shadow', 'enforce'), default='shadow')
+    # 0.9 measured on 200 hand-labeled ambiguous rows (2026-09-22): 27 of 33 moved
+    # rows were senior; all 6 misses were postings with no level signal at all.
+    parser.add_argument('--jev-threshold', type=float, default=0.9)
+    parser.add_argument('--jev-workers', type=int, default=8)
     args = parser.parse_args()
 
     data_dir = Path(args.data_dir)
@@ -638,6 +920,14 @@ def main() -> None:
         elif age <= BACKLOG_DAYS:
             job['remove_reasons'] = ''
             backlog.append(job)
+
+    jev_stats = None
+    if args.jev:
+        moved, jev_stats = jev_screen(fresh + backlog, args.jev_threshold, args.jev_workers, args.jev_mode == 'enforce')
+        moved_ids = {id(row) for row in moved}
+        fresh = [row for row in fresh if id(row) not in moved_ids]
+        backlog = [row for row in backlog if id(row) not in moved_ids]
+        removed.extend(moved)
 
     def posted_timestamp(row: dict[str, Any]) -> float:
         text = str(row.get('posted_at') or '').replace('Z', '+00:00')
@@ -684,6 +974,8 @@ def main() -> None:
         'backlog_role_type_counts': counts(backlog, 'role_type'),
         'removed_reason_counts': dict(Counter(reason for row in removed for reason in row.get('remove_reasons', '').split(';') if reason)),
     }
+    if jev_stats is not None:
+        summary['jev'] = jev_stats
     summary_json.write_text(json.dumps(summary, indent=2, sort_keys=True) + '\n', encoding='ascii')
     write_report(report_md, summary)
     write_latest_pointer(latest_json, summary)
