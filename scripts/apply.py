@@ -82,6 +82,23 @@ RATE_LIMIT_MARKER = Path('applications/rate_limit_marker.json')
 # Distinct exit code (EX_TEMPFAIL) meaning "quota exhausted mid-batch, work remains";
 # callers can wait for the reset and re-run — the ledger makes re-runs idempotent.
 RATE_LIMIT_EXIT_CODE = 75
+# An expired CLI login fails every role identically; 2026-09-25 burned a whole
+# 200-role run on "OAuth session expired". Stop at the first one instead, keep
+# the roles out of the ledger, and exit EX_NOPERM so the runner can alert.
+AUTH_FAILURE_PHRASES = (
+    'failed to authenticate',
+    'oauth session expired',
+    'please run /login',
+    'invalid api key',
+    'not logged in',
+)
+AUTH_FAILED_EVENT = threading.Event()
+AUTH_FAILED_EXIT_CODE = 77
+
+
+def is_auth_failure(text: str) -> bool:
+    low = (text or '').lower()
+    return any(phrase in low for phrase in AUTH_FAILURE_PHRASES)
 
 
 def is_rate_limited(text: str) -> bool:
@@ -748,6 +765,18 @@ def run_agent(row: dict[str, str], index: int, args: argparse.Namespace, snapsho
             'agent': args.agent,
             '_skip_ledger': True,
         }
+    if AUTH_FAILED_EVENT.is_set():
+        return {
+            'id': row.get('id', ''),
+            'status': 'skipped_auth',
+            'detail': 'Skipped: agent CLI login failed earlier in batch',
+            'company_slug': row.get('company_slug', ''),
+            'title': row.get('title', ''),
+            'apply_url': row.get('apply_url', ''),
+            'snapshot_date': snapshot_date,
+            'agent': args.agent,
+            '_skip_ledger': True,
+        }
     if RATE_LIMIT_EVENT.is_set():
         return {
             'id': row.get('id', ''),
@@ -860,6 +889,22 @@ def run_agent(row: dict[str, str], index: int, args: argparse.Namespace, snapsho
         detail = f'{args.agent} exited with code {return_code}: {detail}'
     if status == 'blocked' and re.search(r'(?i)spam', detail):
         SPAM_BY_COMPANY[company] += 1
+
+    if status == 'unknown' and (is_auth_failure(final_message) or is_auth_failure(detail)):
+        if not AUTH_FAILED_EVENT.is_set():
+            AUTH_FAILED_EVENT.set()
+            print(f'[auth] agent CLI login failed on role {index}; short-circuiting remaining roles', flush=True)
+        return {
+            'id': row.get('id', ''),
+            'status': 'infra_error',
+            'detail': detail,
+            'company_slug': company,
+            'title': row.get('title', ''),
+            'apply_url': row.get('apply_url', ''),
+            'snapshot_date': snapshot_date,
+            'agent': args.agent,
+            '_skip_ledger': True,
+        }
 
     # Only an agent that produced no parsed result can have hit the quota wall. A
     # Blocked/Submitted result can quote employer text like "application limit
@@ -1145,6 +1190,8 @@ def main() -> None:
                         reason = 'stop requested'
                     elif record.get('status') == 'skipped_spam_circuit':
                         reason = 'spam circuit breaker'
+                    elif record.get('status') == 'skipped_auth':
+                        reason = 'agent login failed'
                     else:
                         reason = 'rate limit'
                     print(f'Skipped ({reason}, not ledgered): {record.get("company_slug","")} - {record.get("title","")} :: {record.get("detail","")}', flush=True)
@@ -1155,6 +1202,9 @@ def main() -> None:
         stop_cdp_chrome(cdp_state)
     if STOP_EVENT.is_set():
         raise KeyboardInterrupt
+    if AUTH_FAILED_EVENT.is_set():
+        print(f'[auth] agent CLI is not logged in; exiting {AUTH_FAILED_EXIT_CODE}', flush=True)
+        sys.exit(AUTH_FAILED_EXIT_CODE)
     if RATE_LIMIT_EVENT.is_set():
         marker = repo_path(args.repo, RATE_LIMIT_MARKER)
         marker.parent.mkdir(parents=True, exist_ok=True)

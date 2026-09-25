@@ -27,6 +27,17 @@ MIN_FREE_BYTES = 12 * 1024**3
 # apply.py exits with this code (EX_TEMPFAIL) when the agent quota is exhausted
 # mid-batch; unhandled roles remain, so wait for the reset and re-run.
 QUOTA_EXIT_CODE = 75
+# apply.py exits 77 (EX_NOPERM) when the claude CLI's login has failed; the
+# phrases match its AUTH_FAILURE_PHRASES.
+AUTH_FAILED_EXIT_CODE = 77
+AUTH_FAILURE_PHRASES = ('failed to authenticate', 'oauth session expired', 'please run /login', 'invalid api key', 'not logged in')
+
+
+def is_auth_failure(text: str) -> bool:
+    low = (text or '').lower()
+    return any(phrase in low for phrase in AUTH_FAILURE_PHRASES)
+
+
 MAX_QUOTA_RESUMES = 3
 QUOTA_WAIT_CAP_SECONDS = 6 * 3600
 QUOTA_WAIT_FALLBACK_SECONDS = 3600
@@ -342,7 +353,28 @@ class OvernightRun:
         ).stdout
         if has_apply_process(ps):
             raise RuntimeError('another application pipeline is already running')
+        self.check_agent_auth(log)
         self.check_gmail_auth(log)
+
+    def check_agent_auth(self, log: IO[str]) -> None:
+        """Fail before the refresh if the claude CLI's login has expired.
+
+        On 2026-09-25 an expired OAuth session let the run spend 2 hours
+        refreshing, then fail all 200 role agents one by one.
+        """
+        try:
+            probe = subprocess.run(
+                ['claude', '-p', '--strict-mcp-config', '--disable-slash-commands', '--tools=', 'Reply with just OK.'],
+                capture_output=True, text=True, env=self.env, timeout=180, stdin=subprocess.DEVNULL,
+            )
+        except subprocess.TimeoutExpired:
+            log.write('agent auth probe: timed out; continuing (apply.py stops on a login failure)\n')
+            return
+        output = (probe.stdout + probe.stderr).strip()
+        log.write(f'agent auth probe: exit {probe.returncode}: {output[:300]}\n')
+        log.flush()
+        if probe.returncode != 0 and is_auth_failure(output):
+            raise RuntimeError(f'claude CLI is not logged in ({output[:200]}); run `claude /login`')
 
     def sync_slugs(self, log: IO[str]) -> None:
         """Merge tenant slugs from origin/main before the nightly scrape.
@@ -554,8 +586,10 @@ class OvernightRun:
                     'apply to selected roles',
                     self.application_command(dry_run=False),
                     log,
-                    allowed_codes=(QUOTA_EXIT_CODE,),
+                    allowed_codes=(QUOTA_EXIT_CODE, AUTH_FAILED_EXIT_CODE),
                 )
+                if self.last_return_code == AUTH_FAILED_EXIT_CODE:
+                    raise RuntimeError('claude CLI login failed mid-run; run `claude /login` (unapplied roles stay eligible)')
                 while self.last_return_code == QUOTA_EXIT_CODE and resumes < MAX_QUOTA_RESUMES:
                     # The cap is per night, not per apply.py launch: 2026-09-24 attempted
                     # 253 against 200 because each resume got the full --limit again.

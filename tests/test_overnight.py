@@ -7,7 +7,7 @@ from types import SimpleNamespace
 from unittest import mock
 
 from scripts.overnightctl import LABEL, plist
-from scripts.run_overnight import has_apply_process, jsonl_tail, merge_slug_lines, parse_json_object
+from scripts.run_overnight import AUTH_FAILURE_PHRASES, has_apply_process, is_auth_failure, jsonl_tail, merge_slug_lines, parse_json_object
 import scripts.apply as apply_pipeline
 
 
@@ -38,6 +38,14 @@ class OvernightHelpersTest(unittest.TestCase):
         self.assertEqual(merged, 'zeta\nalpha\nbeta\ngamma\n')
         self.assertEqual(added, 2)
         self.assertEqual(merge_slug_lines('a\n', 'a\n'), ('a\n', 0))
+
+    def test_auth_failure_phrases_match_real_cli_errors(self) -> None:
+        self.assertTrue(is_auth_failure('Failed to authenticate: OAuth session expired and could not be refreshed'))
+        self.assertTrue(is_auth_failure('Not logged in · Please run /login'))
+        self.assertFalse(is_auth_failure('Blocked: the form requires a login we do not have'))
+        # run_overnight keeps its own copy so it need not import apply.py.
+        self.assertEqual(AUTH_FAILURE_PHRASES, apply_pipeline.AUTH_FAILURE_PHRASES)
+        self.assertEqual(is_auth_failure('Not logged in'), apply_pipeline.is_auth_failure('Not logged in'))
 
     def test_launch_agent_is_scheduled_and_not_run_at_load(self) -> None:
         repo = Path(__file__).resolve().parents[1]
