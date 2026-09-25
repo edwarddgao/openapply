@@ -33,21 +33,29 @@ class JobPosting:
     salary_period: Optional[str] = None  # HOUR|DAY|WEEK|MONTH|YEAR
 
 RETRYABLE_STATUS = {408, 429, 500, 502, 503, 504}
+# Workday throttles sustained load per client IP with bare 429s (no Retry-After), and
+# the short retries below gave up on ~14% of its sites, so 429s get a longer backoff.
+RATE_LIMIT_RETRIES = 4   # waits 5, 10, 20, 40s
+
+def _retry_wait(err: Exception, attempt: int, retries: int) -> Optional[float]:
+    """Seconds to sleep before retrying after err, or None to give up."""
+    if isinstance(err, urllib.error.HTTPError):
+        if err.code not in RETRYABLE_STATUS: return None
+        if err.code == 429:
+            return 5 * 2 ** attempt if attempt < RATE_LIMIT_RETRIES else None
+    return 1 + attempt if attempt < retries else None
 
 def http_get(url: str, timeout: int = TIMEOUT, retries: int = 2) -> bytes:
-    last = None
-    for attempt in range(retries + 1):
+    attempt = 0
+    while True:
         try:
             req = urllib.request.Request(url, headers={'User-Agent': UA, 'Accept': 'application/json'})
             with urllib.request.urlopen(req, timeout=timeout) as r:
                 return r.read()
-        except urllib.error.HTTPError as e:
-            if e.code not in RETRYABLE_STATUS: raise
-            last = e
         except (urllib.error.URLError, TimeoutError, ConnectionError) as e:
-            last = e
-        time.sleep(1 + attempt)
-    raise last
+            wait = _retry_wait(e, attempt, retries)
+            if wait is None: raise
+            time.sleep(wait); attempt += 1
 
 def http_json(url: str, timeout: int = TIMEOUT) -> Any:
     return json.loads(http_get(url, timeout))
@@ -228,20 +236,17 @@ FULL_BOARDS = False
 FULL_BOARDS_DETAIL_DAYS = 2
 
 def http_post_json(url: str, body: dict, timeout: int = TIMEOUT, retries: int = 2) -> Any:
-    last = None
-    for attempt in range(retries + 1):
+    attempt = 0
+    while True:
         try:
             req = urllib.request.Request(url, data=json.dumps(body).encode(), method='POST', headers={
                 'User-Agent': UA, 'Accept': 'application/json', 'Content-Type': 'application/json'})
             with urllib.request.urlopen(req, timeout=timeout) as r:
                 return json.loads(r.read())
-        except urllib.error.HTTPError as e:
-            if e.code not in RETRYABLE_STATUS: raise
-            last = e
         except (urllib.error.URLError, TimeoutError, ConnectionError) as e:
-            last = e
-        time.sleep(1 + attempt)
-    raise last
+            wait = _retry_wait(e, attempt, retries)
+            if wait is None: raise
+            time.sleep(wait); attempt += 1
 
 def _workday_age_days(posted_on: str) -> Optional[int]:
     s = (posted_on or '').lower()
