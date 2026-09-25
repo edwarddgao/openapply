@@ -92,6 +92,16 @@ python scripts/build_shortlist.py --data-dir data --date latest --out-dir shortl
 HF_TOKEN=... python scripts/publish_hf.py data             # upload
 ```
 
+## Overnight applications
+
+The local application pipeline can run every night through a persistent macOS
+LaunchAgent without creating hosted agent tasks. It refreshes ATS data locally,
+builds the candidate-specific shortlist, uses the application ledger to avoid
+duplicates, and writes one end-of-run summary.
+
+See [docs/overnight-automation.md](docs/overnight-automation.md) for setup,
+pause/resume controls, logs, and failure recovery.
+
 ## Load the published data
 
 ```python

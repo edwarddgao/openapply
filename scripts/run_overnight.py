@@ -36,6 +36,11 @@ QUOTA_RESET_RE = re.compile(r'resets\s+(\d{1,2})(?::(\d{2}))?\s*([ap]m)', re.I)
 # Every attempt gets blocked as recruiter-aggregator-funnel (jobgether: 6 blocks
 # through 2026-08-19); excluding them saves agent quota for real employers.
 AGGREGATOR_EXCLUDES = ('jobgether',)
+# Tenant slug lists the weekly GitHub harvest (.github/workflows/harvest.yml)
+# commits to origin/main. This checkout never pulled them, so the 2026-08-31
+# refresh (+203 slugs) went unscraped locally for two weeks.
+SLUG_FILES = tuple(f'cc_{ats}_FINAL.txt' for ats in ('greenhouse', 'lever', 'ashby', 'rippling', 'gem', 'workday', 'smartrecruiters'))
+SLUG_REMOTE_REF = 'origin/main'
 # Gmail reads go through IMAP with a keychain app password (scripts/gmail_imap.py).
 # The old `gws` OAuth path handed out 7-day refresh tokens - the consent screen is
 # already "In production", but it declares no scopes while gws requests restricted
@@ -50,6 +55,25 @@ APPLY_PROCESS_RE = re.compile(r'\bPython(?:\d+(?:\.\d+)*)?\s+\S*scripts/apply\.p
 
 def utc_now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z')
+
+
+def merge_slug_lines(local_text: str, remote_text: str) -> tuple[str, int]:
+    """Union slug lists: keep every local line in order, append upstream-only ones."""
+    seen: set[str] = set()
+    merged: list[str] = []
+    for line in local_text.splitlines():
+        slug = line.strip()
+        if slug and slug not in seen:
+            seen.add(slug)
+            merged.append(slug)
+    added = 0
+    for line in remote_text.splitlines():
+        slug = line.strip()
+        if slug and slug not in seen:
+            seen.add(slug)
+            merged.append(slug)
+            added += 1
+    return '\n'.join(merged) + '\n', added
 
 
 def atomic_json(path: Path, value: dict[str, Any]) -> None:
@@ -320,6 +344,36 @@ class OvernightRun:
             raise RuntimeError('another application pipeline is already running')
         self.check_gmail_auth(log)
 
+    def sync_slugs(self, log: IO[str]) -> None:
+        """Merge tenant slugs from origin/main before the nightly scrape.
+
+        The weekly harvest workflow only ever writes to origin/main. Slug files
+        are unioned rather than checked out so a local-only slug is never lost,
+        and a fetch failure only degrades the stage: last night's list is still
+        a valid list, and any earlier fetch of the ref is merged regardless.
+        """
+        git = ['/usr/bin/git', '-C', str(self.repo)]
+        self.run_command('fetch upstream slugs', git + ['fetch', '--quiet', 'origin', 'main'], log, optional=True)
+        record: dict[str, Any] = {'ref': SLUG_REMOTE_REF, 'fetched': self.last_return_code == 0, 'added': {}}
+        self.summary['slug_sync'] = record
+        for name in SLUG_FILES:
+            relative = f'slugs/{name}'
+            shown = subprocess.run(
+                git + ['show', f'{SLUG_REMOTE_REF}:{relative}'], capture_output=True, text=True, env=self.env
+            )
+            if shown.returncode != 0:
+                log.write(f'slug sync: cannot read {SLUG_REMOTE_REF}:{relative}: {shown.stderr.strip()}\n')
+                continue
+            path = self.repo / relative
+            local_text = path.read_text(encoding='utf-8') if path.exists() else ''
+            merged, added = merge_slug_lines(local_text, shown.stdout)
+            if added:
+                path.write_text(merged, encoding='utf-8')
+            record['added'][name] = added
+            log.write(f'slug sync: {name} +{added}\n')
+        log.flush()
+        self.save_summary()
+
     def check_gmail_auth(self, log: IO[str]) -> None:
         """Record Gmail auth as run state instead of aborting on it.
 
@@ -396,26 +450,30 @@ class OvernightRun:
         if problems:
             notify(f'openapply {self.date}', ' | '.join(problems), self.repo)
 
-    def application_command(self, *, dry_run: bool) -> list[str]:
+    def application_command(self, *, dry_run: bool, limit: int | None = None) -> list[str]:
         command = [
             sys.executable,
             str(self.repo / 'scripts' / 'apply.py'),
             '--agent', 'claude',
-            '--model', 'sonnet',
+            '--model', self.args.model,
             '--repo', str(self.repo),
             '--latest', 'shortlists/latest.json',
             # Both pools, not just fresh: the fresh pool saturates (every role in it is
             # already in the ledger by 2026-08-24), so 'fresh' alone left 190 eligible
             # backlog roles permanently unapplied. The ledger keeps re-runs idempotent.
             '--pool', 'both',
-            '--limit', str(self.args.max_applications),
+            '--limit', str(self.args.max_applications if limit is None else limit),
             '--exclude-company', ','.join(AGGREGATOR_EXCLUDES),
             '--parallel', '1',
             '--cdp-profile',
             '--headed',
         ]
+        if self.args.effort:
+            command.extend(['--effort', self.args.effort])
         if not self.summary['gmail']['available']:
             command.append('--no-gmail')
+        # Recover yesterday's transient Ashby spam flags (87% submit on a later-day retry).
+        command.append('--retry-spam')
         if dry_run:
             command.append('--dry-run')
         return command
@@ -454,6 +512,7 @@ class OvernightRun:
                     self.summary['outcome'] = 'dry_run_passed'
                     return 0
 
+                self.sync_slugs(log)
                 self.run_command(
                     'refresh public ATS data',
                     [sys.executable, str(self.repo / 'oa_adapter.py'), '--workers', str(self.args.workers), '--out', 'jobs.jsonl'],
@@ -466,7 +525,8 @@ class OvernightRun:
                 )
                 self.run_command(
                     'build local shortlist',
-                    [sys.executable, str(self.repo / 'scripts' / 'build_shortlist.py'), '--data-dir', 'data', '--date', self.date, '--out-dir', 'shortlists'],
+                    # --jev defaults to shadow mode: it only annotates rows (see scripts/jev_report.py).
+                    [sys.executable, str(self.repo / 'scripts' / 'build_shortlist.py'), '--data-dir', 'data', '--date', self.date, '--out-dir', 'shortlists', '--jev'],
                     log,
                 )
                 shortlist_path = self.repo / 'shortlists' / f'date={self.date}' / 'summary.json'
@@ -474,7 +534,7 @@ class OvernightRun:
                     shortlist = json.load(handle)
                 self.summary['shortlist'] = {
                     key: shortlist.get(key)
-                    for key in ('date', 'source_rows', 'fresh_rows', 'backlog_rows', 'removed_rows')
+                    for key in ('date', 'source_rows', 'fresh_rows', 'backlog_rows', 'removed_rows', 'jev')
                 }
                 preview = self.run_command(
                     'select unhandled applications', self.application_command(dry_run=True), log, capture=True
@@ -497,12 +557,17 @@ class OvernightRun:
                     allowed_codes=(QUOTA_EXIT_CODE,),
                 )
                 while self.last_return_code == QUOTA_EXIT_CODE and resumes < MAX_QUOTA_RESUMES:
+                    # The cap is per night, not per apply.py launch: 2026-09-24 attempted
+                    # 253 against 200 because each resume got the full --limit again.
+                    remaining = self.args.max_applications - len(jsonl_tail(self.ledger, ledger_start))
+                    if remaining < 1:
+                        break
                     resumes += 1
                     wait, detail = quota_wait_seconds(self.repo / 'applications' / 'rate_limit_marker.json')
                     self.wait_for_quota_reset(wait, detail, log, resumes)
                     self.run_command(
                         f'apply to selected roles (quota resume {resumes})',
-                        self.application_command(dry_run=False),
+                        self.application_command(dry_run=False, limit=remaining),
                         log,
                         allowed_codes=(QUOTA_EXIT_CODE,),
                     )
@@ -550,6 +615,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--date', default='', help='UTC snapshot date; default today')
     parser.add_argument('--workers', type=int, default=32, help='ATS refresh workers')
     parser.add_argument('--max-applications', type=int, default=200, help='daily application safety cap')
+    parser.add_argument('--model', default='sonnet', help='claude model for the role agents')
+    parser.add_argument('--effort', default='', help="claude --effort for the role agents; empty keeps Claude Code's default")
     parser.add_argument('--dry-run', action='store_true', help='validate dependencies and preview without refresh or submission')
     parser.add_argument('--no-apply', action='store_true', help='refresh and build the shortlist without submitting applications')
     parser.add_argument('--check-auth-only', action='store_true',

@@ -12,6 +12,12 @@ applications/codex-subagent-logs/
 applications/ashby_blocked_urls.txt
 applications/blocked-retry/
 applications/x_hiring_gap/
+applications/worklist-*/
+applications/worklist-backfill-*/
+applications/oneoff/
+applications/needs-input-*.md
+applications/*.pdf
+applications/overnight/
 .cache/
 .claude/
 __pycache__/
@@ -19,3 +25,12 @@ __pycache__/
 .DS_Store
 .venv/
 node_modules/
+
+# Accidental screenshot outputs created by malformed CLI flags.
+/--output
+/-s
+
+# DuckDB spill directory.
+/.tmp/
+*.bak
+*.bak-*
