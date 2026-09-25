@@ -8,7 +8,7 @@ import argparse, json, sys, time, urllib.request, urllib.error, urllib.parse, re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field, asdict
 from typing import Optional, List, Dict, Any
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 UA = 'Mozilla/5.0 (open-apply/0.1)'
 TIMEOUT = 20
@@ -215,11 +215,17 @@ def fetch_gem(slug: str) -> List[JobPosting]:
     return out
 
 # ---------- Workday ----------
-# Slug is tenant/wdN/site. The list API only gives title and a relative "Posted N
-# Days Ago", newest first, so page until postings age past WORKDAY_MAX_AGE and
+# Slug is tenant/wdN/site. The list API only gives title, location and a relative
+# "Posted N Days Ago", newest first, so page until postings age past WORKDAY_MAX_AGE and
 # only fetch details (description, start date) for titles the shortlist would keep.
+# With FULL_BOARDS (the published dataset) every listed posting is kept, and details
+# are fetched only for postings from the last FULL_BOARDS_DETAIL_DAYS days, so each
+# job gets its description once, in the daily partition where it first appears.
 WORKDAY_MAX_AGE = 30
 WORKDAY_MAX_PAGES = 50
+WORKDAY_LIST_CAP = 2000   # the unfiltered list API repeats itself past offset 2000
+FULL_BOARDS = False
+FULL_BOARDS_DETAIL_DAYS = 2
 
 def http_post_json(url: str, body: dict, timeout: int = TIMEOUT, retries: int = 2) -> Any:
     last = None
@@ -257,29 +263,53 @@ def fetch_workday(slug: str) -> List[JobPosting]:
     tenant, dc, site = slug.split('/')
     host = f'https://{tenant}.{dc}.myworkdayjobs.com'
     base = f'{host}/wday/cxs/{tenant}/{site}'
-    postings = []
-    for page in range(WORKDAY_MAX_PAGES):
+    postings, total = [], None
+    for page in range(WORKDAY_LIST_CAP // 20 if FULL_BOARDS else WORKDAY_MAX_PAGES):
         d = http_post_json(f'{base}/jobs', {'limit': 20, 'offset': page * 20, 'searchText': '', 'appliedFacets': {}})
         batch = d.get('jobPostings') or []
         postings += batch
+        total = total or d.get('total')   # only reported on the first page
         ages = [_workday_age_days(p.get('postedOn')) for p in batch]
-        if len(batch) < 20 or (ages and all(a is not None and a > WORKDAY_MAX_AGE for a in ages)):
+        if len(batch) < 20 or (total and len(postings) >= total):
             break
-    wanted = [p for p in postings
-              if p.get('externalPath') and _workday_role_like(p.get('title') or '')
-              and (_workday_age_days(p.get('postedOn')) or 0) <= WORKDAY_MAX_AGE]
+        if not FULL_BOARDS and ages and all(a is not None and a > WORKDAY_MAX_AGE for a in ages):
+            break
+    postings = [p for p in {p.get('externalPath'): p for p in postings}.values() if p.get('externalPath')]
+    if FULL_BOARDS:
+        wanted = [p for p in postings if (_workday_age_days(p.get('postedOn')) or 0) <= FULL_BOARDS_DETAIL_DAYS]
+    else:
+        wanted = [p for p in postings if _workday_role_like(p.get('title') or '')
+                  and (_workday_age_days(p.get('postedOn')) or 0) <= WORKDAY_MAX_AGE]
 
     def detail(p):
         try:
             return p, http_json(f'{base}{p["externalPath"]}').get('jobPostingInfo') or {}
         except urllib.error.HTTPError:
             return p, None
+        except Exception:
+            if not FULL_BOARDS: raise
+            return p, {}   # keep the listed row without a description
 
     out = []
     with ThreadPoolExecutor(4) as ex:
-        details = list(ex.map(detail, wanted))
-    for p, j in details:
+        details = dict(ex.map(lambda p: (p['externalPath'], detail(p)[1]), wanted))
+    today = datetime.now(timezone.utc).date()
+    for p in postings:
+        j = details.get(p['externalPath'], {} if FULL_BOARDS else None)
         if j is None or j.get('canApply') is False: continue
+        if not j:
+            age = _workday_age_days(p.get('postedOn'))
+            posted = None if age is None or '+' in (p.get('postedOn') or '') else (today - timedelta(days=age)).isoformat()
+            out.append(JobPosting(
+                id=f"workday:{tenant}:{p['externalPath']}",
+                source='workday', source_slug=slug,
+                title=p.get('title') or '',
+                apply_url=f'{host}/{site}{p["externalPath"]}',
+                locations=[p['locationsText']] if p.get('locationsText') else [],
+                remote=('remote' in p['locationsText'].lower() or None) if p.get('locationsText') else None,
+                posted_at=posted,
+            ))
+            continue
         # Workday location labels are free text in either order ("Australia, WA,
         # Willowdale", "Hyderabad - Phoenix Equinox Tower 2") and misread as US
         # state codes / cities, so suffix the primary one with its real country.
@@ -289,7 +319,9 @@ def fetch_workday(slug: str) -> List[JobPosting]:
             primary = f'{primary}, {country}'
         locs = [l for l in [primary] + (j.get('additionalLocations') or []) if l]
         out.append(JobPosting(
-            id=f"workday:{tenant}:{j.get('id') or p['externalPath']}",
+            # Published rows key on externalPath so a job keeps one id whether or not
+            # its details were fetched that day; local ids stay as the ledger has them.
+            id=f"workday:{tenant}:{p['externalPath'] if FULL_BOARDS else j.get('id') or p['externalPath']}",
             source='workday', source_slug=slug,
             title=j.get('title') or p.get('title') or '',
             apply_url=j.get('externalUrl') or f'{host}/{site}{p["externalPath"]}',
@@ -303,12 +335,13 @@ def fetch_workday(slug: str) -> List[JobPosting]:
 
 # ---------- SmartRecruiters ----------
 # The postings list has title, location and releasedDate but no description, so
-# (as for Workday) only fetch details for recent, role-like titles.
+# (as for Workday) only fetch details for recent, role-like titles, or with
+# FULL_BOARDS keep every posting and fetch details for the newest ones.
 SMARTRECRUITERS_MAX_AGE = 30
 
 def fetch_smartrecruiters(slug: str) -> List[JobPosting]:
     base = f'https://api.smartrecruiters.com/v1/companies/{urllib.parse.quote(slug)}/postings'
-    cutoff = time.time() - SMARTRECRUITERS_MAX_AGE * 86400
+    cutoff = time.time() - (FULL_BOARDS_DETAIL_DAYS if FULL_BOARDS else SMARTRECRUITERS_MAX_AGE) * 86400
     postings, offset = [], 0
     while True:
         d = http_json(f'{base}?limit=100&offset={offset}')
@@ -323,19 +356,26 @@ def fetch_smartrecruiters(slug: str) -> List[JobPosting]:
         except (KeyError, TypeError, ValueError):
             return True
 
-    wanted = [p for p in postings if recent(p) and _workday_role_like(
-        f"{p.get('name') or ''} {(p.get('department') or {}).get('label') or ''}")]
+    if FULL_BOARDS:
+        wanted = [p for p in postings if recent(p)]
+    else:
+        wanted = [p for p in postings if recent(p) and _workday_role_like(
+            f"{p.get('name') or ''} {(p.get('department') or {}).get('label') or ''}")]
 
     def detail(p):
         try:
             return p, http_json(f'{base}/{urllib.parse.quote(str(p["id"]))}')
         except urllib.error.HTTPError:
             return p, None
+        except Exception:
+            if not FULL_BOARDS: raise
+            return p, {}
 
     out = []
     with ThreadPoolExecutor(4) as ex:
-        details = list(ex.map(detail, wanted))
-    for p, j in details:
+        details = dict((p['id'], j) for p, j in ex.map(detail, wanted))
+    for p in postings if FULL_BOARDS else wanted:
+        j = details.get(p['id'], {})
         if j is None or j.get('active') is False: continue
         loc = j.get('location') or p.get('location') or {}
         place = loc.get('fullLocation') or ', '.join(filter(None, [loc.get('city'), loc.get('region'), (loc.get('country') or '').upper()]))
@@ -380,7 +420,12 @@ def main():
     ap.add_argument('--workers', type=int, default=8)
     ap.add_argument('--ats', default=','.join(ADAPTERS))
     ap.add_argument('--suffix', default='FINAL', help='slug file suffix (FINAL or NEW)')
+    ap.add_argument('--full-boards', action='store_true',
+                    help='keep every Workday/SmartRecruiters posting (for the published dataset); '
+                         'details only for postings from the last FULL_BOARDS_DETAIL_DAYS days')
     args = ap.parse_args()
+    global FULL_BOARDS
+    FULL_BOARDS = args.full_boards
 
     tasks = []
     for ats in args.ats.split(','):

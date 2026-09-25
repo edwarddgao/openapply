@@ -3,7 +3,12 @@ name: daily-refresh
 on:
   schedule:
     - cron: '0 6 * * *'   # 06:00 UTC daily
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Upload to Hugging Face (false = dry run to time the fetch)'
+        type: boolean
+        default: true
 
 concurrency:
   group: refresh
@@ -12,7 +17,8 @@ concurrency:
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    # Full Workday/SmartRecruiters boards took ~3h locally; GitHub allows 6h per job.
+    timeout-minutes: 300
     steps:
       - uses: actions/checkout@v4
 
@@ -28,14 +34,15 @@ jobs:
         run: echo "date=$(date -u +%Y-%m-%d)" >> $GITHUB_OUTPUT
 
       - name: fetch jobs
-        # Published dataset stays on the original three full-board sources; the newer
-        # adapters (workday, smartrecruiters) keep only recent role-like postings.
-        run: python oa_adapter.py --workers 16 --ats greenhouse,lever,ashby --out jobs.jsonl
+        # --full-boards keeps every Workday/SmartRecruiters posting rather than the
+        # local shortlist's recent role-like subset; see the dataset card.
+        run: python oa_adapter.py --workers 64 --full-boards --out jobs.jsonl
 
       - name: convert to parquet
         run: python scripts/jsonl_to_parquet.py jobs.jsonl data --date ${{ steps.d.outputs.date }}
 
       - name: publish to HF
+        if: github.event_name != 'workflow_dispatch' || inputs.publish
         continue-on-error: true
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}

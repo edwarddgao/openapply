@@ -11,9 +11,13 @@ tags:
   - greenhouse
   - lever
   - ashby
+  - rippling
+  - gem
+  - workday
+  - smartrecruiters
   - ats
 size_categories:
-  - 100K<n<1M
+  - 1M<n<10M
 pretty_name: Open-Apply Jobs
 configs:
   - config_name: default
@@ -24,7 +28,7 @@ configs:
 
 # Open-Apply Jobs
 
-A daily-refreshed open dataset of active job postings sourced directly from public ATS APIs (Greenhouse, Lever, Ashby). Every record can be traced back to the hiring company's own career board.
+A daily-refreshed open dataset of active job postings sourced directly from public ATS APIs (Greenhouse, Lever, Ashby, Rippling, Gem, Workday, SmartRecruiters). Every record can be traced back to the hiring company's own career board.
 
 - **Refresh:** automated daily at 06:00 UTC
 - **Partitioning:** Hive-partitioned Parquet (`date=YYYY-MM-DD/source={ats}`)
@@ -57,7 +61,8 @@ data/
 ├── date=YYYY-MM-DD/
 │   ├── source=greenhouse/part-*.parquet
 │   ├── source=lever/part-*.parquet
-│   └── source=ashby/part-*.parquet
+│   ├── source=ashby/part-*.parquet
+│   └── source=…/part-*.parquet      # rippling, gem, workday, smartrecruiters
 ├── date=YYYY-MM-DD/
 │   └── ...
 ```
@@ -69,16 +74,16 @@ Each `date=` folder is a full snapshot of that day's active postings — not an 
 | Field | Type | Notes |
 |---|---|---|
 | `id` | string | `{source}:{slug}:{native_id}` — unique across the dataset |
-| `source` | string | `greenhouse` \| `lever` \| `ashby` |
+| `source` | string | `greenhouse` \| `lever` \| `ashby` \| `rippling` \| `gem` \| `workday` \| `smartrecruiters` |
 | `source_slug` | string | Tenant slug on that ATS (e.g. `databricks`, `spacex`) |
 | `title` | string | Job title |
 | `apply_url` | string | Canonical URL on the ATS career site |
-| `description_html` | string? | Full HTML description (~100% populated) |
+| `description_html` | string? | Full HTML description. ~100% populated for Greenhouse/Lever/Ashby/Rippling/Gem; for Workday/SmartRecruiters only on the day a job first appears (see below) |
 | `employment_type` | string? | e.g. `FullTime`, `Contract`, `Internship` |
 | `department` | string? | Free-form; ATS-dependent |
 | `locations` | list[string] | Always a list; may be empty for fully-remote |
 | `remote` | bool? | Structured where available; otherwise inferred from location text |
-| `posted_at` | string? | Original publish/create timestamp where exposed (`first_published` for Greenhouse, `createdAt` for Lever, `publishedAt` for Ashby) |
+| `posted_at` | string? | Original publish/create timestamp where exposed (`first_published` for Greenhouse, `createdAt` for Lever, `publishedAt` for Ashby, `releasedDate` for SmartRecruiters). Workday: exact `startDate` on the day a job is first seen, else a date derived from "Posted N Days Ago" (null for "30+ Days Ago") |
 | `updated_at` | string? | Last updated timestamp where exposed (currently Greenhouse; often absent from Lever/Ashby public APIs) |
 | `salary_min` / `salary_max` | float? | Only Ashby/Lever expose structured comp (~30%). Greenhouse salary is embedded in `description_html` |
 | `salary_currency` | string? | ISO 4217 (`USD`, `EUR`, `GBP`) |
@@ -86,21 +91,24 @@ Each `date=` folder is a full snapshot of that day's active postings — not an 
 
 ## Collection methodology
 
-1. **Tenant discovery.** Common Crawl CDX queries against `boards.greenhouse.io/*`, `jobs.lever.co/*`, `jobs.ashbyhq.com/*`, unioned across five crawl snapshots. ~10k distinct tenants per refresh.
+1. **Tenant discovery.** Common Crawl CDX queries against each ATS's board hosts (`boards.greenhouse.io/*`, `jobs.lever.co/*`, `jobs.ashbyhq.com/*`, `*.myworkdayjobs.com/*`, …), unioned across five crawl snapshots, plus other public job indexes.
 2. **Fetch.** Each tenant's public JSON board API is called with 16-way concurrency; retries only on transient 5xx/408/429/network errors.
-3. **Normalize.** Per-ATS records are mapped to a canonical schema (the table above) — 3 adapter functions, ~200 lines total.
+3. **Normalize.** Per-ATS records are mapped to a canonical schema (the table above) — one adapter function per ATS.
 4. **Publish.** Daily partition written via `pyarrow.parquet.write_to_dataset` with `zstd` compression, uploaded via `huggingface_hub.HfApi.upload_folder`.
 
 No authentication required for any endpoint. Every URL hit is publicly documented or trivially discoverable in ATS client SDKs.
 
 ## What's covered / what isn't
 
-**In scope:** the 3 "modern" developer-friendly ATSes. Heavy coverage of tech, startups, AI/ML, biotech, agencies, and other knowledge-work-heavy employers.
+**In scope:** Greenhouse, Lever, Ashby, Rippling and Gem (heavy on tech, startups, AI/ML, biotech and other knowledge-work employers), plus Workday and SmartRecruiters (large enterprises, retail, healthcare, and many non-US employers). Workday and SmartRecruiters make up most rows by count; filter on `source` if you want the startup-heavy slice.
 
-**Not in scope (yet):** Workday, Oracle Cloud HCM, iCIMS, SuccessFactors, Taleo, SmartRecruiters, Workable, Jobvite. These have either private APIs (Workday), high-volume-retail bias (SmartRecruiters), SMB noise (Workable), or HTML-only feeds (Jobvite). Collectively they host ~70% of enterprise postings but dilute signal for most downstream uses.
+**Not in scope (yet):** Oracle Cloud HCM, iCIMS, SuccessFactors, Taleo, Workable, Jobvite.
 
 ## Known limitations
 
+- **Workday/SmartRecruiters descriptions are incremental.** Their list APIs return no description, and fetching one per posting for ~1M postings a day is not feasible. Every open posting is listed daily, but `description_html` (and Workday's `employment_type`, exact `posted_at`) is fetched only for postings from the last 2 days. To get a description, join on `id` to the earliest partition that has it.
+- **Newer sources start mid-history.** Rippling, Gem, Workday and SmartRecruiters rows appear only in partitions from the day they were added onward; earlier dates cover Greenhouse, Lever and Ashby only.
+- **Workday lists at most 2,000 postings per career site.** The unfiltered list API stops there; the few larger sites are truncated.
 - **Timestamp migration.** Partitions published before the `updated_at` field was added used a best-effort `posted_at` field. For historical Greenhouse rows, `posted_at` may be the ATS `updated_at` value rather than the original `first_published` value. New partitions use the original publish/create timestamp for `posted_at` and store last-modified time separately in `updated_at` when exposed.
 - **~30% tenant fetch failure rate.** Slugs in the input list include defunct/renamed companies CC still references. These return 404 and are dropped.
 - **No tombstoning.** A job present in `date=N` but absent in `date=N+1` is simply gone; there's no explicit `closed_at` flag. Compute by diffing.
