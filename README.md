@@ -47,6 +47,13 @@ All three are public, unauthenticated JSON APIs. No ToS violation.
 ## Slug discovery
 
 Tenant slugs are harvested via Common Crawl CDX queries against `boards.greenhouse.io/*`, `jobs.lever.co/*`, `jobs.ashbyhq.com/*`, unioned across 5 recent crawl snapshots (~10k distinct tenants). Monthly re-runs catch new tenants organically — slugs are stable and companies rarely renumber their boards.
+ The harvest runs weekly in GitHub Actions and commits to `origin/main`; the local overnight run fetches that ref and unions the new slugs into `slugs/` before each scrape, so the checkout never needs a manual pull to pick them up.
+
+Simplify's public Typesense job index is another discovery source. The command below resolves representative job redirects, verifies missing tenants against the live ATS APIs, and appends only live slugs:
+
+```bash
+.venv/bin/python scripts/discover_slugs_simplify.py --write
+```
 
 ## Schema
 
