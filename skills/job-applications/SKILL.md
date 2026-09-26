@@ -276,6 +276,13 @@ Mechanics: Workday dropdowns are buttons that open a listbox; click the button, 
 - "You have already applied for this job" → **Submitted** (already applied), with that text.
 - Assessments, video interviews, or a required cover letter with no policy answer → **Needs input** with the exact requirement.
 
+## Workable Notes
+
+- Postings are `apply.workable.com/j/<shortcode>`; the form is at `/j/<shortcode>/apply` (or the **Apply for this job** tab). No candidate account is needed; do not create one.
+- The form is one page: personal information (first/last name, email, phone are usually required), resume upload, then the employer's own questions. Upload the resume first: Workable parses it and may prefill fields, so re-check every prefilled value against the profile before submitting.
+- Workable has Cloudflare Turnstile enabled on applications. In the normal headed Chrome profile it is usually invisible. If an interactive challenge appears, or submission fails with a verification error, mark the role **Blocked** with `Turnstile challenge` in the detail; do not try to solve or work around it.
+- Success shows a thank-you / "application submitted" page; a form that stays put with red field errors is not submitted.
+
 ## Custom ATS Notes
 
 - Be cautious with account creation and multi-step applications on ATSs other than Workday.

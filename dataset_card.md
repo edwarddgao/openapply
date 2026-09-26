@@ -15,6 +15,7 @@ tags:
   - gem
   - workday
   - smartrecruiters
+  - workable
   - ats
 size_categories:
   - 1M<n<10M
@@ -28,7 +29,7 @@ configs:
 
 # Open-Apply Jobs
 
-A daily-refreshed open dataset of active job postings sourced directly from public ATS APIs (Greenhouse, Lever, Ashby, Rippling, Gem, Workday, SmartRecruiters). Every record can be traced back to the hiring company's own career board.
+A daily-refreshed open dataset of active job postings sourced directly from public ATS APIs (Greenhouse, Lever, Ashby, Rippling, Gem, Workday, SmartRecruiters, Workable). Every record can be traced back to the hiring company's own career board.
 
 - **Refresh:** automated daily at 06:00 UTC
 - **Partitioning:** Hive-partitioned Parquet (`date=YYYY-MM-DD/source={ats}`)
@@ -62,7 +63,7 @@ data/
 │   ├── source=greenhouse/part-*.parquet
 │   ├── source=lever/part-*.parquet
 │   ├── source=ashby/part-*.parquet
-│   └── source=…/part-*.parquet      # rippling, gem, workday, smartrecruiters
+│   └── source=…/part-*.parquet      # rippling, gem, workday, smartrecruiters, workable
 ├── date=YYYY-MM-DD/
 │   └── ...
 ```
@@ -74,16 +75,16 @@ Each `date=` folder is a full snapshot of that day's active postings — not an 
 | Field | Type | Notes |
 |---|---|---|
 | `id` | string | `{source}:{slug}:{native_id}` — unique across the dataset |
-| `source` | string | `greenhouse` \| `lever` \| `ashby` \| `rippling` \| `gem` \| `workday` \| `smartrecruiters` |
+| `source` | string | `greenhouse` \| `lever` \| `ashby` \| `rippling` \| `gem` \| `workday` \| `smartrecruiters` \| `workable` |
 | `source_slug` | string | Tenant slug on that ATS (e.g. `databricks`, `spacex`) |
 | `title` | string | Job title |
 | `apply_url` | string | Canonical URL on the ATS career site |
-| `description_html` | string? | Full HTML description. ~100% populated for Greenhouse/Lever/Ashby/Rippling/Gem; for Workday/SmartRecruiters only on the day a job first appears (see below) |
+| `description_html` | string? | Full HTML description. ~100% populated for Greenhouse/Lever/Ashby/Rippling/Gem/Workable; for Workday/SmartRecruiters only on the day a job first appears (see below) |
 | `employment_type` | string? | e.g. `FullTime`, `Contract`, `Internship` |
 | `department` | string? | Free-form; ATS-dependent |
 | `locations` | list[string] | Always a list; may be empty for fully-remote |
 | `remote` | bool? | Structured where available; otherwise inferred from location text |
-| `posted_at` | string? | Original publish/create timestamp where exposed (`first_published` for Greenhouse, `createdAt` for Lever, `publishedAt` for Ashby, `releasedDate` for SmartRecruiters). Workday: exact `startDate` on the day a job is first seen, else a date derived from "Posted N Days Ago" (null for "30+ Days Ago") |
+| `posted_at` | string? | Original publish/create timestamp where exposed (`first_published` for Greenhouse, `createdAt` for Lever, `publishedAt` for Ashby, `releasedDate` for SmartRecruiters, `published_on` (a date) for Workable). Workday: exact `startDate` on the day a job is first seen, else a date derived from "Posted N Days Ago" (null for "30+ Days Ago") |
 | `updated_at` | string? | Last updated timestamp where exposed (currently Greenhouse; often absent from Lever/Ashby public APIs) |
 | `salary_min` / `salary_max` | float? | Only Ashby/Lever expose structured comp (~30%). Greenhouse salary is embedded in `description_html` |
 | `salary_currency` | string? | ISO 4217 (`USD`, `EUR`, `GBP`) |
@@ -100,14 +101,14 @@ No authentication required for any endpoint. Every URL hit is publicly documente
 
 ## What's covered / what isn't
 
-**In scope:** Greenhouse, Lever, Ashby, Rippling and Gem (heavy on tech, startups, AI/ML, biotech and other knowledge-work employers), plus Workday and SmartRecruiters (large enterprises, retail, healthcare, and many non-US employers). Workday and SmartRecruiters make up most rows by count; filter on `source` if you want the startup-heavy slice.
+**In scope:** Greenhouse, Lever, Ashby, Rippling and Gem (heavy on tech, startups, AI/ML, biotech and other knowledge-work employers), plus Workable (small and mid-size employers, many outside the US, plus staffing agencies), and Workday and SmartRecruiters (large enterprises, retail, healthcare, and many non-US employers). Workday and SmartRecruiters make up most rows by count; filter on `source` if you want the startup-heavy slice.
 
-**Not in scope (yet):** Oracle Cloud HCM, iCIMS, SuccessFactors, Taleo, Workable, Jobvite.
+**Not in scope (yet):** Oracle Cloud HCM, iCIMS, SuccessFactors, Taleo, Jobvite.
 
 ## Known limitations
 
 - **Workday/SmartRecruiters descriptions are incremental.** Their list APIs return no description, and fetching one per posting for ~1M postings a day is not feasible. Every open posting is listed daily, but `description_html` (and Workday's `employment_type`, exact `posted_at`) is fetched only for postings from the last 2 days. To get a description, join on `id` to the earliest partition that has it.
-- **Newer sources start mid-history.** Rippling, Gem, Workday and SmartRecruiters rows appear only in partitions from the day they were added onward; earlier dates cover Greenhouse, Lever and Ashby only.
+- **Newer sources start mid-history.** Rippling, Gem, Workday, SmartRecruiters and Workable rows appear only in partitions from the day they were added onward; earlier dates cover Greenhouse, Lever and Ashby only.
 - **Workday lists at most 2,000 postings per career site.** The unfiltered list API stops there; the few larger sites are truncated.
 - **Timestamp migration.** Partitions published before the `updated_at` field was added used a best-effort `posted_at` field. For historical Greenhouse rows, `posted_at` may be the ATS `updated_at` value rather than the original `first_published` value. New partitions use the original publish/create timestamp for `posted_at` and store last-modified time separately in `updated_at` when exposed.
 - **~30% tenant fetch failure rate.** Slugs in the input list include defunct/renamed companies CC still references. These return 404 and are dropped.

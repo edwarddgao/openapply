@@ -16,7 +16,7 @@ TIMEOUT = 20
 @dataclass
 class JobPosting:
     id: str                         # {source}:{slug}:{native_id}
-    source: str                     # greenhouse|lever|ashby|rippling|gem|workday|smartrecruiters
+    source: str                     # greenhouse|lever|ashby|rippling|gem|workday|smartrecruiters|workable
     source_slug: str                # tenant slug on the ATS
     title: str
     apply_url: str
@@ -400,6 +400,63 @@ def fetch_smartrecruiters(slug: str) -> List[JobPosting]:
         ))
     return out
 
+# ---------- Workable ----------
+# Workable's job-board syndication feed lists every published job across all its
+# customers (~170k, ~840 MB) in one download. The per-board widget API took 11h
+# for 6.7k boards and got this IP a 13.5h Cloudflare ban on all of
+# apply.workable.com (2026-09-26), so never fan out over boards. The feed has no
+# board slug, so the company name is slugified instead.
+WORKABLE_FEED_URL = 'https://www.workable.com/boards/workable.xml'
+WORKABLE_FEED_SLUG = 'feed'
+
+def _country_name(code: str) -> str:
+    # The feed gives ISO codes, and many collide with US state codes the shortlist
+    # reads as domestic (CO Colombia/Colorado, ID Indonesia/Idaho, AR, DE, IN, PA).
+    import pycountry
+    country = pycountry.countries.get(alpha_2=code.upper()) if len(code) == 2 else None
+    if country is None:
+        return code
+    return {'US': 'United States', 'CA': 'Canada'}.get(country.alpha_2) or getattr(country, 'common_name', None) or country.name
+
+def _slugify(name: str) -> str:
+    return re.sub(r'[^a-z0-9]+', '-', name.lower()).strip('-') or 'unknown'
+
+def fetch_workable(slug: str = WORKABLE_FEED_SLUG) -> List[JobPosting]:
+    import xml.etree.ElementTree as ET
+    from email.utils import parsedate_to_datetime
+    out: Dict[str, JobPosting] = {}
+    req = urllib.request.Request(WORKABLE_FEED_URL, headers={'User-Agent': 'openapply/1.0'})
+    with urllib.request.urlopen(req, timeout=300) as resp:
+        for _, el in ET.iterparse(resp):
+            if el.tag != 'job':
+                continue
+            d = {c.tag: (c.text or '').strip() for c in el}
+            el.clear()
+            try:
+                posted = parsedate_to_datetime(d.get('date', '')).isoformat().replace('+00:00', 'Z')
+            except (TypeError, ValueError):
+                posted = None
+            company = d.get('company', '')
+            place = ', '.join(filter(None, [d.get('city'), d.get('state'), _country_name(d.get('country', ''))]))
+            job_id = f"workable:{_slugify(company)}:{d.get('referencenumber')}"
+            if job_id in out:  # the feed repeats a job once per location
+                if place and place not in out[job_id].locations:
+                    out[job_id].locations.append(place)
+                continue
+            out[job_id] = JobPosting(
+                id=job_id,
+                source='workable', source_slug=_slugify(company),
+                title=d.get('title', ''),
+                apply_url=d.get('url') or f"https://apply.workable.com/j/{d.get('referencenumber')}",
+                description_html=d.get('description') or None,
+                employment_type=d.get('jobtype') or None,
+                department=d.get('category') or None,
+                locations=[place] if place else [],
+                remote={'true': True, 'false': False}.get(d.get('remote', '').lower()),
+                posted_at=posted,
+            )
+    return list(out.values())
+
 ADAPTERS = {
     'greenhouse': fetch_greenhouse,
     'lever':      fetch_lever,
@@ -408,6 +465,7 @@ ADAPTERS = {
     'gem':        fetch_gem,
     'workday':    fetch_workday,
     'smartrecruiters': fetch_smartrecruiters,
+    'workable':   fetch_workable,
 }
 
 def run_adapter(ats: str, slug: str) -> tuple:
@@ -434,6 +492,8 @@ def main():
 
     tasks = []
     for ats in args.ats.split(','):
+        if ats == 'workable':  # one feed download, not one task per board
+            tasks.append((ats, WORKABLE_FEED_SLUG)); continue
         path = f'{args.slug_dir}/cc_{ats}_{args.suffix}.txt'
         try:
             slugs = [ln.strip() for ln in open(path) if ln.strip()]

@@ -938,7 +938,7 @@ def run_agent(row: dict[str, str], index: int, args: argparse.Namespace, snapsho
 # from. Workday is ~9 min/role at mostly large companies, and its first night
 # brought a 1,359-role backlog that took 115 of 200 slots (2026-09-23), so it goes
 # last and is capped per run; the rest stays eligible for later nights.
-SOURCE_PRIORITY = {'greenhouse': 0, 'ashby': 0, 'lever': 0, 'gem': 0, 'rippling': 0, 'smartrecruiters': 1, 'workday': 2}
+SOURCE_PRIORITY = {'greenhouse': 0, 'ashby': 0, 'lever': 0, 'gem': 0, 'rippling': 0, 'workable': 1, 'smartrecruiters': 1, 'workday': 2}
 
 
 def row_source(row: dict[str, str]) -> str:
@@ -1082,7 +1082,7 @@ def main() -> None:
     parser.add_argument('--effort', default='', choices=['', 'low', 'medium', 'high', 'xhigh', 'max'],
                         help="claude --effort; empty keeps Claude Code's default")
     parser.add_argument('--timeout-minutes', type=int, default=45)
-    parser.add_argument('--source-cap', default='workday=50',
+    parser.add_argument('--source-cap', default='workday=50,workable=10',
                         help='per-run caps by source, e.g. workday=50,smartrecruiters=30 (empty for none)')
     parser.add_argument('--retry-status', default='', help='comma-separated statuses to retry, e.g. needs_input,blocked')
     parser.add_argument('--only-id', default='', help='comma-separated role ids to apply regardless of order')
