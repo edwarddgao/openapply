@@ -6,7 +6,7 @@ existing external `claude -p` application agents directly, on Sonnet 5.
 
 ## Nightly workflow
 
-At 05:00 local time, `com.openapply.overnight`:
+At 03:00 local time, `com.openapply.overnight`:
 
 1. acquires a non-overlapping run lock;
 2. validates disk space, applicant configuration, Chrome, the `claude` CLI, agent-browser,
@@ -15,7 +15,8 @@ At 05:00 local time, `com.openapply.overnight`:
 4. converts the UTC day's snapshot to Parquet;
 5. builds the candidate-specific shortlist locally;
 6. selects only unhandled fresh roles using the application ledger;
-7. applies to at most 200 roles serially with profile-backed Chrome; and
+7. applies to at most 200 roles, four at a time (`--parallel`), each worker in its own
+   profile-backed Chrome; and
 8. writes one end-of-run summary.
 
 The application ledger prevents repeats. Anything ever submitted is never

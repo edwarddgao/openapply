@@ -129,7 +129,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('command', choices=['install', 'status', 'start', 'stop', 'pause', 'resume', 'uninstall'])
     parser.add_argument('--repo', type=Path, default=REPO_ROOT)
-    parser.add_argument('--hour', type=int, default=5)
+    parser.add_argument('--hour', type=int, default=3)
     parser.add_argument('--minute', type=int, default=0)
     parser.add_argument('--max-applications', type=int, default=200)
     args = parser.parse_args()

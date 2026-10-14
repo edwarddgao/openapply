@@ -496,7 +496,7 @@ class OvernightRun:
             '--pool', 'both',
             '--limit', str(self.args.max_applications if limit is None else limit),
             '--exclude-company', ','.join(AGGREGATOR_EXCLUDES),
-            '--parallel', '1',
+            '--parallel', str(self.args.parallel),
             '--cdp-profile',
             '--headed',
         ]
@@ -649,6 +649,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--date', default='', help='UTC snapshot date; default today')
     parser.add_argument('--workers', type=int, default=32, help='ATS refresh workers')
     parser.add_argument('--max-applications', type=int, default=200, help='daily application safety cap')
+    # Serial runs took 6-9 h of applying (2026-09-27..10-09), finishing 12:00-16:30
+    # from a 05:00 start. Each worker drives its own profile-backed Chrome.
+    parser.add_argument('--parallel', type=int, default=4, help='roles applied concurrently, one Chrome each')
     parser.add_argument('--model', default='sonnet', help='claude model for the role agents')
     parser.add_argument('--effort', default='', help="claude --effort for the role agents; empty keeps Claude Code's default")
     parser.add_argument('--dry-run', action='store_true', help='validate dependencies and preview without refresh or submission')

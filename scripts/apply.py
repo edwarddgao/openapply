@@ -16,6 +16,7 @@ import csv
 import hashlib
 import json
 import os
+import queue
 import re
 import shutil
 import signal
@@ -296,7 +297,7 @@ def strip_burned_device_state(profile_dir: Path) -> None:
             print(f'[cdp] cookie strip failed (continuing): {exc}', file=sys.stderr, flush=True)
 
 
-def start_cdp_chrome(args: argparse.Namespace) -> dict[str, Any]:
+def start_cdp_chrome(args: argparse.Namespace, port: int) -> dict[str, Any]:
     """Copy the real Chrome profile and launch it headed with a CDP port.
 
     Returns a state dict for teardown. A FULL profile copy (minus caches) launched
@@ -332,7 +333,7 @@ def start_cdp_chrome(args: argparse.Namespace) -> dict[str, Any]:
     chrome_cmd = [
         args.chrome_binary,
         f'--user-data-dir={tmpdir}',
-        f'--remote-debugging-port={args.cdp_port}',
+        f'--remote-debugging-port={port}',
         '--remote-allow-origins=*',
         '--no-first-run', '--no-default-browser-check',
         # Workday's WOTC tax-credit questionnaire opens in a popup; blocked, the
@@ -350,17 +351,17 @@ def start_cdp_chrome(args: argparse.Namespace) -> dict[str, Any]:
     deadline = time.monotonic() + 30
     while time.monotonic() < deadline:
         try:
-            _cdp_http(args.cdp_port, '/json/version')
+            _cdp_http(port, '/json/version')
             break
         except (urllib.error.URLError, OSError, ConnectionError, json.JSONDecodeError):
             time.sleep(0.5)
     else:
         _kill_process_group(proc)
         shutil.rmtree(tmpdir, ignore_errors=True)
-        raise SystemExit(f'CDP did not come up on port {args.cdp_port} within 30s')
+        raise SystemExit(f'CDP did not come up on port {port} within 30s')
 
-    print(f'[cdp] launched Chrome on profile copy {tmpdir} (port {args.cdp_port})', flush=True)
-    return {'proc': proc, 'tmpdir': tmpdir, 'port': args.cdp_port}
+    print(f'[cdp] launched Chrome on profile copy {tmpdir} (port {port})', flush=True)
+    return {'proc': proc, 'tmpdir': tmpdir, 'port': port}
 
 
 def stop_cdp_chrome(state: dict[str, Any] | None) -> None:
@@ -405,13 +406,14 @@ def cdp_new_tab(port: int, url: str) -> str:
     return ws
 
 
-def prepare_browser_session(row: dict[str, str], session: str, args: argparse.Namespace, log_file: Any) -> None:
+def prepare_browser_session(row: dict[str, str], session: str, args: argparse.Namespace, log_file: Any,
+                            cdp_port: int | None = None) -> None:
     close_browser_session(args.repo, session)
     url = row.get('apply_url', '')
     if args.cdp_profile:
         # Open the role in a dedicated CDP tab that cdp_new_tab makes the only page
         # target, then bind agent-browser to it (see cdp_new_tab for why).
-        ws = cdp_new_tab(args.cdp_port, url)
+        ws = cdp_new_tab(cdp_port or args.cdp_port, url)
         run_agent_browser(
             args.repo,
             ['agent-browser', '--session', session, 'connect', ws],
@@ -752,7 +754,8 @@ def spam_retry_ready(previous: dict[str, Any]) -> bool:
     return (datetime.now(timezone.utc) - last).days >= SPAM_RETRY_COOLDOWN_DAYS
 
 
-def run_agent(row: dict[str, str], index: int, args: argparse.Namespace, snapshot_date: str) -> dict[str, Any]:
+def run_agent(row: dict[str, str], index: int, args: argparse.Namespace, snapshot_date: str,
+              cdp_port: int | None = None) -> dict[str, Any]:
     if STOP_EVENT.is_set():
         return {
             'id': row.get('id', ''),
@@ -830,7 +833,7 @@ def run_agent(row: dict[str, str], index: int, args: argparse.Namespace, snapsho
         with log_path.open('w', encoding='utf-8') as log_file:
             if args.prepare_browser:
                 try:
-                    prepare_browser_session(row, session, args, log_file)
+                    prepare_browser_session(row, session, args, log_file, cdp_port)
                 except (RuntimeError, OSError) as exc:
                     browser_setup_error = exc
                 else:
@@ -1098,9 +1101,6 @@ def main() -> None:
 
     if args.cdp_profile and not args.prepare_browser:
         raise SystemExit('--cdp-profile requires --prepare-browser (the launcher connects each role to a CDP tab)')
-    if args.cdp_profile and args.parallel > 1:
-        print('[cdp] --cdp-profile drives one shared Chrome serially; forcing --parallel 1', flush=True)
-        args.parallel = 1
 
     args.repo = args.repo.resolve()
     args.status = repo_path(args.repo, args.status)
@@ -1171,16 +1171,35 @@ def main() -> None:
         # `close --all` would also tear down the unrelated hermes agent-browser
         # daemon that shares the default socket.
         close_all_browser_sessions(args.repo)
-    cdp_state: dict[str, Any] | None = None
-    if args.cdp_profile:
-        cdp_state = start_cdp_chrome(args)
+    cdp_states: list[dict[str, Any]] = []
+    cdp_ports: queue.Queue[int] = queue.Queue()
     print(f'Launching {len(todo)} role(s) from {latest["date"]} with parallel={max_workers}', flush=True)
     try:
+        if args.cdp_profile:
+            # One Chrome per worker: cdp_new_tab closes every other page target so
+            # agent-browser binds deterministically, which would kill a sibling
+            # worker's form in a shared Chrome.
+            for slot in range(max_workers):
+                cdp_states.append(start_cdp_chrome(args, args.cdp_port + slot))
+                cdp_ports.put(args.cdp_port + slot)
+        company_locks: collections.defaultdict[str, threading.Lock] = collections.defaultdict(threading.Lock)
+
+        def run_slot(row: dict[str, str], index: int) -> dict[str, Any]:
+            # Same-company attempts stay serial: back-to-back submits at one company
+            # get spam-flagged (see interleave_companies).
+            with company_locks[row.get('company_slug', '')]:
+                port = cdp_ports.get() if args.cdp_profile else None
+                try:
+                    print(f'Starting {index}/{len(todo)}: {row.get("company_slug", "")} - {row.get("title", "")}', flush=True)
+                    return run_agent(row, index, args, latest['date'], port)
+                finally:
+                    if port is not None:
+                        cdp_ports.put(port)
+
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = {}
             for index, row in enumerate(todo, 1):
-                print(f'Starting {index}/{len(todo)}: {row.get("company_slug", "")} - {row.get("title", "")}', flush=True)
-                futures[executor.submit(run_agent, row, index, args, latest['date'])] = row
+                futures[executor.submit(run_slot, row, index)] = row
             for future in as_completed(futures):
                 record = future.result()
                 if record.pop('_skip_ledger', False):
@@ -1199,7 +1218,8 @@ def main() -> None:
                 append_status(args.status, record)
                 print(f'Finished: {record["detail"]}', flush=True)
     finally:
-        stop_cdp_chrome(cdp_state)
+        for state in cdp_states:
+            stop_cdp_chrome(state)
     if STOP_EVENT.is_set():
         raise KeyboardInterrupt
     if AUTH_FAILED_EVENT.is_set():
