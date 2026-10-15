@@ -131,7 +131,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--repo', type=Path, default=REPO_ROOT)
     parser.add_argument('--hour', type=int, default=3)
     parser.add_argument('--minute', type=int, default=0)
-    parser.add_argument('--max-applications', type=int, default=200)
+    parser.add_argument('--max-applications', type=int, default=500)
     args = parser.parse_args()
     if not 0 <= args.hour <= 23 or not 0 <= args.minute <= 59:
         parser.error('invalid schedule time')

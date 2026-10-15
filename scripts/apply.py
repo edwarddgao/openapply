@@ -793,6 +793,19 @@ def run_agent(row: dict[str, str], index: int, args: argparse.Namespace, snapsho
             '_skip_ledger': True,
         }
 
+    if args.stop_at and datetime.now(timezone.utc) >= args.stop_at:
+        return {
+            'id': row.get('id', ''),
+            'status': 'skipped_deadline',
+            'detail': f'Skipped: past --stop-at {args.stop_at.astimezone().strftime("%H:%M")}',
+            'company_slug': row.get('company_slug', ''),
+            'title': row.get('title', ''),
+            'apply_url': row.get('apply_url', ''),
+            'snapshot_date': snapshot_date,
+            'agent': args.agent,
+            '_skip_ledger': True,
+        }
+
     company = row.get('company_slug', '')
     if SPAM_BY_COMPANY[company] >= SPAM_CIRCUIT_LIMIT:
         return {
@@ -1092,6 +1105,8 @@ def main() -> None:
     parser.add_argument('--exclude-company', default='', help='comma-separated company_slug values to skip (e.g. openai for 180-day rate-limit window)')
     parser.add_argument('--include-federal-defense', action='store_true', help='allow auto-applying roles flagged as federal/defense instead of skipping them')
     parser.add_argument('--dry-run', action='store_true')
+    parser.add_argument('--stop-at', default='',
+                        help='ISO timestamp; no new role starts after it (in-flight roles finish)')
     args = parser.parse_args()
 
     if not args.model and args.agent == 'claude':
@@ -1102,6 +1117,7 @@ def main() -> None:
     if args.cdp_profile and not args.prepare_browser:
         raise SystemExit('--cdp-profile requires --prepare-browser (the launcher connects each role to a CDP tab)')
 
+    args.stop_at = datetime.fromisoformat(args.stop_at).astimezone(timezone.utc) if args.stop_at else None
     args.repo = args.repo.resolve()
     args.status = repo_path(args.repo, args.status)
     args.output_dir = repo_path(args.repo, args.output_dir.expanduser())
@@ -1207,6 +1223,8 @@ def main() -> None:
                         reason = 'infra error'
                     elif record.get('status') == 'skipped_stopped':
                         reason = 'stop requested'
+                    elif record.get('status') == 'skipped_deadline':
+                        reason = 'past stop time'
                     elif record.get('status') == 'skipped_spam_circuit':
                         reason = 'spam circuit breaker'
                     elif record.get('status') == 'skipped_auth':

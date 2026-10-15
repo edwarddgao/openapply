@@ -164,6 +164,14 @@ def quota_wait_seconds(marker_path: Path) -> tuple[int, str]:
     return min(wait, QUOTA_WAIT_CAP_SECONDS), detail
 
 
+def next_local_time(hhmm: str) -> datetime:
+    """Next occurrence of a local HH:MM, fixed once per run so quota resumes share it."""
+    hour, minute = (int(part) for part in hhmm.split(':'))
+    now = datetime.now().astimezone()
+    target = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+    return target if target > now else target + timedelta(days=1)
+
+
 def applescript_string(value: str) -> str:
     return '"' + value.replace('\\', '\\\\').replace('"', '\\"') + '"'
 
@@ -244,6 +252,7 @@ class OvernightRun:
         self.args = args
         self.repo = args.repo.resolve()
         self.date = args.date or datetime.now(timezone.utc).strftime('%Y-%m-%d')
+        self.stop_at = next_local_time(args.stop_at) if args.stop_at else None
         run_stamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')
         self.output_root = self.repo / 'applications' / 'overnight'
         self.run_dir = self.output_root / f'date={self.date}' / f'run={run_stamp}'
@@ -263,6 +272,7 @@ class OvernightRun:
             'dry_run': args.dry_run,
             'no_apply': args.no_apply,
             'max_applications': args.max_applications,
+            'stop_at': self.stop_at.isoformat() if self.stop_at else None,
             'stages': [],
             'shortlist': {},
             'applications': {},
@@ -506,6 +516,9 @@ class OvernightRun:
             command.append('--no-gmail')
         # Recover yesterday's transient Ashby spam flags (87% submit on a later-day retry).
         command.append('--retry-spam')
+        command.extend(['--source-cap', self.args.source_cap])
+        if self.stop_at:
+            command.extend(['--stop-at', self.stop_at.isoformat()])
         if dry_run:
             command.append('--dry-run')
         return command
@@ -596,8 +609,10 @@ class OvernightRun:
                     remaining = self.args.max_applications - len(jsonl_tail(self.ledger, ledger_start))
                     if remaining < 1:
                         break
-                    resumes += 1
                     wait, detail = quota_wait_seconds(self.repo / 'applications' / 'rate_limit_marker.json')
+                    if self.stop_at and datetime.now().astimezone() + timedelta(seconds=wait) >= self.stop_at:
+                        break
+                    resumes += 1
                     self.wait_for_quota_reset(wait, detail, log, resumes)
                     self.run_command(
                         f'apply to selected roles (quota resume {resumes})',
@@ -648,7 +663,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--repo', type=Path, default=REPO_ROOT)
     parser.add_argument('--date', default='', help='UTC snapshot date; default today')
     parser.add_argument('--workers', type=int, default=32, help='ATS refresh workers')
-    parser.add_argument('--max-applications', type=int, default=200, help='daily application safety cap')
+    # The stop time, not the count, ends a normal night: from a 03:00 start the apply
+    # stage runs ~04:00-09:00, and four workers manage ~2 roles/min outside Workday.
+    parser.add_argument('--max-applications', type=int, default=500, help='daily application safety cap')
+    parser.add_argument('--stop-at', default='09:00',
+                        help='local HH:MM after which no new role starts (next occurrence); empty disables')
+    parser.add_argument('--source-cap', default='workday=150,workable=50',
+                        help='per-run caps for slow ATSs; Workday (~9 min/role) still goes last')
     # Serial runs took 6-9 h of applying (2026-09-27..10-09), finishing 12:00-16:30
     # from a 05:00 start. Each worker drives its own profile-backed Chrome.
     parser.add_argument('--parallel', type=int, default=4, help='roles applied concurrently, one Chrome each')
