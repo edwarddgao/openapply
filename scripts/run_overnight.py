@@ -668,8 +668,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--max-applications', type=int, default=500, help='daily application safety cap')
     parser.add_argument('--stop-at', default='09:00',
                         help='local HH:MM after which no new role starts (next occurrence); empty disables')
-    parser.add_argument('--source-cap', default='workday=150,workable=50',
-                        help='per-run caps for slow ATSs; Workday (~9 min/role) still goes last')
+    # No Workday cap: --stop-at bounds the night and Workday (~9 min/role) sorts last,
+    # so it only fills time the faster ATSs leave over.
+    parser.add_argument('--source-cap', default='workable=50',
+                        help='per-run caps for slow ATSs, name=N; an unlisted ATS is uncapped')
     # Serial runs took 6-9 h of applying (2026-09-27..10-09), finishing 12:00-16:30
     # from a 05:00 start. Each worker drives its own profile-backed Chrome.
     parser.add_argument('--parallel', type=int, default=4, help='roles applied concurrently, one Chrome each')

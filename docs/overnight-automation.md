@@ -16,8 +16,8 @@ At 03:00 local time, `com.openapply.overnight`:
 5. builds the candidate-specific shortlist locally;
 6. selects only unhandled fresh roles using the application ledger;
 7. applies four roles at a time (`--parallel`), each worker in its own profile-backed
-   Chrome, until 09:00 (`--stop-at`) or 500 roles; Workday goes last, capped at 150
-   a run; and
+   Chrome, until 09:00 (`--stop-at`) or 500 roles; Workday goes last and fills
+   whatever time is left; and
 8. writes one end-of-run summary.
 
 The application ledger prevents repeats. Anything ever submitted is never

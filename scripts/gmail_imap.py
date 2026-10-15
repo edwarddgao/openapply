@@ -239,8 +239,11 @@ def cmd_security_code(args: argparse.Namespace) -> int:
 # {tenant}.wdN.myworkdayjobs.com/{site}/activate/<token>/ and "Reset your password
 # for your candidate account" carries .../passwordreset/<token>/. Senders vary by
 # tenant (x@otp.workday.com, workday@bbva.com), so match on subject and link host.
+# Some tenants (snapchat, ssctech) live on wdN.myworkdaysite.com/recruiting/{tenant}/
+# instead; their reset mail arrived but went unmatched, blocking those roles.
 WORKDAY_LINK_RE = re.compile(
-    r'https://([\w-]+)\.wd\d+\.myworkdayjobs\.com/[^\s"\'<>]*?/(activate|passwordreset)/[^\s"\'<>]+'
+    r'https://(?:([\w-]+)\.wd\d+\.myworkdayjobs\.com|wd\d+\.myworkdaysite\.com/recruiting/([\w-]+))'
+    r'/[^\s"\'<>]*?/(activate|passwordreset)/[^\s"\'<>]+'
 )
 
 
@@ -262,7 +265,7 @@ def search_workday_links(client: imaplib.IMAP4_SSL, tenant: str, kind: str,
         if received and received.timestamp() < cutoff:
             continue
         for match in WORKDAY_LINK_RE.finditer(unescape(message_text(message))):
-            if match.group(1).lower() == tenant.lower() and match.group(2) == kind:
+            if (match.group(1) or match.group(2)).lower() == tenant.lower() and match.group(3) == kind:
                 results.append({
                     'link': match.group(0),
                     'kind': kind,

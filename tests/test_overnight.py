@@ -6,6 +6,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 
+from scripts.gmail_imap import WORKDAY_LINK_RE
 from scripts.overnightctl import LABEL, plist
 from scripts.run_overnight import AUTH_FAILURE_PHRASES, has_apply_process, is_auth_failure, jsonl_tail, merge_slug_lines, parse_json_object
 import scripts.apply as apply_pipeline
@@ -106,8 +107,17 @@ class OvernightHelpersTest(unittest.TestCase):
             )
             with mock.patch('scripts.apply.tempfile.mkdtemp', return_value=str(temporary)):
                 with self.assertRaises(subprocess.CalledProcessError):
-                    apply_pipeline.start_cdp_chrome(args)
+                    apply_pipeline.start_cdp_chrome(args, 9222)
             self.assertFalse(temporary.exists())
+
+    def test_workday_link_matches_myworkdaysite_tenants(self) -> None:
+        links = {
+            'https://wd1.myworkdaysite.com/recruiting/snapchat/snap/passwordreset/tok/?redirect=x': ('snapchat', 'passwordreset'),
+            'https://nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite/activate/tok/': ('nvidia', 'activate'),
+        }
+        for link, expected in links.items():
+            match = WORKDAY_LINK_RE.search(link)
+            self.assertEqual((match.group(1) or match.group(2), match.group(3)), expected)
 
 
 if __name__ == '__main__':

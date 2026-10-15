@@ -522,6 +522,21 @@ def load_workday_password(applicant_profile: Path) -> bool:
     return True
 
 
+def applicant_email(args: argparse.Namespace) -> str:
+    """Profile email for the role prompt.
+
+    2026-10-15: Haiku agents typed edwardgao@gmail.com (a dropped letter) or the
+    Claude Code account email into Workday sign-in. The account lookup failed and
+    the password reset, if any, went to an inbox gmail_imap.py never reads: 49 of
+    117 Workday roles blocked as workday_email_link_missing vs 7-22% on Sonnet.
+    """
+    try:
+        value = json.loads(Path(args.applicant_profile).read_text(encoding='utf-8'))['personal']['email']
+    except (OSError, json.JSONDecodeError, KeyError, TypeError):
+        value = ''
+    return value or '(personal.email from the applicant profile, character for character)'
+
+
 def build_prompt(row: dict[str, str], session: str, args: argparse.Namespace, snapshot_date: str) -> str:
     if args.prepare_browser:
         browser_instructions = f"""- A browser session is ALREADY prepared and the application URL is ALREADY open in it. On EVERY agent-browser command, pass exactly `--session {session}` (this exact flag and value) to target it.
@@ -559,8 +574,11 @@ Gmail is UNAVAILABLE for this run: the IMAP app password is missing or rejected.
     if not is_workday:
         workday_note = ""
     else:
-        tenant = urllib.parse.urlsplit(row.get('apply_url', '')).hostname or ''
-        tenant = tenant.split('.', 1)[0]
+        # From the role id, not the host: wdN.myworkdaysite.com/recruiting/{tenant}/
+        # URLs would otherwise yield 'wd1' and never match the tenant's mail.
+        tenant = row.get('id', '').split(':')[1] if row.get('id', '').count(':') >= 2 else ''
+        if not tenant:
+            tenant = (urllib.parse.urlsplit(row.get('apply_url', '')).hostname or '').split('.', 1)[0]
         workday_note = f"""
 Workday: the user has authorized creating a candidate account on this tenant ({tenant}) with the shared password in ${WORKDAY_PASSWORD_ENV}. Follow the skill's Workday section. Type the password only as the shell variable, e.g. `agent-browser fill <ref> "${WORKDAY_PASSWORD_ENV}"`; never echo, print or expand it into your output. Fetch activation / password-reset links with `python3 scripts/gmail_imap.py workday-link --tenant {tenant} --kind activate|passwordreset`.
 """
@@ -583,6 +601,7 @@ Required workflow:
 - Close the agent-browser session when done if possible. The launcher will also attempt cleanup.
 {ashby_note}{gmail_note}{workday_note}
 Applicant data:
+- Email: type exactly `{applicant_email(args)}` in every email, username and sign-in field. Copy it character for character; it is not the email of the account running you.
 - Read applicant facts and commitments from {args.applicant_profile}. This JSON profile is the source of truth for contact details, resume path, work authorization, sponsorship, availability, preferences, clearances, screening facts, demographics preferences, education, and languages.
 - Read reusable answer strategy from {args.application_policy}. Use it to apply profile facts to recurring form questions such as referral source, cover letters, in-office commitments, clearance, export-control status, compensation, transcript availability, and negative/conflict screening.
 - Do not print or dump the full applicant profile or application policy into logs or the final message.
