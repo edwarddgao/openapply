@@ -29,7 +29,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -74,6 +74,12 @@ RATE_LIMIT_PHRASES = (
 )
 RATE_LIMIT_EVENT = threading.Event()
 STOP_EVENT = threading.Event()
+# Set at --stop-at: in-flight agents are killed and kept out of the ledger, but the
+# batch ends normally (exit 0) rather than as an operator stop.
+DEADLINE_EVENT = threading.Event()
+# No new role starts this close to --stop-at. Workday roles run p95 11.5 min, max
+# 21 min (2026-10-15/16), so nearly every role started before it finishes in time.
+LAST_START_MARGIN = 15 * 60
 ACTIVE_SUBAGENTS: set[subprocess.Popen] = set()
 ACTIVE_SUBAGENTS_LOCK = threading.Lock()
 # First message that tripped RATE_LIMIT_EVENT, persisted to RATE_LIMIT_MARKER on
@@ -689,9 +695,9 @@ def _kill_process_group(proc: subprocess.Popen) -> None:
             pass
 
 
-def request_stop() -> None:
+def request_stop(event: threading.Event = STOP_EVENT) -> None:
     """Stop active role agents and keep queued roles out of the ledger."""
-    STOP_EVENT.set()
+    event.set()
     with ACTIVE_SUBAGENTS_LOCK:
         active = list(ACTIVE_SUBAGENTS)
     for proc in active:
@@ -812,11 +818,11 @@ def run_agent(row: dict[str, str], index: int, args: argparse.Namespace, snapsho
             '_skip_ledger': True,
         }
 
-    if args.stop_at and datetime.now(timezone.utc) >= args.stop_at:
+    if args.stop_at and datetime.now(timezone.utc) >= args.stop_at - timedelta(seconds=LAST_START_MARGIN):
         return {
             'id': row.get('id', ''),
             'status': 'skipped_deadline',
-            'detail': f'Skipped: past --stop-at {args.stop_at.astimezone().strftime("%H:%M")}',
+            'detail': f'Skipped: too close to --stop-at {args.stop_at.astimezone().strftime("%H:%M")}',
             'company_slug': row.get('company_slug', ''),
             'title': row.get('title', ''),
             'apply_url': row.get('apply_url', ''),
@@ -920,6 +926,20 @@ def run_agent(row: dict[str, str], index: int, args: argparse.Namespace, snapsho
         final_message = data[-4000:].strip()
 
     status, detail = parse_status(final_message)
+    if status == 'unknown' and return_code not in {0, None} and (DEADLINE_EVENT.is_set() or STOP_EVENT.is_set()):
+        # Killed mid-form by --stop-at or an operator stop: not an outcome, so the
+        # role stays out of the ledger and is picked up by the next run.
+        return {
+            'id': row.get('id', ''),
+            'status': 'skipped_deadline' if DEADLINE_EVENT.is_set() else 'skipped_stopped',
+            'detail': f'Stopped mid-application (agent exit {return_code})',
+            'company_slug': company,
+            'title': row.get('title', ''),
+            'apply_url': row.get('apply_url', ''),
+            'snapshot_date': snapshot_date,
+            'agent': args.agent,
+            '_skip_ledger': True,
+        }
     if return_code not in {0, None} and status == 'unknown':
         detail = f'{args.agent} exited with code {return_code}: {detail}'
     if status == 'blocked' and re.search(r'(?i)spam', detail):
@@ -1125,7 +1145,8 @@ def main() -> None:
     parser.add_argument('--include-federal-defense', action='store_true', help='allow auto-applying roles flagged as federal/defense instead of skipping them')
     parser.add_argument('--dry-run', action='store_true')
     parser.add_argument('--stop-at', default='',
-                        help='ISO timestamp; no new role starts after it (in-flight roles finish)')
+                        help='ISO timestamp by which applying is over: no new role starts in the last '
+                             '15 min and agents still running at it are stopped (not ledgered)')
     args = parser.parse_args()
 
     if not args.model and args.agent == 'claude':
@@ -1209,6 +1230,12 @@ def main() -> None:
     cdp_states: list[dict[str, Any]] = []
     cdp_ports: queue.Queue[int] = queue.Queue()
     print(f'Launching {len(todo)} role(s) from {latest["date"]} with parallel={max_workers}', flush=True)
+    if args.stop_at:
+        deadline_timer = threading.Timer(
+            max(0.0, (args.stop_at - datetime.now(timezone.utc)).total_seconds()),
+            request_stop, args=(DEADLINE_EVENT,))
+        deadline_timer.daemon = True
+        deadline_timer.start()
     try:
         if args.cdp_profile:
             # One Chrome per worker: cdp_new_tab closes every other page target so

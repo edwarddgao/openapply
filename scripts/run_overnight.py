@@ -664,10 +664,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--date', default='', help='UTC snapshot date; default today')
     parser.add_argument('--workers', type=int, default=32, help='ATS refresh workers')
     # The stop time, not the count, ends a normal night: from a 03:00 start the apply
-    # stage runs ~04:00-09:00, and four workers manage ~2 roles/min outside Workday.
+    # stage runs ~04:00-08:00, and four workers manage ~2 roles/min outside Workday.
     parser.add_argument('--max-applications', type=int, default=500, help='daily application safety cap')
-    parser.add_argument('--stop-at', default='09:00',
-                        help='local HH:MM after which no new role starts (next occurrence); empty disables')
+    # Applying must be over by 08:00 (user, 2026-10-16): last start 07:45, hard stop 08:00.
+    parser.add_argument('--stop-at', default='08:00',
+                        help='local HH:MM (next occurrence) by which applying is over; empty disables')
     # No Workday cap: --stop-at bounds the night and Workday (~9 min/role) sorts last,
     # so it only fills time the faster ATSs leave over.
     parser.add_argument('--source-cap', default='workable=50',
