@@ -564,6 +564,8 @@ class OvernightRun:
         ]
         if self.args.effort:
             command.extend(['--effort', self.args.effort])
+        if self.args.workday_effort:
+            command.extend(['--workday-effort', self.args.workday_effort])
         if not self.summary['gmail']['available']:
             command.append('--no-gmail')
         # Recover yesterday's transient Ashby spam flags (87% submit on a later-day retry).
@@ -730,6 +732,12 @@ def parse_args() -> argparse.Namespace:
     # Serial runs took 6-9 h of applying (2026-09-27..10-09), finishing 12:00-16:30
     # from a 05:00 start. Each worker drives its own profile-backed Chrome.
     parser.add_argument('--parallel', type=int, default=4, help='roles applied concurrently, one Chrome each')
+    # Trial from 2026-10-19: Haiku at low effort submitted ~45% of Workday roles (22%
+    # blocked on a missing reset link) vs 60-75% for Sonnet. Workday's sign-in, reset
+    # and multi-step forms are where low effort is most likely to cost; the ledger
+    # records model and effort per role so the nights can be compared.
+    parser.add_argument('--workday-effort', default='medium',
+                        help='claude --effort for Workday roles; empty uses --effort')
     parser.add_argument('--model', default='sonnet', help='claude model for the role agents')
     parser.add_argument('--effort', default='', help="claude --effort for the role agents; empty keeps Claude Code's default")
     parser.add_argument('--dry-run', action='store_true', help='validate dependencies and preview without refresh or submission')
