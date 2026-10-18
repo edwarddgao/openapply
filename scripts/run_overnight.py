@@ -58,6 +58,11 @@ SLUG_REMOTE_REF = 'origin/main'
 # Gmail ones, so every grant was an unverified restricted-scope grant. App passwords
 # do not expire, so there is no renewal clock left to warn about.
 # Outcomes that are a normal end state and should not raise an alert.
+# A source whose refresh failed for more than this share of its tenants is replaced
+# by its last good snapshot. 2026-10-17: Workday returned non-JSON for 5,332 of
+# 5,650 tenants, the shortlist kept 23 of ~1,290 Workday roles, and the night ran
+# out of work at 04:57.
+SOURCE_FAILURE_RATIO = 0.5
 QUIET_OUTCOMES = ('completed', 'dry_run_passed', 'refresh_only_completed', 'skipped_already_running')
 CURRENT_CHILD: subprocess.Popen[str] | None = None
 STOP_REQUESTED = False
@@ -170,6 +175,23 @@ def next_local_time(hhmm: str) -> datetime:
     now = datetime.now().astimezone()
     target = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
     return target if target > now else target + timedelta(days=1)
+
+
+def good_previous_partition(data: Path, source: str, date: str, lookback: int = 7) -> Path | None:
+    """Most recent earlier source partition at least half the size of the week's largest.
+
+    Size screens out snapshots from other failed refreshes (1.2 MB vs ~30 MB for
+    Workday on 2026-10-17) without needing their refresh stats.
+    """
+    candidates = sorted(
+        (path for path in data.glob(f'date=*/source={source}') if path.parent.name < f'date={date}'),
+        key=lambda path: path.parent.name, reverse=True,
+    )[:lookback]
+    sizes = {path: sum(f.stat().st_size for f in path.glob('*.parquet')) for path in candidates}
+    if not sizes or not max(sizes.values()):
+        return None
+    floor = max(sizes.values()) / 2
+    return next((path for path in candidates if sizes[path] >= floor), None)
 
 
 def applescript_string(value: str) -> str:
@@ -473,6 +495,33 @@ class OvernightRun:
         stage_record['status'] = 'completed'
         self.save_summary()
 
+    def fall_back_failed_sources(self, log: IO[str]) -> None:
+        """Swap in the last good snapshot for any source whose refresh mostly failed."""
+        try:
+            stats = json.loads((self.run_dir / 'refresh_stats.json').read_text(encoding='utf-8'))
+        except (OSError, ValueError):
+            return
+        data = self.repo / 'data'
+        fallbacks = []
+        for source, counts in sorted(stats.items()):
+            total = counts.get('tenants_ok', 0) + counts.get('tenants_err', 0)
+            if not total or counts.get('tenants_err', 0) / total <= SOURCE_FAILURE_RATIO:
+                continue
+            previous = good_previous_partition(data, source, self.date)
+            note = {'source': source, 'tenants_ok': counts.get('tenants_ok', 0),
+                    'tenants_err': counts.get('tenants_err', 0), 'used_date': None}
+            if previous is not None:
+                target = data / f'date={self.date}' / f'source={source}'
+                shutil.rmtree(target, ignore_errors=True)
+                shutil.copytree(previous, target)
+                note['used_date'] = previous.parent.name.removeprefix('date=')
+            fallbacks.append(note)
+            log.write(f"\nrefresh failed for {note['tenants_err']}/{total} {source} tenants; "
+                      f"using snapshot from {note['used_date'] or 'nowhere (none found)'}\n")
+            log.flush()
+        self.summary['source_fallbacks'] = fallbacks
+        self.save_summary()
+
     def emit_alerts(self) -> None:
         outcome = self.summary.get('outcome')
         gmail = self.summary.get('gmail') or {}
@@ -489,6 +538,9 @@ class OvernightRun:
         if outcome == 'completed' and not applications.get('attempted'):
             problems.append('run completed but submitted nothing '
                             f"({applications.get('eligible', 0)} eligible)")
+        for note in self.summary.get('source_fallbacks') or []:
+            problems.append(f"{note['source']} refresh failed for {note['tenants_err']} tenants; "
+                            f"used {note['used_date'] or 'no'} snapshot")
         if problems:
             notify(f'openapply {self.date}', ' | '.join(problems), self.repo)
 
@@ -560,7 +612,8 @@ class OvernightRun:
                 self.sync_slugs(log)
                 self.run_command(
                     'refresh public ATS data',
-                    [sys.executable, str(self.repo / 'oa_adapter.py'), '--workers', str(self.args.workers), '--out', 'jobs.jsonl'],
+                    [sys.executable, str(self.repo / 'oa_adapter.py'), '--workers', str(self.args.workers), '--out', 'jobs.jsonl',
+                     '--stats', str(self.run_dir / 'refresh_stats.json')],
                     log,
                 )
                 self.run_command(
@@ -568,6 +621,7 @@ class OvernightRun:
                     [sys.executable, str(self.repo / 'scripts' / 'jsonl_to_parquet.py'), 'jobs.jsonl', 'data', '--date', self.date],
                     log,
                 )
+                self.fall_back_failed_sources(log)
                 self.run_command(
                     'build local shortlist',
                     # --jev defaults to shadow mode: it only annotates rows (see scripts/jev_report.py).

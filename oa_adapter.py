@@ -481,6 +481,7 @@ def main():
     ap.add_argument('--out', default='oa_jobs.jsonl')
     ap.add_argument('--limit', type=int, default=0, help='max slugs per ATS (0=all)')
     ap.add_argument('--workers', type=int, default=8)
+    ap.add_argument('--stats', default='', help='write per-ATS tenant ok/err and job counts as JSON')
     ap.add_argument('--ats', default=','.join(ADAPTERS))
     ap.add_argument('--suffix', default='FINAL', help='slug file suffix (FINAL or NEW)')
     ap.add_argument('--full-boards', action='store_true',
@@ -530,6 +531,9 @@ def main():
     print(f'{"ATS":<16}{"ok":>6}{"err":>6}{"jobs":>10}')
     for ats, s in by_ats.items():
         print(f'{ats:<16}{s["tenants_ok"]:>6}{s["tenants_err"]:>6}{s["jobs"]:>10}')
+    if args.stats:
+        with open(args.stats, 'w') as f:
+            json.dump(by_ats, f, indent=2, sort_keys=True)
 
 if __name__ == '__main__':
     main()

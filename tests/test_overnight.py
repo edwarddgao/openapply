@@ -8,7 +8,7 @@ from unittest import mock
 
 from scripts.gmail_imap import WORKDAY_LINK_RE
 from scripts.overnightctl import LABEL, plist
-from scripts.run_overnight import AUTH_FAILURE_PHRASES, has_apply_process, is_auth_failure, jsonl_tail, merge_slug_lines, parse_json_object
+from scripts.run_overnight import AUTH_FAILURE_PHRASES, OvernightRun, good_previous_partition, has_apply_process, is_auth_failure, jsonl_tail, merge_slug_lines, parse_json_object
 import scripts.apply as apply_pipeline
 
 
@@ -118,6 +118,30 @@ class OvernightHelpersTest(unittest.TestCase):
         for link, expected in links.items():
             match = WORKDAY_LINK_RE.search(link)
             self.assertEqual((match.group(1) or match.group(2), match.group(3)), expected)
+
+
+    def test_failed_source_falls_back_to_last_good_snapshot(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            for date, size in (('2026-10-16', 1000), ('2026-10-17', 40), ('2026-10-18', 30)):
+                for source in ('workday', 'ashby'):
+                    part = repo / 'data' / f'date={date}' / f'source={source}'
+                    part.mkdir(parents=True)
+                    (part / 'part-0.parquet').write_bytes(b'x' * (size if source == 'workday' else 500))
+            run_dir = repo / 'run'
+            run_dir.mkdir()
+            (run_dir / 'refresh_stats.json').write_text(json.dumps({
+                'workday': {'tenants_ok': 300, 'tenants_err': 5300, 'jobs': 900},
+                'ashby': {'tenants_ok': 4200, 'tenants_err': 1100, 'jobs': 65000},
+            }), encoding='utf-8')
+            run = SimpleNamespace(repo=repo, run_dir=run_dir, date='2026-10-18', summary={}, save_summary=lambda: None)
+            with tempfile.TemporaryFile('w+') as log:
+                OvernightRun.fall_back_failed_sources(run, log)
+            today = repo / 'data' / 'date=2026-10-18'
+            self.assertEqual((today / 'source=workday' / 'part-0.parquet').stat().st_size, 1000)
+            self.assertEqual((today / 'source=ashby' / 'part-0.parquet').stat().st_size, 500)
+            self.assertEqual([note['used_date'] for note in run.summary['source_fallbacks']], ['2026-10-16'])
+            self.assertIsNone(good_previous_partition(repo / 'data', 'workday', '2026-10-16'))
 
 
 if __name__ == '__main__':
