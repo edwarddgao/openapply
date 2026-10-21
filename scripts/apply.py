@@ -667,7 +667,7 @@ def build_codex_cmd(args: argparse.Namespace, prompt: str, final_path: Path) -> 
     return cmd
 
 
-def build_claude_cmd(args: argparse.Namespace, prompt: str, effort: str = '') -> list[str]:
+def build_claude_cmd(args: argparse.Namespace, prompt: str, effort: str = '', model: str = '') -> list[str]:
     # Every turn re-reads the whole context, so trim what the role agent never uses:
     # account MCP connectors, skills and the default tool set take the base context
     # from ~27.7k to ~11.5k tokens (measured 2026-09-23). Only Bash (agent-browser,
@@ -676,8 +676,8 @@ def build_claude_cmd(args: argparse.Namespace, prompt: str, effort: str = '') ->
         'claude', '-p', '--dangerously-skip-permissions',
         '--strict-mcp-config', '--disable-slash-commands', '--tools=Bash,Read',
     ]
-    if args.model:
-        cmd.extend(['--model', args.model])
+    if model or args.model:
+        cmd.extend(['--model', model or args.model])
     if effort:
         cmd.extend(['--effort', effort])
     cmd.append(prompt)
@@ -859,13 +859,18 @@ def run_agent(row: dict[str, str], index: int, args: argparse.Namespace, snapsho
     prompt = build_prompt(row, session, args, snapshot_date)
     final_path.unlink(missing_ok=True)
 
-    effort = args.effort
-    if row.get('id', '').startswith('workday:') and getattr(args, 'workday_effort', ''):
-        effort = args.workday_effort
+    model, effort = args.model, args.effort
+    if row.get('id', '').startswith('workday:'):
+        if getattr(args, 'workday_model', ''):
+            # A separate Workday model takes --workday-effort as is: empty means
+            # Claude Code's default effort, not the other roles' --effort.
+            model, effort = args.workday_model, args.workday_effort
+        elif getattr(args, 'workday_effort', ''):
+            effort = args.workday_effort
     if args.agent == 'codex':
         cmd = build_codex_cmd(args, prompt, final_path)
     else:
-        cmd = build_claude_cmd(args, prompt, effort)
+        cmd = build_claude_cmd(args, prompt, effort, model)
 
     started_at = utc_now()
     return_code = None
@@ -984,7 +989,7 @@ def run_agent(row: dict[str, str], index: int, args: argparse.Namespace, snapsho
         'session': session,
         'agent': args.agent,
         'agent_return_code': return_code,
-        'model': args.model,
+        'model': model,
         'effort': effort,
         'output_path': ledger_path(args.repo, final_path),
         'log_path': ledger_path(args.repo, log_path),
@@ -1142,7 +1147,9 @@ def main() -> None:
     parser.add_argument('--effort', default='', choices=['', 'low', 'medium', 'high', 'xhigh', 'max'],
                         help="claude --effort; empty keeps Claude Code's default")
     parser.add_argument('--workday-effort', default='', choices=['', 'low', 'medium', 'high', 'xhigh', 'max'],
-                        help='claude --effort for Workday roles only; empty uses --effort')
+                        help='claude --effort for Workday roles only; empty uses --effort, or the CLI '
+                             'default when --workday-model is set')
+    parser.add_argument('--workday-model', default='', help='claude model for Workday roles only; empty uses --model')
     parser.add_argument('--timeout-minutes', type=int, default=45)
     parser.add_argument('--source-cap', default='workday=50,workable=10',
                         help='per-run caps by source, e.g. workday=50,smartrecruiters=30 (empty for none)')
