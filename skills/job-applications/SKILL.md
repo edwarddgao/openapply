@@ -60,7 +60,7 @@ If any field is unknown and required, ask before submitting.
 3. Open the application URL with `agent-browser` in the active application session.
 4. Inspect the page with the text accessibility tree first: `agent-browser snapshot -i --compact` (and add `--depth N` or `-s <selector>` to scope long forms). Use this to identify ATS type and required fields. Do **not** take a full-page screenshot — long ATS forms (Greenhouse, Workday) routinely exceed 2000px and Claude/Codex will reject the image, blocking the whole role. Only use `agent-browser screenshot` (without `--full`) on a small selector when the text snapshot is genuinely insufficient (e.g., visual captcha or canvas-based widget). Re-snapshot after meaningful DOM changes; do not periodically poll with screenshots.
 5. Fill basic fields first: name, email, phone, location/country.
-6. Upload the resume from the known resume PDF path.
+6. Upload the resume by its absolute path (`resume_pdf` in the applicant profile). Never pass a relative path such as `config/resume/...`: the browser resolves it from its own directory, attaches nothing, and on Ashby freezes the agent-browser session.
 7. Fill profile links and education fields.
 8. Answer work authorization and sponsorship fields from user facts.
 9. Answer voluntary EEO/demographic fields with decline/prefer-not-answer unless instructed otherwise.

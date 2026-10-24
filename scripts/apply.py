@@ -528,6 +528,25 @@ def load_workday_password(applicant_profile: Path) -> bool:
     return True
 
 
+def resume_upload_path(args: argparse.Namespace) -> str:
+    """Absolute resume path for the role prompt.
+
+    2026-09-26: Opus at low effort shortened the profile's absolute resume path to
+    `config/resume/...` after cd-ing into the repo. Chrome resolves upload paths from its
+    own working directory, so it attached a missing file: Ashby wedged the agent-browser
+    daemon and Greenhouse stalled at 0% (37 of 52 relative-path sessions vs 0 of 45
+    absolute). Stating the absolute path in the prompt removes the guess.
+    """
+    try:
+        value = json.loads(Path(args.applicant_profile).read_text(encoding='utf-8')).get('resume_pdf', '')
+    except (OSError, json.JSONDecodeError):
+        value = ''
+    if not value:
+        return '(resume_pdf from the applicant profile, as an absolute path)'
+    path = Path(value).expanduser()
+    return str(path if path.is_absolute() else (args.repo / path).resolve())
+
+
 def applicant_email(args: argparse.Namespace) -> str:
     """Profile email for the role prompt.
 
@@ -608,6 +627,7 @@ Required workflow:
 {ashby_note}{gmail_note}{workday_note}
 Applicant data:
 - Email: type exactly `{applicant_email(args)}` in every email, username and sign-in field. Copy it character for character; it is not the email of the account running you.
+- Resume PDF: upload exactly `{resume_upload_path(args)}` (this absolute path). The browser resolves upload paths from its own directory, not yours, so a relative path such as `config/resume/...` attaches nothing and freezes the session.
 - Read applicant facts and commitments from {args.applicant_profile}. This JSON profile is the source of truth for contact details, resume path, work authorization, sponsorship, availability, preferences, clearances, screening facts, demographics preferences, education, and languages.
 - Read reusable answer strategy from {args.application_policy}. Use it to apply profile facts to recurring form questions such as referral source, cover letters, in-office commitments, clearance, export-control status, compensation, transcript availability, and negative/conflict screening.
 - Do not print or dump the full applicant profile or application policy into logs or the final message.
@@ -626,13 +646,25 @@ Rules:
 
 
 def close_browser_session(repo: Path, session: str) -> None:
-    subprocess.run(
-        ['agent-browser', '--session', session, 'close'],
-        cwd=repo,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        check=False,
-    )
+    try:
+        subprocess.run(
+            ['agent-browser', '--session', session, 'close'],
+            cwd=repo,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+            timeout=30,
+        )
+    except subprocess.TimeoutExpired:
+        pass
+    # A wedged daemon ignores close and stays attached to the shared CDP Chrome with
+    # waitForDebuggerOnStart auto-attach, so later roles' new workers/iframes stay paused
+    # and their pages freeze right after resume upload (2026-09-26: 5 of the first 10 roles).
+    pid_file = Path.home() / '.agent-browser' / f'{session}.pid'
+    try:
+        os.kill(int(pid_file.read_text().strip()), signal.SIGKILL)
+    except (OSError, ValueError):
+        pass
 
 
 def close_all_browser_sessions(repo: Path) -> None:
