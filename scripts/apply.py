@@ -764,6 +764,11 @@ def request_stop(event: threading.Event = STOP_EVENT) -> None:
         _kill_process_group(proc)
 
 
+def past_last_start(stop_at: datetime | None) -> bool:
+    """True once no new role may start before --stop-at."""
+    return bool(stop_at) and datetime.now(timezone.utc) >= stop_at - timedelta(seconds=LAST_START_MARGIN)
+
+
 def run_subagent(cmd: list[str], *, cwd: Path, timeout: int, stdout: Any) -> tuple[int, str | None]:
     """Run a subagent, killing the whole process group on timeout.
 
@@ -878,7 +883,7 @@ def run_agent(row: dict[str, str], index: int, args: argparse.Namespace, snapsho
             '_skip_ledger': True,
         }
 
-    if args.stop_at and datetime.now(timezone.utc) >= args.stop_at - timedelta(seconds=LAST_START_MARGIN):
+    if past_last_start(args.stop_at):
         return {
             'id': row.get('id', ''),
             'status': 'skipped_deadline',
@@ -1285,6 +1290,14 @@ def main() -> None:
 
     if not todo:
         print('No eligible roles selected')
+        return
+
+    if past_last_start(args.stop_at):
+        # 2026-10-24: a 7.4 h refresh started this stage at 10:50 against an 08:00
+        # stop; it launched four headed --cdp-profile Chromes that sat blank on the
+        # desktop while all 500 roles were skipped one by one.
+        print(f'Skipping {len(todo)} role(s): too close to --stop-at '
+              f'{args.stop_at.astimezone().strftime("%H:%M")}', flush=True)
         return
 
     if any(row.get('id', '').startswith('workday:') for row in todo) \

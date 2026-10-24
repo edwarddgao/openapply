@@ -110,6 +110,21 @@ class OvernightHelpersTest(unittest.TestCase):
                     apply_pipeline.start_cdp_chrome(args, 9222)
             self.assertFalse(temporary.exists())
 
+    @mock.patch('scripts.apply.start_cdp_chrome')
+    @mock.patch('scripts.apply.selected_rows', return_value=[{'id': 'ashby:x', 'company_slug': 'x'}])
+    @mock.patch('scripts.apply.load_statuses', return_value={})
+    @mock.patch('scripts.apply.load_latest', return_value={'date': '2026-10-24', 'fresh': 'f.csv', 'backlog': 'b.csv'})
+    @mock.patch('scripts.apply.read_rows', return_value=[])
+    @mock.patch('scripts.apply.validate_json_file')
+    @mock.patch('scripts.apply.shutil.which', return_value='/usr/bin/true')
+    def test_apply_past_stop_at_launches_no_chrome(self, *mocks: mock.Mock) -> None:
+        start_cdp_chrome = mocks[-1]
+        argv = ['apply.py', '--cdp-profile', '--prepare-browser', '--parallel', '4',
+                '--stop-at', '2026-10-24T08:00:00-04:00']
+        with mock.patch('sys.argv', argv), mock.patch('scripts.apply.repo_path', side_effect=lambda _repo, p: Path(p)):
+            apply_pipeline.main()
+        start_cdp_chrome.assert_not_called()
+
     def test_workday_link_matches_myworkdaysite_tenants(self) -> None:
         links = {
             'https://wd1.myworkdaysite.com/recruiting/snapchat/snap/passwordreset/tok/?redirect=x': ('snapchat', 'passwordreset'),
