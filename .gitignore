@@ -34,3 +34,7 @@ node_modules/
 /.tmp/
 *.bak
 *.bak-*
+
+# Local scratch and no-submit dry-run transcripts.
+/tmp/
+applications/dry-run-logs/
