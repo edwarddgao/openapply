@@ -2,7 +2,7 @@
 
 OpenApply runs overnight as a macOS LaunchAgent. It does not use a hosted agent
 automation and does not create remote tasks. The scheduled process launches the
-existing external `claude -p` application agents directly, on Sonnet 5.
+existing external `claude -p` application agents directly, on Haiku 5.5.
 
 ## Nightly workflow
 

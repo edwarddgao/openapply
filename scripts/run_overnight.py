@@ -744,8 +744,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--workday-effort', default='',
                         help="claude --effort for Workday roles; empty is Claude Code's default "
                              'with --workday-model, else --effort')
-    parser.add_argument('--model', default='sonnet', help='claude model for the role agents')
-    parser.add_argument('--effort', default='', help="claude --effort for the role agents; empty keeps Claude Code's default")
+    # Haiku 5.5 (released 2026-10-07) by explicit id: the CLI's `haiku` alias still resolves
+    # to claude-haiku-4-5. 2026-10-08 no-submit A/B on the same nine forms
+    # (applications/dry-run-logs/ab-20261008-*): Haiku 5 ready / 3 needs-input / 1 blocked
+    # vs Sonnet 5.5 6 / 1 / 2, with Haiku's extra needs-input verdicts being refusals to
+    # guess; 21 vs 13 turns, 80 vs 75 s, $0.02 vs $0.22 per role (10x cheaper).
+    # Earlier: Sonnet 5.5 nights 09-29..10-07 ran $0.30-0.52/role, $0.40-0.77/submitted,
+    # 22-41 turns (analysis/overnight_cost.py); Opus 5.5 nights 09-27/28 ran $0.59-0.65/role.
+    parser.add_argument('--model', default='claude-haiku-5-5', help='claude model for the role agents')
+    parser.add_argument('--effort', default='low', help="claude --effort for the role agents; empty keeps Claude Code's default")
     parser.add_argument('--dry-run', action='store_true', help='validate dependencies and preview without refresh or submission')
     parser.add_argument('--no-apply', action='store_true', help='refresh and build the shortlist without submitting applications')
     parser.add_argument('--check-auth-only', action='store_true',

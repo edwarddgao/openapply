@@ -100,6 +100,8 @@ Simplify Copilot autofill is only usable from the user's live signed-in Chrome (
 
 ## Greenhouse Notes
 
+- Never press Enter anywhere inside a Greenhouse form, including inside a React select: Enter submits the form. Commit a select by clicking the option, then re-snapshot to verify the value; if a select will not take a value, report it rather than retrying with the keyboard. (2026-10-08: an Enter press to reselect Work Authorization submitted a real application during a no-submit dry run.)
+
 - Direct job-board URLs are often more reliable than embedded iframes.
 - If clicking submit does not work, try `document.querySelector('form').requestSubmit()`.
 - Greenhouse security-code fallback uses 8-character codes and fields commonly named `#security-input-0` through `#security-input-7`.

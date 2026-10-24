@@ -459,6 +459,7 @@ def append_status(path: Path, record: dict[str, Any]) -> None:
 
 
 STATUS_MARKERS = (
+    ('ready_to_submit', 'ready:'),
     ('submitted', 'submitted:'),
     ('blocked', 'blocked:'),
     ('needs_input', 'needs input:'),
@@ -466,9 +467,27 @@ STATUS_MARKERS = (
 )
 
 
+CLI_NOISE_RE = re.compile(
+    r"^\s*\[claude-code:|isn't described by this version's model catalog|"
+    r'CLAUDE_CODE_DISABLE_UNKNOWN_MODEL_WINDOW_ENFORCEMENT')
+
+
+def strip_cli_noise(message: str) -> str:
+    """Drop Claude Code diagnostics that share stdout with the agent's final line.
+
+    2026-10-08: on a model id newer than the CLI's catalog (claude-haiku-5-5 on
+    2.1.291) the CLI prints a "model catalog" warning and an unrecognized_model log
+    line ahead of the agent's verdict. parse_status read the warning first and filed
+    all nine A/B roles as 'unknown' although every agent had answered.
+    """
+    return '\n'.join(line for line in message.splitlines() if not CLI_NOISE_RE.search(line))
+
+
 def parse_status(message: str) -> tuple[str, str]:
-    text = ' '.join(message.strip().split())
+    text = ' '.join(strip_cli_noise(message).strip().split())
     lower = re.sub(r'^[\W_]+', '', text.lower())
+    if lower.startswith('ready'):
+        return 'ready_to_submit', text
     if lower.startswith('submitted'):
         return 'submitted', text
     if lower.startswith('blocked'):
@@ -608,6 +627,15 @@ Gmail is UNAVAILABLE for this run: the IMAP app password is missing or rejected.
 Workday: the user has authorized creating a candidate account on this tenant ({tenant}) with the shared password in ${WORKDAY_PASSWORD_ENV}. Follow the skill's Workday section. Type the password only as the shell variable, e.g. `agent-browser fill <ref> "${WORKDAY_PASSWORD_ENV}"`; never echo, print or expand it into your output. Fetch activation / password-reset links with `python3 scripts/gmail_imap.py workday-link --tenant {tenant} --kind activate|passwordreset`.
 """
 
+    if getattr(args, 'no_submit', False):
+        dry_run_note = """
+DRY RUN - NO SUBMISSION: fill and verify every field exactly as you would for a real application (resume upload, every question, EEO declines), but do NOT click the final Submit / Send application / Apply control. When the form is complete and verified, return exactly one line: Ready - <what was filled, and any required question you could not answer>. Still return Blocked or Needs input when those apply.
+"""
+        final_statuses = 'Ready / Blocked / Needs input'
+    else:
+        dry_run_note = ''
+        final_statuses = 'Submitted / Blocked / Needs input'
+
     return f"""You are an external job application agent. Apply to exactly one role.
 
 Role:
@@ -624,7 +652,7 @@ Required workflow:
 {browser_instructions}
 - Do not use browser extensions, third-party autofill helpers, or AI autofill tools. Fill forms directly with agent-browser from the applicant profile and policy.
 - Close the agent-browser session when done if possible. The launcher will also attempt cleanup.
-{ashby_note}{gmail_note}{workday_note}
+{ashby_note}{gmail_note}{workday_note}{dry_run_note}
 Applicant data:
 - Email: type exactly `{applicant_email(args)}` in every email, username and sign-in field. Copy it character for character; it is not the email of the account running you.
 - Resume PDF: upload exactly `{resume_upload_path(args)}` (this absolute path). The browser resolves upload paths from its own directory, not yours, so a relative path such as `config/resume/...` attaches nothing and freezes the session.
@@ -641,7 +669,7 @@ Rules:
 - If a required answer cannot be inferred, stop and return Needs input with exact question text.
 - On Greenhouse validation errors, inspect aria-invalid="true" / *-error fields. For invalid custom dropdowns, reselect via a different path; visible selected text alone may not clear validation.
 - If blocked, return the exact blocker.
-- Final response must be one concise status line only: Submitted / Blocked / Needs input, with confirmation URL or exact blocker.
+- Final response must be one concise status line only: {final_statuses}, with confirmation URL or exact blocker.
 """
 
 
@@ -1193,10 +1221,14 @@ def main() -> None:
     parser.add_argument('--stop-at', default='',
                         help='ISO timestamp by which applying is over: no new role starts in the last '
                              '15 min and agents still running at it are stopped (not ledgered)')
+    parser.add_argument('--no-submit', action='store_true',
+                        help='agent dry run: fill and verify but never click Submit; outcomes go to '
+                             'applications/dry-runs.jsonl instead of the ledger')
     args = parser.parse_args()
 
     if not args.model and args.agent == 'claude':
-        args.model = 'sonnet'
+        # Explicit id: the CLI's `haiku` alias lags new releases (2.1.291 -> claude-haiku-4-5).
+        args.model = 'claude-haiku-5-5'
     if not args.model and args.agent == 'codex':
         args.model = 'gpt-5.5'
 
@@ -1324,6 +1356,12 @@ def main() -> None:
                     else:
                         reason = 'rate limit'
                     print(f'Skipped ({reason}, not ledgered): {record.get("company_slug","")} - {record.get("title","")} :: {record.get("detail","")}', flush=True)
+                    continue
+                if args.no_submit:
+                    record['dry_run'] = True
+                    record['model'] = args.model
+                    append_status(repo_path(args.repo, Path('applications/dry-runs.jsonl')), record)
+                    print(f'Dry run ({record["status"]}): {record["detail"]}', flush=True)
                     continue
                 append_status(args.status, record)
                 print(f'Finished: {record["detail"]}', flush=True)
