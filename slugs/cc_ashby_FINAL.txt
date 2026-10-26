@@ -118,6 +118,7 @@ aaru
 abacum
 abby-care
 abe
+aboon
 abound
 abridge
 absentia-labs
@@ -182,6 +183,7 @@ agentio
 agentis-capital-advisors
 agentmail
 agi-inc
+agiholdings
 agility
 agora
 agreena
@@ -194,6 +196,7 @@ aida
 aidigest
 aidkit
 aim
+aim-solutions
 aim4hire
 aion
 aios
@@ -268,6 +271,7 @@ alterion
 alternativepayments
 altimate
 altis
+altitude
 altruistiq
 altura
 alva-energy
@@ -321,6 +325,7 @@ anon
 anrok
 ansiblehealth
 answersnow
+answerthis
 antaiventures
 antares
 anterior
@@ -370,6 +375,7 @@ aqua-voice
 aquant
 aquarianlp
 aquark
+aquila
 arago
 aragorn
 aran-industries
@@ -667,6 +673,7 @@ bivacor-inc
 bizly
 bjak
 bjakcareer
+black-forest-labs
 black-mountain-dynamics
 blackbird-labs-inc
 blackbox-strategies
@@ -1082,6 +1089,7 @@ composio
 composite
 compound
 compound-eye
+compoundcontentstudio
 compresr
 compscience
 compyl
@@ -1108,6 +1116,7 @@ connecthum
 connectly
 conquest
 conscious-talent
+consensys
 console
 constellation
 constellationspace
@@ -1322,9 +1331,11 @@ depthfirst
 designworkstalent
 develop-health
 devsavant
+dewarmte
 dex
 dexmate
 dext-careers
+dfd001cc-f1d3-494c-a350-b14cfef0f0e1
 dgpt
 di-ati
 diagrid
@@ -1345,6 +1356,7 @@ discovery-loop
 dispatch
 displai
 distance
+distill
 distributed-spectrum
 distributor-wire-cable
 distyl
@@ -1414,6 +1426,7 @@ dust
 duvo
 dyna-robotics
 dynamic
+dynamic-creatures
 dyneti
 e-source
 e2b
@@ -1534,6 +1547,7 @@ equall
 equals
 equi
 equip
+eradrive
 eragon
 erebor
 ernest
@@ -1571,6 +1585,7 @@ evvy
 exa
 excelerate
 exegy
+exo
 exofreight
 expa
 exponential
@@ -1647,6 +1662,7 @@ fidamy
 fiddler-ai
 fiducial
 fieldguide
+fieldmaterials
 fig
 filed
 filigran
@@ -1833,6 +1849,7 @@ further
 furtherai
 fuse
 fuser
+futrue
 futrue-neuroscience
 future-find
 futureaudioworkshop
@@ -1986,6 +2003,7 @@ graymatter-robotics
 grayswanai
 grazemate
 greatquestion
+greatsky
 green-tree-school-and-services
 greenboard
 greenlight-workforce-solutions
@@ -2171,6 +2189,7 @@ homevision
 honey
 honeybook
 honeydew
+honeyinsurance
 hook
 hookmusic
 hoopla
@@ -2210,6 +2229,7 @@ humanly
 humanoid
 humans-and
 humatahealth
+hume-ai
 hustlewing
 hv
 hyde
@@ -2251,6 +2271,7 @@ imagineart
 immersivelabs
 immunara
 immunic-therapeutics
+impact-justice
 impossible-foods
 imprint
 improbable
@@ -2429,6 +2450,7 @@ kalibri-labs
 kalos
 kalshi
 kamiwaza
+kandou-ai
 kantiv
 kantoko
 karman
@@ -2481,6 +2503,7 @@ kit
 kittl
 kiwi
 kiwi-com
+klarify
 klarity
 klarity-ai
 kled-ai
@@ -2498,6 +2521,7 @@ knowtex
 knowunity
 knox-systems
 koahlabs
+kobalt
 kodex
 kodif
 kodifly
@@ -2510,6 +2534,7 @@ kombo
 kong
 kontakt
 konvu
+koro
 kos.ai
 kota
 kovari
@@ -2534,6 +2559,7 @@ kyra
 l-c-l-excavation
 labhouse
 ladder
+laelaps
 lago
 lai
 lakera.ai
@@ -2591,9 +2617,11 @@ legora
 leland
 lemfi
 lemlist
+lemon-io
 lemon-markets
 lemonade
 lempire
+lemrock
 lendable
 lenny
 lens
@@ -2735,6 +2763,7 @@ m-kopa
 m13
 m7health
 mach
+mach10usa
 mach9
 machinery-partner
 machinify
@@ -2939,10 +2968,12 @@ mistral.ai
 miter
 mithrl
 mitiga-solutions
+mitti
 mnemonic
 moab
 mobasi
 mobbin.com
+mobi
 mobilefirst
 modal
 modefair
@@ -3104,6 +3135,7 @@ neura-robotics-gmbh
 neural-earth
 neural-solutions
 neuralconcept
+neuromorphic-labs
 neurons-lab.com
 neurophos
 neuroscale
@@ -3202,6 +3234,7 @@ nudge
 numeral
 numeric
 numerixs-quant
+numo
 numosai
 nuna
 nuon
@@ -3243,6 +3276,7 @@ offdeal
 office-hours
 offstream
 oh
+ohr
 oktoberagency
 old-well-labs
 oligo
@@ -3270,6 +3304,7 @@ onecrew
 onehealth
 oneleet
 onepay
+onepot
 oneschema
 onestock
 onhires
@@ -3308,6 +3343,7 @@ openobserve-careers
 openphilanthropy
 openrouter
 opensea
+openstandard
 openstore
 operator
 opfoundation
@@ -3365,6 +3401,7 @@ overjet
 overtone
 overview
 overviewenergy
+oviva
 owkin
 owner
 ownup
@@ -3395,6 +3432,7 @@ pallon.com
 palmstreet
 palo-it
 palup
+panacea
 pandektes
 pangramlabs
 pano-ai
@@ -3520,6 +3558,7 @@ pharos
 phasebiolabs
 phia
 phil
+philo
 phinitylabs
 phira-ventures
 phlair
@@ -3626,6 +3665,7 @@ pointr
 polar
 polaranalytics
 polarisgrowth
+polaroid
 polarsteps
 polene-paris
 poliigon
@@ -3655,16 +3695,19 @@ potion
 powerlattice
 powerline
 powerus
+powerverse
 pplwise
 praecipio
 pragmaplatform
 pragmatico
 pragmatike
 prairielearn
+pramaana-labs
 pravah
 praxipal
 praxis
 precharm
+predikt
 prefect
 preference
 preference-model
@@ -3682,6 +3725,7 @@ primeintellect
 primer
 primer.io
 prior-labs
+prism
 prive
 privy
 privy-operations
@@ -3707,6 +3751,7 @@ promise
 promise-studios
 prompt
 pronoia
+proofofhuman
 proofofplay
 proofs
 propagate
@@ -3720,6 +3765,7 @@ prorata
 prose
 prosper-ai
 prospyr
+prosus
 protectai
 protege
 protegrity
@@ -3744,6 +3790,7 @@ pulley
 pulse
 pulsora
 pure
+pure-app
 puzzle-consulting-services
 puzzle.io
 pylon
@@ -3756,6 +3803,7 @@ qawolf
 qdrant.tech
 qed-ai
 qih-group
+qlub
 qontext
 qorelo
 quadrillion-labs
@@ -3799,8 +3847,10 @@ radar
 radiant
 radiant-industries
 radiantgraph
+radical-health
 radical-numerics
 radiusai
+radixark
 raft
 raiku
 railway
@@ -3887,6 +3937,7 @@ relevanceai
 releventfp
 relevize
 reliable-robotics
+relling
 remarcable-inc
 rematiq-gmbh
 rematter
@@ -3991,6 +4042,7 @@ roadsurfer.com
 roalddahl
 roam
 robco
+robert-rauschenberg-foundation
 robin-ai
 robin-radar
 roboflow
@@ -4227,6 +4279,8 @@ shortstory
 shuttlelabs
 sibill
 sidebar
+sidekick
+sideshift
 siena
 siepe
 sierra
@@ -4290,6 +4344,7 @@ slant
 slash-financial
 slate
 sleeper
+slide
 slingshot-aerospace
 slingshotai
 slope
@@ -4334,6 +4389,7 @@ solstice
 solva
 solvd
 solve.ai
+solvea
 solveintelligence
 somethings
 somite-ai
@@ -4515,6 +4571,7 @@ substrate
 substrate-bio
 subtotal
 subzero
+successionai
 succinct
 sui
 suite-studios
@@ -4720,6 +4777,7 @@ textlayer
 texture
 teya
 teza-technologies
+tfc
 tgc
 thaleron
 that1detailer
@@ -4815,6 +4873,7 @@ toms
 tonal
 tonicai
 toogeza
+toogoodtogo
 tools
 toolsforhumanity
 top-hat
@@ -4951,6 +5010,7 @@ unmind
 unstructured
 unto-labs
 unwrap
+up
 upchurch
 upcodes
 updoc
@@ -5015,6 +5075,7 @@ veev
 veezu
 vega
 vegaclaims
+vegatech
 veho
 veho-tech-inc
 veliu
@@ -5156,6 +5217,7 @@ wearebeyondsports
 weareopenr
 weave
 weave-grid
+weave-os
 weaviate
 webai
 weekend
@@ -5168,15 +5230,18 @@ welltheory
 wemod
 wemolo
 wescale
+westmag
 wetransfer
 wetravel
 wffa-advisors-careers
 what3words
 whatnot
 wheel
+when
 wherobots
 whetstoneresearch
 whippy
+whisk
 whiskeylibrary
 whitecircle
 whoop
@@ -5219,6 +5284,7 @@ woebot-health
 woflow
 wokelo-ai
 wonderbly.com
+wonderful
 wonderly
 woodhouse-academy
 wordly.ai

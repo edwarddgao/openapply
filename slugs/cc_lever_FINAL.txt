@@ -445,6 +445,7 @@ blackcloak
 blanc-labs
 blencorp
 blendlabs
+blinkist
 blinkux
 blinq
 blocknative
@@ -485,6 +486,7 @@ boston-materials
 bostondynamicsaiinstitute
 bostonimaging
 botify
+bound
 bounteous
 boweryfarming
 boxbot
@@ -498,6 +500,7 @@ branch.gg
 brand-knew
 braviantholdings
 brazoderecho
+breezebio
 brevo
 brewbird
 bricknetworks
@@ -594,6 +597,7 @@ caseware
 cashrewards
 caslservice
 catalist
+catalystmobility
 catalyze
 catenamedia
 causal-app
@@ -635,6 +639,7 @@ chefrobotics
 cherre
 cherrytechnologies
 chicago2024
+chipping-concrete
 chironhealth
 chooose
 chooosejobs
@@ -671,6 +676,7 @@ clearedge
 clearer
 clearpoint
 clerky
+clevelandconstruction
 clevertap
 clicktime
 climate-collaborative
@@ -764,6 +770,7 @@ coolbet
 copia
 copiapower
 copilotmoney
+copper
 copyai
 corbalt
 cordtechnologies
@@ -903,6 +910,7 @@ digitalmass
 digitalmediamanagement
 digitalremedy
 digitalturbine
+dijital-team-pty-ltd
 dilitrust
 dioxycle
 directi
@@ -941,11 +949,14 @@ dreamgolf
 dreamsports
 drivemode
 drivetrain
+drizly
 dronedeploy
+droneseed
 dronesense
 dscout
 dsi
 dten
+dualitas-therapeutics
 duetti
 duffel
 dulcedo
@@ -1221,6 +1232,7 @@ fullyvested
 fundapps
 fundrise
 funxyz
+furientis
 fuse
 futureof-life
 fwf
@@ -1250,6 +1262,7 @@ genefab
 generation
 genesis
 genesistherapeutics
+genuine-health
 geocomply-2
 geotab
 gess
@@ -1295,6 +1308,7 @@ gluegroups
 gmo
 go-cloudforce
 goalbookapp-2
+goat
 gobrightside
 gocatalant
 goforward
@@ -1304,6 +1318,7 @@ gojob
 gokenamerica1
 gomaterials
 gonetspeed
+gong
 goodamerican
 goodeggs
 goodleap
@@ -1398,6 +1413,7 @@ heard
 hearsaysystems
 heartbeathealth
 heetch
+heirloomtechnologies
 helbiz
 hellobestow
 hellojagger
@@ -1458,9 +1474,11 @@ human-protocol-foundation
 humanapi
 humanetech
 humansecurity
+humble-robotics
 humi-2
 huntakiller
 hush
+hutker-architects-inc
 hydrow
 hypebeast
 hyperlane
@@ -1583,6 +1601,7 @@ janeapp
 januaryinc
 januxrx
 jar-app
+jarofleets
 jeff-app
 jellysmack
 jetsetpilates
@@ -1661,6 +1680,7 @@ klearnow
 klick
 kmaconsultingllc
 knix
+knotch
 knownwell
 knrtherapy
 koalahealth
@@ -1786,6 +1806,7 @@ logz
 longtail-ai
 longwall
 looker
+loop
 loopinternet
 loopio
 loopreturns
@@ -1899,6 +1920,7 @@ mcaconnect
 mcchrystalgroup
 mcgovern
 mechanicalorchard
+medacuitysoftware
 medal
 medallia
 medcarepediatric
@@ -1914,6 +1936,7 @@ medrhythms
 meds
 meesho
 meetalbert
+meetgroup
 meetingstreetschools
 meetingtomorrow
 megaport
@@ -2058,6 +2081,7 @@ nesto
 netflix
 netlight
 netomi
+networkconnex
 neuralink
 nevados
 newfrontinsurance
@@ -2113,6 +2137,7 @@ ntdsoftware
 numeris
 nutcrackertherapeutics
 nuuds
+nuvoair
 nxscale
 o-p-e-n
 oaknorth.ai
@@ -2178,6 +2203,7 @@ outpacebio
 outreach
 outsight
 outsourcedstaff
+overhead-garage-door
 overmind
 owner
 ownwell
@@ -2470,6 +2496,7 @@ quidd
 quidel
 quilt
 quilt-air
+quilted-health
 quince
 quincus
 quincyinst
@@ -2938,6 +2965,7 @@ streamsets
 streetcontext
 streetlightdata
 stridecenters
+stridehealth
 strider
 strongcompute
 strongdm
@@ -2994,6 +3022,7 @@ switchboardsoftware
 swoopapp
 swordhealth
 swyftx
+sycurio
 sygnaturediscovery
 sylvera
 symmetryinvestments
@@ -3024,6 +3053,7 @@ tagup
 tahoebio-ai
 tailwindbi
 tajir-app
+takescoop
 tala
 talentkompass-deutschland
 talentneuron
@@ -3043,6 +3073,7 @@ tapcart
 taplytics
 taptapsend
 taxfyle
+tbwachiatday
 tdthornton
 teachable
 teambuilders
@@ -3052,6 +3083,7 @@ technexus
 techruiter
 techtalentproject
 teck-2
+tecla
 tecton
 teecom
 tegus
@@ -3164,6 +3196,7 @@ tkda
 tlnt
 todaytixgroup
 together
+togetherhood
 tokenmetrics
 toku
 tombras
@@ -3344,6 +3377,7 @@ veefriends
 veepee
 veeva
 veir
+velaura
 velo3d
 veloceenergy
 velsera

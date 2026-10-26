@@ -66,9 +66,11 @@ alinia-ai
 alitheon
 allana
 alleviatehealth-care
+allia-health
 alljoined-com
 alpacahealth-io
 alpharun
+alpine-solutions-group
 alquistrobotics-com
 altara
 altara-co
@@ -156,6 +158,7 @@ aurorincad-com
 authentictalent-com
 autokitteh-inc
 autonomique-ai
+autonomous-search
 autopilotbrand-com
 aux-insights
 averity
@@ -182,10 +185,12 @@ beckettfinch-com-au
 beechwood-talent
 beem
 beglaubigt-de
+belli-test1
 benbase
 bennyapi-com
 bestomer
 better-auth
+better-auth-com
 betterbasket-ai
 bettermoneyco-com
 beveladvisors-com
@@ -214,6 +219,7 @@ blazetalent
 bld-talent
 blend-inc
 bloom-recruiting
+bloomily
 blue-heron-consulting
 blue-iris
 blue-j
@@ -280,6 +286,7 @@ cambrian-ops
 camfer-dev
 cams-careers
 candidate-fyi
+candidate-labs
 candoriq
 capitol-ai
 caplight-com
@@ -289,6 +296,7 @@ cardda
 cardnexus
 careerconnections-io
 careers
+careers-myrrsgroup
 careers-readyon
 careswift
 caret
@@ -330,6 +338,7 @@ claimonics
 clara-law
 clarinet
 clarity
+claryx
 classet-org
 clearchecks-com-ats
 clearchoicecontractors-com
@@ -361,6 +370,7 @@ conduct-ai
 conductorai
 confida-ai
 connect3r-xyz
+constant-ai
 constellation
 constellation-institute
 constrafor
@@ -399,6 +409,7 @@ critical-elements-hr
 crosby
 crucibl-ai
 cruitbase-inc
+crustdata-co
 curbcuts-com
 curex-org
 curiouscardinals-com
@@ -419,6 +430,7 @@ dataday-technology-solutions
 datagrid
 dataonebso
 dataprana-io
+datasqrl
 datax-io
 daupler-com
 dawn-media
@@ -434,6 +446,7 @@ deependstrategies-com
 deepline-com
 deeptempo
 deeptune-com
+defence-recruiting-de
 deform
 deliver
 demo-gem-com
@@ -464,6 +477,7 @@ dropbox-ats
 dry-ground-ai
 dunbarlabs-com
 dunk4dreams
+dunmore-ink
 duranium-co
 durin
 dwbridges-com
@@ -484,6 +498,7 @@ elanco
 elevation-land-solutions
 eliza
 elloe-ai
+elm-ai-com
 elo-ai
 elsewhere-partners
 emancro-ai
@@ -523,6 +538,7 @@ everything-to-gain
 evisort-exec
 evlos-technology
 excelity-careers
+exolabs
 expand-com
 expedition-technology
 exponent
@@ -599,6 +615,7 @@ fulfil-io
 fullstack
 fullyramped
 fullystockedfridge-com
+fulton-river-partners
 function-health
 fundify-ai
 furtherai-com
@@ -611,6 +628,7 @@ gandaklabs-com
 garrett-fields-com
 gatewayx
 gbdtalent-com
+gbh
 gc-ai
 gem
 gem-ben
@@ -691,6 +709,7 @@ gtbio
 guardoc-health
 guardrail-ai
 guidesage-ai
+hachette-book-group
 hachette-book-group-sandbox
 hacktron
 hadrian
@@ -722,6 +741,7 @@ hemut
 heycuee-com
 heyiris-ai
 high-five
+highland-health-direct
 highwinds-com
 hihobbes-com
 hilabs-ie
@@ -743,6 +763,7 @@ humanrise-ro
 hunt-club
 hy-works
 hypercubic
+hypernatural-ai
 i-am-self-employed
 i360technologies-inc
 igniwa-com
@@ -752,6 +773,7 @@ imagen-technologies-ats
 impact-hire
 impact-search
 in-great-co
+inactive-20260918-c2b8e95f
 inception
 index-exchange
 inergroup
@@ -901,6 +923,7 @@ manifest
 manifested-com
 manifestios-com
 mantis-partners
+manuela
 manufacturing-recruiting
 manzmaison-com
 maple
@@ -932,6 +955,7 @@ measurementlabs-ai
 medallion-fm
 mednet-org
 meetdex-ai
+meettie-com
 megapot
 meineautosdirekt
 melow-ai
@@ -965,6 +989,7 @@ modernloop-one
 modernmenopause
 modernrealty-io
 modular
+momentum
 monark-markets
 mondrio
 monterey-ai
@@ -999,6 +1024,7 @@ nebula
 nerdery
 nerve
 neuratri-com
+neuronindustries-com
 neurovrd-com
 nevoya-inc
 newcrew
@@ -1074,6 +1100,7 @@ overmind
 overwatch
 overwatch-mission-critical-sandbox
 oxfordsolutionsinc-com
+oxus
 p3technology-io
 paces
 pacificrecruitingstrategies-com
@@ -1088,8 +1115,10 @@ paragonintel-com
 parakeet-health
 paramark
 parcell
+parker-staffing-services
 parrotsoftware-io
 partao
+particle-ai
 partnerhq
 patcher-ai
 patternstack-io
@@ -1107,6 +1136,7 @@ peregrine-talent
 permanent-ag
 permianlabs-xyz
 permutable-ai
+perpetuity-finance
 phipps-cameron-recruitment
 photalabs-com
 photon
@@ -1196,6 +1226,7 @@ rditrials
 reach-vote
 reachlink
 realm-labs
+rebill-com
 rebuild-work
 recharged
 recoursehealth-com
@@ -1234,6 +1265,7 @@ revtalent-co
 rex
 rf-renovo-management-company-llc
 rhodev
+ridezum-com
 riften-ai
 riley
 rinsed
@@ -1242,6 +1274,7 @@ ripsim-com
 risczero-com
 rise-search
 risely-ai
+rivan-com
 riveron-careers
 rivia
 rlstudios-xyz
@@ -1270,6 +1303,7 @@ sajackstracking-com
 sales-marker
 salesqueze-com
 salient
+samba
 samba-tv
 samora-ai
 sandbar-inc
@@ -1326,6 +1360,7 @@ simplycure
 simpsonranches-com
 sixmo-companies
 skale-talent
+skilllab
 skillreveal
 skillsjump
 skyconsulting-inc-com
@@ -1355,7 +1390,9 @@ solvea
 sonisearch-com
 soundhound
 source
+sourcedirect-consulting-ltd
 southbridge-ai
+sovexgroup-com
 spacex
 spark-investment-management-llc
 spawn
@@ -1372,6 +1409,7 @@ ssg
 ssoready-com
 stack-auth-com
 stackfix-com
+stackyak
 staffeto-com
 staircasestudios-ai
 stanford-alumni-association
@@ -1438,6 +1476,7 @@ teamohana
 teampascal-com
 tech-first
 techcitytalent-com
+tecolote
 tecolote-research-inc
 tegimpactsolutions-co-za
 tegis-co-za
@@ -1490,6 +1529,7 @@ themuralgroup-com
 thenewclub-fyi
 thepeoplestack-co
 thequantumtalentgroup-com
+therapyconsultantsinc-com
 therrsgroup
 theseus-us
 theskilldeck-com
@@ -1518,6 +1558,7 @@ token-transit
 toolhouse-ai
 topmark-funding
 torchsystems-com
+toro-data-labs
 totalitsolutions-com
 tq-ventures
 traceroot-ai
@@ -1543,6 +1584,7 @@ trojan-trading
 tropic
 tropic-gemats
 trove
+trove-talent
 trueanomaly-space
 truelight-talent
 tryastraea-com
@@ -1559,6 +1601,7 @@ tungsten-dev
 turbohome
 turbotest-ai
 twc
+twenty20
 twentyfour7-dev
 twinecommerce-com
 twinsix
@@ -1574,6 +1617,7 @@ unearth-talent
 unify-ai
 unify-hiring-com
 unit1-studio
+unity
 unityai-co
 unitytalentsolutions-com
 unsiloed-ai
@@ -1629,6 +1673,7 @@ verlynk
 vesseltalent-com
 vesta-eco
 vettura-llc
+veyda-com
 viamoss-ai
 vicky-miles
 victory-lap
@@ -1647,6 +1692,7 @@ voltai-com
 voltairlabs-com
 vorsystems
 voyager
+vultron
 wantshes-com
 wardstone-space
 waterworth-net
@@ -1654,6 +1700,7 @@ wayback-labs
 wcscompany-com
 webflow-ats-sandbox
 weeatbig-com
+welcome-newborn
 well-copy
 wellfound-com
 western-governors-university
@@ -1675,6 +1722,7 @@ workup-health
 worth-search
 wyzecam-com
 xed-ro
+xyloplan-com
 y-combinator-sandbox
 ybl
 yc-stealth
